@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket 订单簿实时监控</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #44ff44;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            background: #1a1f3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls input {
+            background: #0a0e27;
+            border: 1px solid #3a4f7a;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .controls button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background: #3a62a8;
+        }
+
+        .controls button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #1a1f3a;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2a5298;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .spread-info {
+            font-size: 14px;
+            color: #ffd700;
+        }
+
+        .orderbook-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .orderbook-side {
+            flex: 1;
+        }
+
+        .side-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .bids-header {
+            background: rgba(34, 139, 34, 0.2);
+            color: #4ade80;
+        }
+
+        .asks-header {
+            background: rgba(220, 38, 38, 0.2);
+            color: #f87171;
+        }
+
+        .orderbook-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            padding: 4px 8px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+            margin-bottom: 1px;
+            font-size: 13px;
+        }
+
+        .orderbook-row.bid {
+            background: linear-gradient(to left, transparent, rgba(34, 139, 34, 0.1));
+        }
+
+        .orderbook-row.ask {
+            background: linear-gradient(to right, transparent, rgba(220, 38, 38, 0.1));
+        }
+
+        .orderbook-row.flash {
+            animation: flash 0.3s ease-out;
+        }
+
+        @keyframes flash {
+            0% { background-color: rgba(255, 215, 0, 0.5); }
+            100% { background-color: transparent; }
+        }
+
+        .depth-bar {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .depth-bar.bid {
+            background: #228b22;
+            right: 0;
+        }
+
+        .depth-bar.ask {
+            background: #dc2626;
+            left: 0;
+        }
+
+        .price {
+            font-weight: bold;
+        }
+
+        .price.bid {
+            color: #4ade80;
+        }
+
+        .price.ask {
+            color: #f87171;
+        }
+
+        .size {
+            color: #a0a0a0;
+        }
+
+        .total {
+            color: #707070;
+            font-size: 11px;
+        }
+
+        .trades-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trade-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr;
+            padding: 6px 8px;
+            border-bottom: 1px solid #2a2f4a;
+            font-size: 13px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .trade-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .trade-time {
+            color: #888;
+        }
+
+        .trade-price.buy {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .trade-price.sell {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .trade-size {
+            color: #a0a0a0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(42, 82, 152, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #0a0e27;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #2a5298;
+            border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #3a62a8;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .message-log {
+            background: #0a0e27;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #1a1f3a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Polymarket 订单簿实时监控</h1>
+            <div class="status">
+                <div class="status-item">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">未连接</span>
+                </div>
+                <div class="status-item">
+                    <span>延迟: <strong id="latency">-</strong>ms</span>
+                </div>
+                <div class="status-item">
+                    <span>消息数: <strong id="msgCount">0</strong></span>
+                </div>
+                <div class="status-item">
+                    <span>最后更新: <strong id="lastUpdate">-</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="assetId" 
+                   placeholder="输入 Asset ID (例如: 13574144071637000647847673812540937418094892574120740792765602393177388985995)"
+                   value="13574144071637000647847673812540937418094892574120740792765602393177388985995">
+            <button id="connectBtn" onclick="connect()">连接</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>断开</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">最佳买价 (Bid)</div>
+                <div class="stat-value" id="bestBid" style="color: #4ade80;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">最佳卖价 (Ask)</div>
+                <div class="stat-value" id="bestAsk" style="color: #f87171;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">价差 (Spread)</div>
+                <div class="stat-value" id="spread" style="color: #ffd700;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">最新成交价</div>
+                <div class="stat-value" id="lastPrice">-</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📖 订单簿</div>
+                </div>
+                <div class="orderbook-container">
+                    <div class="orderbook-side">
+                        <div class="side-header bids-header">买单 (Bids)</div>
+                        <div id="bidsContainer" class="scrollbar-thin" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="orderbook-side">
+                        <div class="side-header asks-header">卖单 (Asks)</div>
+                        <div id="asksContainer" class="scrollbar-thin" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">💹 最新成交</div>
+                </div>
+                <div id="tradesContainer" class="trades-container scrollbar-thin"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">📝 消息日志</div>
+            </div>
+            <div id="messageLog" class="message-log scrollbar-thin"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let msgCount = 0;
+        let lastMessageTime = 0;
+        const maxTrades = 50;
+        const maxLogEntries = 100;
+
+        // 使用 Map 来存储订单簿数据，提高查找和更新效率
+        let bidsMap = new Map();
+        let asksMap = new Map();
+        let maxDepth = 0;
+
+        function connect() {
+            const assetId = document.getElementById('assetId').value.trim();
+            if (!assetId) {
+                alert('请输入 Asset ID');
+                return;
+            }
+
+            // 连接到本地 WebSocket 服务器
+            const wsUrl = 'ws://localhost:8765';
+            
+            updateStatus('连接中...', false);
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                updateStatus('已连接', true);
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                
+                // 发送订阅消息
+                const subscribeMsg = {
+                    type: 'subscribe',
+                    asset_id: assetId
+                };
+                ws.send(JSON.stringify(subscribeMsg));
+                addLog('已发送订阅请求: ' + assetId);
+            };
+
+            ws.onmessage = (event) => {
+                const now = Date.now();
+                const latency = lastMessageTime ? now - lastMessageTime : 0;
+                lastMessageTime = now;
+                
+                document.getElementById('latency').textContent = latency;
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                msgCount++;
+                document.getElementById('msgCount').textContent = msgCount;
+
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {
+                    console.error('解析消息失败:', e);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket 错误:', error);
+                updateStatus('连接错误', false);
+                addLog('错误: ' + error.message, true);
+            };
+
+            ws.onclose = () => {
+                updateStatus('已断开', false);
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                addLog('连接已关闭');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function handleMessage(data) {
+            if (Array.isArray(data)) {
+                // 处理数组格式的消息
+                data.forEach(msg => processMessage(msg));
+            } else {
+                processMessage(data);
+            }
+        }
+
+        function processMessage(msg) {
+            if (msg.event_type === 'book') {
+                // 完整订单簿更新
+                updateOrderBook(msg.bids, msg.asks);
+                addLog(`订单簿更新: ${msg.bids?.length || 0} 买单, ${msg.asks?.length || 0} 卖单`);
+            } else if (msg.event_type === 'price_change') {
+                // 价格变化
+                handlePriceChange(msg);
+                addLog(`价格变化: ${msg.price_changes?.length || 0} 项`);
+            } else if (msg.event_type === 'last_trade_price') {
+                // 最新成交
+                handleTrade(msg);
+                addLog(`成交: ${msg.price} x ${msg.size}`);
+            }
+        }
+
+        function updateOrderBook(bids, asks) {
+            if (!bids || !asks) return;
+
+            // 清空并重建 Map
+            bidsMap.clear();
+            asksMap.clear();
+            maxDepth = 0;
+
+            let totalBid = 0;
+            bids.forEach(bid => {
+                const size = parseFloat(bid.size);
+                totalBid += size;
+                bidsMap.set(bid.price, { size, total: totalBid });
+                maxDepth = Math.max(maxDepth, totalBid);
+            });
+
+            let totalAsk = 0;
+            asks.forEach(ask => {
+                const size = parseFloat(ask.size);
+                totalAsk += size;
+                asksMap.set(ask.price, { size, total: totalAsk });
+                maxDepth = Math.max(maxDepth, totalAsk);
+            });
+
+            renderOrderBook();
+            updateBestPrices();
+        }
+
+        function renderOrderBook() {
+            const bidsContainer = document.getElementById('bidsContainer');
+            const asksContainer = document.getElementById('asksContainer');
+
+            // 使用 DocumentFragment 减少 DOM 操作
+            const bidsFragment = document.createDocumentFragment();
+            const asksFragment = document.createDocumentFragment();
+
+            // 渲染买单（价格从高到低）
+            const sortedBids = Array.from(bidsMap.entries())
+                .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
+                .slice(0, 20);
+
+            sortedBids.forEach(([price, data]) => {
+                const row = createOrderRow(price, data.size, data.total, 'bid');
+                bidsFragment.appendChild(row);
+            });
+
+            // 渲染卖单（价格从低到高）
+            const sortedAsks = Array.from(asksMap.entries())
+                .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))
+                .slice(0, 20);
+
+            sortedAsks.forEach(([price, data]) => {
+                const row = createOrderRow(price, data.size, data.total, 'ask');
+                asksFragment.appendChild(row);
+            });
+
+            // 一次性更新 DOM
+            bidsContainer.innerHTML = '';
+            asksContainer.innerHTML = '';
+            bidsContainer.appendChild(bidsFragment);
+            asksContainer.appendChild(asksFragment);
+        }
+
+        function createOrderRow(price, size, total, side) {
+            const row = document.createElement('div');
+            row.className = `orderbook-row ${side}`;
+            
+            const depthPercent = (total / maxDepth) * 100;
+            const depthBar = document.createElement('div');
+            depthBar.className = `depth-bar ${side}`;
+            depthBar.style.width = `${depthPercent}%`;
+            
+            row.innerHTML = `
+                <span class="price ${side}">${price}</span>
+                <span class="size">${size.toFixed(2)}</span>
+                <span class="total">${total.toFixed(2)}</span>
+            `;
+            row.appendChild(depthBar);
+            
+            return row;
+        }
+
+        function handlePriceChange(msg) {
+            // 处理价格变化
+            if (msg.price_changes) {
+                msg.price_changes.forEach(change => {
+                    const assetId = document.getElementById('assetId').value.trim();
+                    if (change.asset_id === assetId) {
+                        // 更新对应价格的数据
+                        const price = change.price;
+                        const size = parseFloat(change.size);
+                        
+                        if (change.side === 'BUY') {
+                            if (size > 0) {
+                                bidsMap.set(price, { size, total: 0 }); // total 将在重新计算时更新
+                            } else {
+                                bidsMap.delete(price);
+                            }
+                        } else if (change.side === 'SELL') {
+                            if (size > 0) {
+                                asksMap.set(price, { size, total: 0 });
+                            } else {
+                                asksMap.delete(price);
+                            }
+                        }
+                    }
+                });
+                
+                // 重新计算累计量
+                recalculateTotals();
+                renderOrderBook();
+                updateBestPrices();
+            }
+        }
+
+        function recalculateTotals() {
+            maxDepth = 0;
+            
+            // 重新计算买单累计
+            const sortedBids = Array.from(bidsMap.entries())
+                .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
+            let totalBid = 0;
+            sortedBids.forEach(([price, data]) => {
+                totalBid += data.size;
+                data.total = totalBid;
+                maxDepth = Math.max(maxDepth, totalBid);
+            });
+
+            // 重新计算卖单累计
+            const sortedAsks = Array.from(asksMap.entries())
+                .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+            let totalAsk = 0;
+            sortedAsks.forEach(([price, data]) => {
+                totalAsk += data.size;
+                data.total = totalAsk;
+                maxDepth = Math.max(maxDepth, totalAsk);
+            });
+        }
+
+        function handleTrade(msg) {
+            const tradesContainer = document.getElementById('tradesContainer');
+            const trade = document.createElement('div');
+            trade.className = 'trade-row';
+            
+            const time = new Date(parseInt(msg.timestamp)).toLocaleTimeString();
+            const side = msg.side === 'BUY' ? 'buy' : 'sell';
+            
+            trade.innerHTML = `
+                <span class="trade-time">${time}</span>
+                <span class="trade-price ${side}">${msg.price}</span>
+                <span class="trade-size">${parseFloat(msg.size).toFixed(2)}</span>
+            `;
+            
+            tradesContainer.insertBefore(trade, tradesContainer.firstChild);
+            
+            // 限制显示数量
+            while (tradesContainer.children.length > maxTrades) {
+                tradesContainer.removeChild(tradesContainer.lastChild);
+            }
+
+            // 更新最新成交价
+            document.getElementById('lastPrice').textContent = msg.price;
+        }
+
+        function updateBestPrices() {
+            const bestBid = Math.max(...Array.from(bidsMap.keys()).map(parseFloat));
+            const bestAsk = Math.min(...Array.from(asksMap.keys()).map(parseFloat));
+            
+            document.getElementById('bestBid').textContent = bestBid > 0 ? bestBid.toFixed(2) : '-';
+            document.getElementById('bestAsk').textContent = bestAsk < Infinity ? bestAsk.toFixed(2) : '-';
+            
+            if (bestBid > 0 && bestAsk < Infinity) {
+                const spread = bestAsk - bestBid;
+                document.getElementById('spread').textContent = spread.toFixed(4);
+            } else {
+                document.getElementById('spread').textContent = '-';
+            }
+        }
+
+        function updateStatus(text, connected) {
+            document.getElementById('statusText').textContent = text;
+            const dot = document.getElementById('statusDot');
+            if (connected) {
+                dot.classList.add('connected');
+            } else {
+                dot.classList.remove('connected');
+            }
+        }
+
+        function addLog(message, isError = false) {
+            const logContainer = document.getElementById('messageLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = isError ? '#f87171' : '#888';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // 限制日志数量
+            while (logContainer.children.length > maxLogEntries) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        // 页面卸载时关闭连接
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+</html>

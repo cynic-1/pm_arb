@@ -1,0 +1,128 @@
+[
+  {
+    "market_match": {
+      "question": "Supreme Court rules in favor of Trump's tariffs?",
+      "opinion_market_id": 1546,
+      "opinion_yes_token": "25759712766022771123719459322915923244234836050506319634791370371911956014912",
+      "opinion_no_token": "80993736742659296074271471707092779338813385409282660753587012054032463729137",
+      "polymarket_condition_id": "0xb1d2cd56624ec8bb3d8115d50d503d0e8578bf32d754ad5fe3c0e08a73186c57",
+      "polymarket_yes_token": "105826416199005342591038391498217708749113687972802625260881736773834354050519",
+      "polymarket_no_token": "51171279104285400909666677762285621845926753560865042481170667672124752488918",
+      "polymarket_slug": "will-the-supreme-court-rule-in-favor-of-trumps-tariffs",
+      "similarity_score": 1.0
+    },
+    "strategy": "poly_yes_opinion_no",
+    "opinion_yes_bid": null,
+    "opinion_yes_ask": null,
+    "opinion_no_bid": 0.7,
+    "opinion_no_ask": 0.709,
+    "poly_yes_bid": 0.25,
+    "poly_yes_ask": 0.27,
+    "poly_no_bid": null,
+    "poly_no_ask": null,
+    "cost": 0.979,
+    "profit": 0.02100000000000002,
+    "profit_rate": 2.145045965270686,
+    "timestamp": "2025-11-24 18:54:31",
+    "opinion_yes_book": null,
+    "opinion_no_book": {
+      "bids": [
+        {
+          "price": 0.7,
+          "size": 1088.6457142857143
+        },
+        {
+          "price": 0.674,
+          "size": 296.7359050445104
+        },
+        {
+          "price": 0.635,
+          "size": 4724.4
+        },
+        {
+          "price": 0.63,
+          "size": 4.37
+        },
+        {
+          "price": 0.62,
+          "size": 10.0
+        }
+      ],
+      "asks": [
+        {
+          "price": 0.709,
+          "size": 12.59
+        },
+        {
+          "price": 0.71,
+          "size": 256.06
+        },
+        {
+          "price": 0.72,
+          "size": 504.29
+        },
+        {
+          "price": 0.75,
+          "size": 3189.9333333333334
+        },
+        {
+          "price": 0.751,
+          "size": 213.12000000000003
+        }
+      ],
+      "source": "opinion",
+      "token_id": "80993736742659296074271471707092779338813385409282660753587012054032463729137",
+      "timestamp": 1763981670.0203815
+    },
+    "poly_yes_book": {
+      "bids": [
+        {
+          "price": 0.25,
+          "size": 140.0
+        },
+        {
+          "price": 0.24,
+          "size": 1300.28
+        },
+        {
+          "price": 0.23,
+          "size": 559.0
+        },
+        {
+          "price": 0.22,
+          "size": 1527.83
+        },
+        {
+          "price": 0.21,
+          "size": 1435.0
+        }
+      ],
+      "asks": [
+        {
+          "price": 0.27,
+          "size": 100.0
+        },
+        {
+          "price": 0.28,
+          "size": 2027.63
+        },
+        {
+          "price": 0.29,
+          "size": 638.29
+        },
+        {
+          "price": 0.3,
+          "size": 333.0
+        },
+        {
+          "price": 0.31,
+          "size": 226.51
+        }
+      ],
+      "source": "polymarket",
+      "token_id": "105826416199005342591038391498217708749113687972802625260881736773834354050519",
+      "timestamp": 1763981670.8424814
+    },
+    "poly_no_book": null
+  }
+]
