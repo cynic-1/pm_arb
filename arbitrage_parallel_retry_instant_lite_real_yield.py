@@ -1060,20 +1060,24 @@ class CrossPlatformArbitrage:
                         profit_rate = metrics['profit_rate']
                         annualized_rate = metrics['annualized_rate']
                         annualized_threshold = max(0.0, self.min_annualized_percent)
+                        meets_annualized = True
                         if annualized_threshold > 0:
                             if annualized_rate is None:
                                 print(
                                     f"  ⚪ 跳过立即套利: 年化收益率缺失 (需 ≥ {annualized_threshold:.2f}%)"
                                 )
-                                return
-                            if annualized_rate < annualized_threshold:
+                                meets_annualized = False
+                            elif annualized_rate < annualized_threshold:
                                 print(
                                     f"  ⚪ 跳过立即套利: 年化收益率 {annualized_rate:.2f}% < {annualized_threshold:.2f}%"
                                 )
-                                return
-                        first_price = self._round_price(op_yes_ask.price)
-                        second_price = self._round_price(pm_no_ask.price)
-                        local_immediate.append({
+                                meets_annualized = False
+                        if not meets_annualized:
+                            pass
+                        else:
+                            first_price = self._round_price(op_yes_ask.price)
+                            second_price = self._round_price(pm_no_ask.price)
+                            local_immediate.append({
                             'match': match,
                             'type': 'immediate',
                             'strategy': 'opinion_yes_ask_poly_no_ask',
@@ -1095,8 +1099,8 @@ class CrossPlatformArbitrage:
                             'poly_yes_book': poly_yes_book,
                             'poly_no_book': poly_no_book,
                         })
-                        ann_text = f", 年化收益率={annualized_rate:.2f}%" if annualized_rate is not None else ""
-                        print(f"  ✓ 发现立即套利: Opinion YES ask + Poly NO ask, 成本(含手续费)=${cost:.3f}, 收益率={profit_rate:.2f}%{ann_text}")
+                            ann_text = f", 年化收益率={annualized_rate:.2f}%" if annualized_rate is not None else ""
+                            print(f"  ✓ 发现立即套利: Opinion YES ask + Poly NO ask, 成本(含手续费)=${cost:.3f}, 收益率={profit_rate:.2f}%{ann_text}")
 
             if opinion_yes_book and opinion_yes_book.bids and poly_no_book and poly_no_book.asks:
                 pair = self._find_best_valid_bid_ask_pair(
@@ -1170,20 +1174,24 @@ class CrossPlatformArbitrage:
                         profit_rate = metrics['profit_rate']
                         annualized_rate = metrics['annualized_rate']
                         annualized_threshold = max(0.0, self.min_annualized_percent)
+                        meets_annualized = True
                         if annualized_threshold > 0:
                             if annualized_rate is None:
                                 print(
                                     f"  ⚪ 跳过立即套利: 年化收益率缺失 (需 ≥ {annualized_threshold:.2f}%)"
                                 )
-                                return
-                            if annualized_rate < annualized_threshold:
+                                meets_annualized = False
+                            elif annualized_rate < annualized_threshold:
                                 print(
                                     f"  ⚪ 跳过立即套利: 年化收益率 {annualized_rate:.2f}% < {annualized_threshold:.2f}%"
                                 )
-                                return
-                        first_price = self._round_price(op_no_ask.price)
-                        second_price = self._round_price(pm_yes_ask.price)
-                        local_immediate.append({
+                                meets_annualized = False
+                        if not meets_annualized:
+                            pass
+                        else:
+                            first_price = self._round_price(op_no_ask.price)
+                            second_price = self._round_price(pm_yes_ask.price)
+                            local_immediate.append({
                             'match': match,
                             'type': 'immediate',
                             'strategy': 'opinion_no_ask_poly_yes_ask',
