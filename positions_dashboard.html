@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Polymarket & Opinion 仓位看板</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --border: #334155;
+      --loss: #f87171;
+      --gain: #4ade80;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem 3rem;
+    }
+
+    main {
+      width: min(1200px, 100%);
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.8rem, 3vw, 2.3rem);
+    }
+
+    .subtitle {
+      margin: 0 0 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.2rem;
+    }
+
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45);
+    }
+
+    section header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 0.45rem 0.35rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    th {
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    tbody tr:hover {
+      background: rgba(148, 163, 184, 0.05);
+    }
+
+    .value-large {
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .pill {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .error {
+      color: var(--loss);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      background: rgba(148, 163, 184, 0.15);
+    }
+
+    .gain {
+      color: var(--gain);
+    }
+
+    .loss {
+      color: var(--loss);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 1rem 0;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Polymarket & Opinion 仓位看板</h1>
+    <p class="subtitle">
+      数据每 10 分钟自动刷新一次，无需手动操作。
+      <span id="last-updated" class="badge">等待加载...</span>
+    </p>
+    <div style="margin-bottom: 1rem; display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;">
+      <span class="meta">下一次自动刷新倒计时：<span id="countdown">--:--:--</span></span>
+    </div>
+
+    <div class="sections">
+      <section id="polymarket-section">
+        <header>
+          <div>
+            <h2 style="margin: 0">Polymarket</h2>
+            <p class="pill">地址：<span id="poly-address">--</span></p>
+          </div>
+          <span class="tag">总价值</span>
+        </header>
+        <div class="value-large" id="poly-total">$0.00</div>
+        <p class="meta" id="poly-error"></p>
+        <table id="polymarket-table">
+          <thead>
+            <tr>
+              <th>市场</th>
+              <th>方向</th>
+              <th>份额</th>
+              <th>均价</th>
+              <th>市值</th>
+              <th>PnL</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="opinion-section">
+        <header>
+          <div>
+            <h2 style="margin: 0">Opinion</h2>
+            <p class="pill">API Key：<span id="opinion-status">检测中</span></p>
+          </div>
+          <span class="tag">总价值</span>
+        </header>
+        <div class="value-large" id="opinion-total">$0.00</div>
+        <p class="meta" id="opinion-error"></p>
+        <table id="opinion-table">
+          <thead>
+            <tr>
+              <th>市场</th>
+              <th>方向</th>
+              <th>份额</th>
+              <th>均价</th>
+              <th>市值</th>
+              <th>PnL</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+    let nextRefresh = Date.now() + REFRESH_INTERVAL_MS;
+    let countdownTimer;
+
+    const polyTable = document.querySelector('#polymarket-table tbody');
+    const opinionTable = document.querySelector('#opinion-table tbody');
+    const polyTotal = document.getElementById('poly-total');
+    const polyAddressLabel = document.getElementById('poly-address');
+    const polyError = document.getElementById('poly-error');
+    const opinionTotal = document.getElementById('opinion-total');
+    const opinionError = document.getElementById('opinion-error');
+    const lastUpdated = document.getElementById('last-updated');
+    const countdown = document.getElementById('countdown');
+    const opinionStatus = document.getElementById('opinion-status');
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/positions', { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        renderTables(data);
+        lastUpdated.textContent = new Date(data.lastUpdated).toLocaleString();
+        nextRefresh = Date.now() + REFRESH_INTERVAL_MS;
+      } catch (err) {
+        polyError.textContent = `Polymarket 拉取失败：${err.message}`;
+        opinionError.textContent = `Opinion 拉取失败：${err.message}`;
+      }
+    }
+
+    function renderTables(data) {
+      renderPolymarket(data.polymarket);
+      renderOpinion(data.opinion);
+    }
+
+    function renderPolymarket(poly) {
+      polyAddressLabel.textContent = poly.address ?? '未知';
+      polyTotal.textContent = formatUSD(poly.totalValue);
+      polyError.textContent = poly.error ? `⚠️ ${poly.error}` : '';
+      renderRows(polyTable, poly.positions, ['market', 'outcome', 'size', 'avgPrice', 'currentValue', 'cashPnl'], polyFormatter);
+    }
+
+    function renderOpinion(opinion) {
+      opinionStatus.textContent = opinion.error ? '未连接' : '已连接';
+      opinionTotal.textContent = formatUSD(opinion.totalValue);
+      opinionError.textContent = opinion.error ? `⚠️ ${opinion.error}` : '';
+      renderRows(opinionTable, opinion.positions, ['marketTitle', 'side', 'shares', 'avgPrice', 'currentValue', 'unrealizedPnl'], opinionFormatter);
+    }
+
+    function renderRows(tbody, rows, columns, formatter) {
+      tbody.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = columns.length;
+        td.className = 'empty';
+        td.textContent = '暂无满足条件的仓位';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        columns.forEach((col) => {
+          const td = document.createElement('td');
+          td.innerHTML = formatter(col, row[col]);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function polyFormatter(col, value) {
+      switch (col) {
+        case 'size':
+          return formatNumber(value);
+        case 'avgPrice':
+          return formatUSD(value);
+        case 'currentValue':
+          return `<strong>${formatUSD(value)}</strong>`;
+        case 'cashPnl':
+          return formatPnl(value);
+        default:
+          return escapeHtml(value ?? '--');
+      }
+    }
+
+    function opinionFormatter(col, value) {
+      switch (col) {
+        case 'shares':
+          return formatNumber(value);
+        case 'avgPrice':
+          return formatUSD(value);
+        case 'currentValue':
+          return `<strong>${formatUSD(value)}</strong>`;
+        case 'unrealizedPnl':
+          return formatPnl(value);
+        default:
+          return escapeHtml(value ?? '--');
+      }
+    }
+
+    function formatUSD(value) {
+      const num = Number(value) || 0;
+      return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function formatNumber(value) {
+      const num = Number(value) || 0;
+      return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    function formatPnl(value) {
+      const num = Number(value) || 0;
+      const cls = num >= 0 ? 'gain' : 'loss';
+      return `<span class="${cls}">${formatUSD(num)}</span>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function tickCountdown() {
+      const diff = Math.max(0, nextRefresh - Date.now());
+      const hours = String(Math.floor(diff / 3600000)).padStart(2, '0');
+      const minutes = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+      const seconds = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+      countdown.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    countdownTimer = setInterval(() => {
+      tickCountdown();
+    }, 1000);
+
+    fetchData();
+    setInterval(fetchData, REFRESH_INTERVAL_MS);
+  </script>
+</body>
+</html>
