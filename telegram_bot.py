@@ -31,9 +31,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 PYTHON_EXEC = os.getenv("PYTHON_EXEC", "venv/bin/python")
-MATCHES_FILE = os.getenv("MATCHES_FILE", "market_matches_1130.json")
+MATCHES_FILE = os.getenv("MATCHES_FILE", "market_matches_1204.json")
 INTERVAL_SECONDS = int(os.getenv("INTERVAL_SECONDS", "600"))
-CMD = f"{shlex.quote(PYTHON_EXEC)} arbitrage_parallel_retry_instant_lite_real_yield.py --pro --no-interactive --matches-file {shlex.quote(MATCHES_FILE)}"
+CMD = f"{shlex.quote(PYTHON_EXEC)} arbitrage.py --pro --no-interactive --matches-file {shlex.quote(MATCHES_FILE)}"
 
 
 def send_message(text: str) -> bool:

@@ -578,7 +578,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output",
-        default="market_matches_1130.json",
+        default="market_matches_1204.json",
         help="保存匹配结果的文件路径",
     )
     parser.add_argument(
@@ -605,7 +605,7 @@ def main() -> None:
             print(f"❌ 无效的 topic_type: {topic_value}。仅支持 BINARY/CATEGORICAL。")
             sys.exit(1)
         try:
-            opinion_markets = scanner.fetch_opinion_markets(300, topic_type=TopicType[topic_value.upper()])
+            opinion_markets = scanner.fetch_opinion_markets(400, topic_type=TopicType[topic_value.upper()])
         except Exception as exc:
             print(f"❌ 无法加载 Opinion 市场文件: {exc}")
             sys.exit(1)
