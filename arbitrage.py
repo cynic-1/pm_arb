@@ -1792,7 +1792,7 @@ def main():
     parser.add_argument(
         '--matches-file',
         type=str,
-        default='market_matches_merged.json',
+        default='market_matches.json',
         help='市场匹配结果文件路径，支持多个文件用逗号分隔 (默认: market_matches.json)'
     )
     
