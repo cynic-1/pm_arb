@@ -573,12 +573,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="跨平台市场匹配工具")
     parser.add_argument(
         "--topic-type",
-        default="BINARY",
+        default="BINARY,CATEGORICAL",
         help="指定要处理的 Opinion 市场类型，可用逗号分隔 (例如: BINARY,CATEGORICAL)",
     )
     parser.add_argument(
         "--output",
-        default="market_matches_1204.json",
+        default="market_matches_1205.json",
         help="保存匹配结果的文件路径",
     )
     parser.add_argument(
@@ -605,7 +605,7 @@ def main() -> None:
             print(f"❌ 无效的 topic_type: {topic_value}。仅支持 BINARY/CATEGORICAL。")
             sys.exit(1)
         try:
-            opinion_markets = scanner.fetch_opinion_markets(400, topic_type=TopicType[topic_value.upper()])
+            opinion_markets = scanner.fetch_opinion_markets(500, topic_type=TopicType[topic_value.upper()])
         except Exception as exc:
             print(f"❌ 无法加载 Opinion 市场文件: {exc}")
             sys.exit(1)

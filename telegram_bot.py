@@ -3,21 +3,24 @@
 Telegram bot that runs the arbitrage scanner periodically and pushes immediate arbitrage opportunities.
 
 Config is loaded from a .env file. Required environment variables:
-  TELEGRAM_BOT_TOKEN  - Bot token (eg. 123456:ABC-...)
-  TELEGRAM_CHAT_ID    - Chat id to send messages to (user or group)
-  PYTHON_EXEC         - Path to Python executable to run (default: venv/bin/python)
-  MATCHES_FILE        - Comma-separated matches files (default: market_matches_multi.json,market_matches_unmatched.json)
-  INTERVAL_SECONDS    - Interval between runs in seconds (default: 1800 = 30 minutes)
+    TELEGRAM_BOT_TOKEN   - Bot token (eg. 123456:ABC-...)
+    TELEGRAM_CHAT_ID     - Chat id to send messages to (user or group)
+    ARBITRAGE_LOG_PATH   - Absolute path to arbitrage log file to follow (or directory pointer file)
 
-The bot runs continuously and will post the "immediate arbitrage" section from the script's output.
+Optional environment variables:
+    LOG_POINTER_FILE     - File that stores the path of the latest log (default: logs/CURRENT_LOG)
+    FOLLOW_INTERVAL      - Seconds between log polling (default: 5)
+    MAX_CHUNK_BYTES      - Max bytes per Telegram message chunk (default: 3500)
+
+The bot no longer launches the scanner itself; instead it tails the arbitrage
+log file and forwards newly appended "immediate arbitrage" segments.
 """
 import os
 import time
-import shlex
-import subprocess
 import traceback
 import logging
 from typing import Optional
+from pathlib import Path
 
 from dotenv import load_dotenv
 import requests
@@ -30,10 +33,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-PYTHON_EXEC = os.getenv("PYTHON_EXEC", "venv/bin/python")
-MATCHES_FILE = os.getenv("MATCHES_FILE", "market_matches_1204.json")
-INTERVAL_SECONDS = int(os.getenv("INTERVAL_SECONDS", "600"))
-CMD = f"{shlex.quote(PYTHON_EXEC)} arbitrage.py --pro --no-interactive --matches-file {shlex.quote(MATCHES_FILE)}"
+FOLLOW_INTERVAL = float(os.getenv("FOLLOW_INTERVAL", "5"))
+MAX_CHUNK_BYTES = int(os.getenv("MAX_CHUNK_BYTES", "3500"))
+LOG_POINTER_FILE = os.getenv("LOG_POINTER_FILE", "logs/CURRENT_LOG")
+ARBITRAGE_LOG_PATH = os.getenv("ARBITRAGE_LOG_PATH")
 
 
 def send_message(text: str) -> bool:
@@ -57,32 +60,6 @@ def send_message(text: str) -> bool:
     except Exception:
         LOG.exception("Failed to send Telegram message")
         return False
-
-
-def run_scanner(timeout: int = 300) -> Optional[str]:
-    """Run the arbitrage scanner command and return combined stdout+stderr as text."""
-    LOG.info("Running command: %s", CMD)
-    try:
-        # Use shell=False for safety; split the command
-        args = shlex.split(CMD)
-        completed = subprocess.run(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            timeout=timeout,
-            check=False,
-            cwd=os.path.dirname(__file__) or None,
-            text=True,
-        )
-        output = completed.stdout or ""
-        LOG.info("Scanner finished (returncode=%s), %d bytes captured", completed.returncode, len(output))
-        return output
-    except subprocess.TimeoutExpired:
-        LOG.exception("Scanner timed out after %s seconds", timeout)
-        return None
-    except Exception:
-        LOG.exception("Failed to run scanner command")
-        return None
 
 
 def extract_immediate_arbitrage_block(output: str) -> Optional[str]:
@@ -142,31 +119,94 @@ def extract_immediate_arbitrage_block(output: str) -> Optional[str]:
     return "\n\n".join(blocks)
 
 
+def resolve_log_path() -> Optional[Path]:
+    """Resolve the actual log file to tail.
+
+    Priority:
+      1. ARBITRAGE_LOG_PATH env (file or pointer).
+      2. LOG_POINTER_FILE env (defaults to logs/CURRENT_LOG).
+    """
+    if ARBITRAGE_LOG_PATH:
+        candidate = Path(ARBITRAGE_LOG_PATH)
+        if candidate.is_dir():
+            LOG.warning("ARBITRAGE_LOG_PATH points to a directory; expecting file")
+            return None
+        return candidate
+
+    pointer = Path(LOG_POINTER_FILE)
+    if not pointer.exists():
+        LOG.error("Pointer file %s does not exist", pointer)
+        return None
+    try:
+        target = pointer.read_text(encoding="utf-8").strip()
+    except Exception:
+        LOG.exception("Failed to read pointer file %s", pointer)
+        return None
+    if not target:
+        LOG.error("Pointer file %s is empty", pointer)
+        return None
+    log_path = Path(target)
+    if not log_path.exists():
+        LOG.error("Log file %s from pointer does not exist", log_path)
+        return None
+    return log_path
+
+
+def tail_new_content(log_path: Path, last_offset: int) -> tuple[int, Optional[str]]:
+    """Read new bytes from log file starting at last_offset."""
+    try:
+        size = log_path.stat().st_size
+    except FileNotFoundError:
+        LOG.error("Log file %s disappeared", log_path)
+        return last_offset, None
+    except Exception:
+        LOG.exception("Failed to stat log file %s", log_path)
+        return last_offset, None
+
+    if size <= last_offset:
+        return size, None
+
+    try:
+        with log_path.open("r", encoding="utf-8", errors="ignore") as fh:
+            fh.seek(last_offset)
+            data = fh.read()
+            return fh.tell(), data
+    except Exception:
+        LOG.exception("Failed to read log file %s", log_path)
+        return last_offset, None
+
+
 def main_loop():
-    LOG.info("Starting telegram bot loop: will run every %s seconds", INTERVAL_SECONDS)
+    LOG.info("Starting telegram bot loop; polling interval=%ss", FOLLOW_INTERVAL)
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         LOG.error("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID. Exiting.")
         return
 
+    log_path = resolve_log_path()
+    if not log_path:
+        send_message("❌ 无法定位套利日志文件，Bot 已停止。")
+        return
+
+    LOG.info("Following arbitrage log: %s", log_path)
+    last_offset = 0
+
     while True:
         try:
-            output = run_scanner(timeout=180)
-            if output is None:
-                send_message("⚠️ 扫描器运行失败或超时。请检查运行环境和日志。")
-            else:
-                block = extract_immediate_arbitrage_block(output)
+            log_path = resolve_log_path() or log_path
+            offset, chunk = tail_new_content(log_path, last_offset)
+            last_offset = offset
+
+            if chunk:
+                block = extract_immediate_arbitrage_block(chunk)
                 if block:
-                    # Telegram has message size limits; split if necessary
-                    max_len = 3900
-                    if len(block) <= max_len:
+                    if len(block) <= MAX_CHUNK_BYTES:
                         send_message(block)
                     else:
-                        # Split into chunks at newline boundaries
                         parts = []
                         cur = []
                         cur_len = 0
                         for line in block.splitlines(True):
-                            if cur_len + len(line) > max_len and cur:
+                            if cur_len + len(line) > MAX_CHUNK_BYTES and cur:
                                 parts.append(''.join(cur))
                                 cur = [line]
                                 cur_len = len(line)
@@ -178,8 +218,7 @@ def main_loop():
                         for p in parts:
                             send_message(p)
                             time.sleep(0.5)
-                else:
-                    send_message("ℹ️ 本轮未检测到立即套利机会（或无法解析输出）。")
+            time.sleep(FOLLOW_INTERVAL)
 
         except KeyboardInterrupt:
             LOG.info("Interrupted by user, exiting")
@@ -190,9 +229,6 @@ def main_loop():
                 send_message("❌ Bot 发生异常，请检查日志。\n" + traceback.format_exc()[:1500])
             except Exception:
                 LOG.exception("Failed to report exception to Telegram")
-
-        LOG.info("Sleeping for %s seconds...", INTERVAL_SECONDS)
-        time.sleep(INTERVAL_SECONDS)
 
 
 if __name__ == '__main__':
