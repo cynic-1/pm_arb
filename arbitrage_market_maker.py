@@ -6,6 +6,7 @@
 """
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import deque
 import logging
 import os
 import json
@@ -13,7 +14,7 @@ import time
 import argparse
 import threading
 import traceback
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Deque
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from dotenv import load_dotenv
@@ -370,6 +371,14 @@ class CrossPlatformArbitrage:
             self.liquidity_wait_timeout = max(0.0, float(os.getenv("LIQUIDITY_WAIT_TIMEOUT", "0")))
         except Exception:
             self.liquidity_wait_timeout = 0.0
+        try:
+            self.liquidity_trade_poll_interval = max(0.5, float(os.getenv("LIQUIDITY_TRADE_POLL_INTERVAL", "2.0")))
+        except Exception:
+            self.liquidity_trade_poll_interval = 2.0
+        try:
+            self.liquidity_trade_limit = max(10, int(os.getenv("LIQUIDITY_TRADE_LIMIT", "40")))
+        except Exception:
+            self.liquidity_trade_limit = 40
         self.liquidity_debug = os.getenv("LIQUIDITY_DEBUG", "1") not in {"0", "false", "False"}
 
         # 跟踪启动的即时执行线程（仅用于信息/清理）
@@ -379,6 +388,8 @@ class CrossPlatformArbitrage:
         self._liquidity_orders_lock = threading.Lock()
         self._liquidity_status_stop = threading.Event()
         self._liquidity_status_thread: Optional[threading.Thread] = None
+        self._last_trade_poll = 0.0
+        self._recent_trade_ids: Deque[str] = deque(maxlen=500)
         fallback_env = os.getenv("ORDER_STATUS_FALLBACK_AFTER")
         self.order_status_fallback_after: Optional[float] = None
         if fallback_env:
@@ -609,7 +620,7 @@ class CrossPlatformArbitrage:
     # ==================== 账户监控 ====================
     def _status_is_filled(self, status: Optional[str], filled: Optional[float] = None, total: Optional[float] = None) -> bool:
         """判断订单是否成交完毕。"""
-        normalized = (status or "").strip().lower()
+        normalized = str(status or "").strip().lower()
         if normalized in {"filled", "completed", "done", "success", "closed", "executed", "matched"}:
             return True
         if filled is not None and total is not None:
@@ -618,7 +629,7 @@ class CrossPlatformArbitrage:
 
     def _status_is_cancelled(self, status: Optional[str]) -> bool:
         """判断订单是否被取消或拒绝。"""
-        normalized = (status or "").strip().lower()
+        normalized = str(status or "").strip().lower()
         return normalized in {"cancelled", "canceled", "rejected", "expired", "failed", "cancel"}
 
     def _ensure_account_monitors(self) -> None:
@@ -636,11 +647,7 @@ class CrossPlatformArbitrage:
         if status_entry is None:
             return None
         normalized: Dict[str, Any] = {}
-        for key in ["status", "status_enum", "statusEnum"]:
-            value = self._extract_from_entry(status_entry, [key])
-            if value is not None:
-                normalized['status'] = value
-                break
+        normalized['status'] = self._parse_opinion_status(status_entry)
         normalized['filled'] = self._to_float(
             self._extract_from_entry(status_entry, ['filled_amount', 'filledAmount', 'filledBaseAmount', 'filled_base_amount'])
         )
@@ -648,6 +655,59 @@ class CrossPlatformArbitrage:
             self._extract_from_entry(status_entry, ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken'])
         )
         return normalized
+
+    def _parse_opinion_status(self, entry: Any) -> Optional[str]:
+        text_value = self._extract_from_entry(entry, ['status_enum', 'statusEnum', 'status_text', 'statusText'])
+        if text_value:
+            return str(text_value)
+        raw = self._extract_from_entry(entry, ['status'])
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            mapping = {
+                0: 'unknown',
+                1: 'pending',
+                2: 'filled',
+                3: 'canceled',
+                4: 'partial',
+            }
+            return mapping.get(int(raw), str(raw))
+        return str(raw)
+
+    def _sum_trade_shares(self, trades: Any) -> Optional[float]:
+        if not trades or not isinstance(trades, (list, tuple)):
+            return None
+        total = 0.0
+        for trade in trades:
+            shares = self._to_float(
+                self._extract_from_entry(trade, [
+                    'shares',
+                    'filled_shares',
+                    'filledAmount',
+                    'filled_amount',
+                    'maker_amount',
+                ])
+            )
+            if shares is None or shares <= 0:
+                continue
+            total += shares
+        return total if total > 0 else None
+
+    def _coalesce_order_amount(self, entry: Any, fallback: Optional[float]) -> Optional[float]:
+        order_amount = self._to_float(
+            self._extract_from_entry(entry, [
+                'maker_amount',
+                'makerAmount',
+                'maker_amount_in_base_token',
+                'makerAmountInBaseToken',
+                'order_shares',
+                'orderAmount',
+                'order_amount',
+            ])
+        )
+        if order_amount is not None:
+            return order_amount
+        return fallback
 
     def _extract_from_entry(self, entry: Any, candidate_keys: List[str]) -> Optional[Any]:
         """从对象或字典中提取字段"""
@@ -2158,6 +2218,7 @@ class CrossPlatformArbitrage:
                 continue
             try:
                 self._update_liquidity_order_statuses(tracked_states=tracked)
+                self._poll_opinion_trades()
             except KeyboardInterrupt:
                 raise
             except Exception as exc:
@@ -2221,9 +2282,9 @@ class CrossPlatformArbitrage:
                 continue
 
             previous_status = state.status
-            status_value = self._extract_from_entry(status_entry, ['status', 'status_enum', 'statusEnum'])
-            if status_value is not None:
-                state.status = status_value
+            parsed_status = self._parse_opinion_status(status_entry)
+            if parsed_status is not None:
+                state.status = parsed_status
 
             filled_amount = self._to_float(
                 self._extract_from_entry(
@@ -2231,14 +2292,26 @@ class CrossPlatformArbitrage:
                     ['filled_amount', 'filledAmount', 'filled_base_amount', 'filledBaseAmount']
                 )
             ) or 0.0
+            if filled_amount <= 0:
+                filled_shares = self._to_float(
+                    self._extract_from_entry(
+                        status_entry,
+                        ['filled_shares', 'filledShares']
+                    )
+                )
+                if filled_shares:
+                    filled_amount = filled_shares
             total_amount = self._to_float(
                 self._extract_from_entry(
                     status_entry,
                     ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken']
                 )
             )
+            trades_sum = self._sum_trade_shares(self._extract_from_entry(status_entry, ['trades']))
+            if trades_sum and trades_sum > filled_amount:
+                filled_amount = trades_sum
             if total_amount is None or total_amount <= 0:
-                total_amount = state.opinion_order_size or state.effective_size
+                total_amount = self._coalesce_order_amount(status_entry, state.opinion_order_size)
             target_total = total_amount or state.opinion_order_size or state.effective_size or 0.0
 
             if self._status_is_filled(state.status, filled_amount, total_amount) and filled_amount < target_total - 1e-6:
@@ -2277,6 +2350,75 @@ class CrossPlatformArbitrage:
             if self._status_is_filled(state.status, filled_amount, total_amount):
                 print(f"🏁 Opinion 挂单 {order_id[:10]}... 已完成")
                 self._remove_liquidity_order_state(state.key)
+
+    def _poll_opinion_trades(self) -> None:
+        now = time.time()
+        if now - self._last_trade_poll < self.liquidity_trade_poll_interval:
+            return
+        self._last_trade_poll = now
+
+        with self._liquidity_orders_lock:
+            if not self.liquidity_orders_by_id:
+                return
+
+        try:
+            response = self.opinion_client.get_my_trades(limit=self.liquidity_trade_limit)
+        except Exception as exc:
+            print(f"⚠️ Opinion trades API 调用失败: {exc}")
+            return
+
+        if getattr(response, 'errno', 1) != 0:
+            print(f"⚠️ Opinion trades API errno={getattr(response, 'errno', None)}")
+            return
+
+        trade_list = getattr(getattr(response, 'result', None), 'list', None)
+        if not trade_list:
+            return
+
+        for trade in trade_list:
+            order_no = self._extract_from_entry(trade, ['order_no', 'orderNo', 'order_id', 'orderId'])
+            trade_no = self._extract_from_entry(trade, ['trade_no', 'tradeNo', 'id'])
+            if not order_no or not trade_no:
+                continue
+            trade_no = str(trade_no)
+            if trade_no in self._recent_trade_ids:
+                continue
+            self._recent_trade_ids.append(trade_no)
+            with self._liquidity_orders_lock:
+                state = self.liquidity_orders_by_id.get(order_no)
+            if not state:
+                continue
+            self._handle_opinion_trade(trade, state)
+
+    def _handle_opinion_trade(self, trade_entry: Any, state: LiquidityOrderState) -> None:
+        shares = self._to_float(
+            self._extract_from_entry(trade_entry, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
+        )
+        if shares is None or shares <= 0:
+            amount = self._to_float(self._extract_from_entry(trade_entry, ['amount', 'order_shares']))
+            if amount and amount > 0:
+                shares = amount
+        if shares is None or shares <= 0:
+            return
+
+        status_text = self._parse_opinion_status(trade_entry)
+        price = self._to_float(self._extract_from_entry(trade_entry, ['price']))
+        delta = min(shares, max(state.effective_size - state.filled_size, 0.0))
+        if delta <= 0:
+            return
+
+        state.filled_size += delta
+        print(
+            f"✅ Opinion trade {state.order_id[:10]}... delta={delta:.2f}, 累计 {state.filled_size:.2f}, price={price if price is not None else 'n/a'}"
+        )
+        if self.polymarket_trading_enabled:
+            self._hedge_polymarket(state, delta)
+        else:
+            print("⚠️ Polymarket 未启用交易，无法根据 trade 对冲")
+
+        if self._status_is_filled(status_text, state.filled_size, state.effective_size):
+            print(f"🏁 Opinion 挂单 {state.order_id[:10]}... 通过 trade 完成")
+            self._remove_liquidity_order_state(state.key)
 
     def _hedge_polymarket(self, state: LiquidityOrderState, hedge_size: float) -> None:
         remaining = max(0.0, hedge_size)
