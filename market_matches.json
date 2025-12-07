@@ -213,7 +213,7 @@
     "polymarket_no_token": "108743709732442130739073851488597967747030701044009651663118921104082786836017",
     "polymarket_slug": "us-x-venezuela-military-engagement-by-march-31-2026-264-352-211-137-861-788",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "Kraken IPO by ...? - March 31, 2026",
@@ -225,7 +225,7 @@
     "polymarket_no_token": "103693433518125527001416636574099415821922498558487623412396163292963814003978",
     "polymarket_slug": "kraken-ipo-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "Kraken IPO by ...? - December 31, 2026",
@@ -237,7 +237,7 @@
     "polymarket_no_token": "28557614648090529004584076028720900603196666949274543515794672175624115225556",
     "polymarket_slug": "kraken-ipo-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1798646400
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Teyana Taylor",
@@ -705,7 +705,7 @@
     "polymarket_no_token": "43182654922523355554487760103848610368479277548038277439440055164132446025451",
     "polymarket_slug": "grok-5-released-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "Will the U.S. invade Venezuela by...? - December 31, 2025",
@@ -717,7 +717,7 @@
     "polymarket_no_token": "81046748927736052916392088237473207584765682653658270710464996485326088705956",
     "polymarket_slug": "will-the-us-invade-venezuela-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1767196800
   },
   {
     "question": "Will the U.S. invade Venezuela by...? - March 31, 2026",
@@ -729,7 +729,7 @@
     "polymarket_no_token": "69910242282118971624533455808252879932448371195032444218608122709050627942212",
     "polymarket_slug": "will-the-us-invade-venezuela-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $440–460",
@@ -1137,7 +1137,7 @@
     "polymarket_no_token": "111395431477341319990490806549685062184767317046913627686270380262287734089926",
     "polymarket_slug": "will-base-launch-a-token-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1782748800
   },
   {
     "question": "Will Base launch a token by ...? - December 31, 2026",
@@ -1149,7 +1149,7 @@
     "polymarket_no_token": "25537301018568558689509959375134200843374787525809263597130671425208747239474",
     "polymarket_slug": "will-base-launch-a-token-by-december-31-2026-154",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1798646400
   },
   {
     "question": "Will MetaMask launch a token by ... ? - September 30, 2026",
@@ -1161,7 +1161,7 @@
     "polymarket_no_token": "24192542941326556420937589393283472461812173299056788843809804465380232715721",
     "polymarket_slug": "will-metamask-launch-a-token-by-september-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1790697600
   },
   {
     "question": "Maduro out by...? - March 31, 2026",
@@ -1173,7 +1173,7 @@
     "polymarket_no_token": "51557640493959409967450715581364676138625317681860098426262565961674126617926",
     "polymarket_slug": "maduro-out-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "MicroStrategy sells any Bitcoin by ...? - March 31, 2026",
@@ -1185,7 +1185,7 @@
     "polymarket_no_token": "61476326573463890939120700176570456436619008823217970387484180237661307640203",
     "polymarket_slug": "microstrategy-sells-any-bitcoin-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1774886400
   },
   {
     "question": "MicroStrategy sells any Bitcoin by ...? - June 30, 2026",
@@ -1197,7 +1197,7 @@
     "polymarket_no_token": "65176388692130651396848427090788038285140833850265294793449655516920659740141",
     "polymarket_slug": "microstrategy-sells-any-bitcoin-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 1782748800
   },
   {
     "question": "Time 2025 Person of the Year - Artificial Intelligence",
