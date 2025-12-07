@@ -214,6 +214,8 @@ class LiquidityOrderState:
     updated_at: float = field(default_factory=time.time)
     last_roi: Optional[float] = None
     last_annualized: Optional[float] = None
+    last_reported_status: Optional[str] = None
+    last_status_log: float = 0.0
     last_status_check: float = 0.0
 
 
@@ -345,7 +347,7 @@ class CrossPlatformArbitrage:
         except Exception:
             self.liquidity_target_size = max(250.0, self.liquidity_min_size)
         try:
-            self.max_liquidity_orders = max(1, int(os.getenv("LIQUIDITY_MAX_ACTIVE", "5")))
+            self.max_liquidity_orders = max(1, int(os.getenv("LIQUIDITY_MAX_ACTIVE", "10")))
         except Exception:
             self.max_liquidity_orders = 5
         try:
@@ -360,6 +362,14 @@ class CrossPlatformArbitrage:
             self.liquidity_loop_interval = max(5.0, float(os.getenv("LIQUIDITY_LOOP_INTERVAL", "12")))
         except Exception:
             self.liquidity_loop_interval = 12.0
+        try:
+            self.liquidity_requote_increment = max(0.0, float(os.getenv("LIQUIDITY_REQUOTE_INCREMENT", "0.0")))
+        except Exception:
+            self.liquidity_requote_increment = 0.0
+        try:
+            self.liquidity_wait_timeout = max(0.0, float(os.getenv("LIQUIDITY_WAIT_TIMEOUT", "0")))
+        except Exception:
+            self.liquidity_wait_timeout = 0.0
         self.liquidity_debug = os.getenv("LIQUIDITY_DEBUG", "1") not in {"0", "false", "False"}
 
         # 跟踪启动的即时执行线程（仅用于信息/清理）
@@ -600,7 +610,7 @@ class CrossPlatformArbitrage:
     def _status_is_filled(self, status: Optional[str], filled: Optional[float] = None, total: Optional[float] = None) -> bool:
         """判断订单是否成交完毕。"""
         normalized = (status or "").strip().lower()
-        if normalized in {"filled", "completed", "done", "success", "closed"}:
+        if normalized in {"filled", "completed", "done", "success", "closed", "executed", "matched"}:
             return True
         if filled is not None and total is not None:
             return filled >= max(total - 1e-6, 0.0)
@@ -609,7 +619,7 @@ class CrossPlatformArbitrage:
     def _status_is_cancelled(self, status: Optional[str]) -> bool:
         """判断订单是否被取消或拒绝。"""
         normalized = (status or "").strip().lower()
-        return normalized in {"cancelled", "canceled", "rejected", "expired", "failed"}
+        return normalized in {"cancelled", "canceled", "rejected", "expired", "failed", "cancel"}
 
     def _ensure_account_monitors(self) -> None:
         """简化版本: 仅标记监控已启用，实际轮询直接调用 API。"""
@@ -1982,10 +1992,23 @@ class CrossPlatformArbitrage:
         if existing:
             existing.last_roi = opportunity.get('profit_rate')
             existing.last_annualized = opportunity.get('annualized_rate')
-            price_diff = abs(existing.opinion_price - opportunity['opinion_price'])
-            if price_diff > self.liquidity_price_tolerance:
-                print(f"🔁 流动性挂单价格偏移 {price_diff:.4f}，重新挂单: {key}")
-                self._cancel_liquidity_order(existing, reason="price drift")
+            new_price = opportunity.get('opinion_price')
+            need_requote = False
+            if new_price is not None:
+                # 强制在买一价被抬高时撤单重挂，确保我们始终是最优价
+                if new_price > (existing.opinion_price + max(self.liquidity_requote_increment, 0.0) + 1e-6):
+                    print(
+                        f"⬆️ Opinion 买一价 {new_price:.3f} 超过当前挂单 {existing.opinion_price:.3f}，撤单重新挂: {key}"
+                    )
+                    need_requote = True
+                else:
+                    price_diff = abs(existing.opinion_price - new_price)
+                    if price_diff > self.liquidity_price_tolerance:
+                        print(f"🔁 流动性挂单价格偏移 {price_diff:.4f}，重新挂单: {key}")
+                        need_requote = True
+
+            if need_requote:
+                self._cancel_liquidity_order(existing, reason="repricing")
                 existing = None
             else:
                 existing.hedge_price = opportunity['polymarket_price']
@@ -2142,6 +2165,24 @@ class CrossPlatformArbitrage:
                 traceback.print_exc()
             self._liquidity_status_stop.wait(timeout=self.liquidity_status_poll_interval)
 
+    def wait_for_liquidity_orders(self, timeout: Optional[float] = None) -> None:
+        """阻塞等待所有 Opinion 挂单完成或超时后再退出。"""
+        if timeout is None or timeout <= 0:
+            timeout = self.liquidity_wait_timeout
+
+        start = time.time()
+        while True:
+            with self._liquidity_orders_lock:
+                active = len(self.liquidity_orders_by_id)
+            if not active:
+                break
+            if timeout and (time.time() - start) >= timeout:
+                print("⚠️ 等待 Opinion 挂单完成超时，仍有挂单在执行")
+                break
+            time.sleep(min(self.liquidity_status_poll_interval, 2.0))
+
+        self._stop_liquidity_status_thread()
+
     def _fetch_opinion_order_status(self, order_id: str) -> Optional[Any]:
         try:
             self._throttle_opinion_request()
@@ -2179,6 +2220,7 @@ class CrossPlatformArbitrage:
             if not status_entry:
                 continue
 
+            previous_status = state.status
             status_value = self._extract_from_entry(status_entry, ['status', 'status_enum', 'statusEnum'])
             if status_value is not None:
                 state.status = status_value
@@ -2195,6 +2237,28 @@ class CrossPlatformArbitrage:
                     ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken']
                 )
             )
+            if total_amount is None or total_amount <= 0:
+                total_amount = state.opinion_order_size or state.effective_size
+            target_total = total_amount or state.opinion_order_size or state.effective_size or 0.0
+
+            if self._status_is_filled(state.status, filled_amount, total_amount) and filled_amount < target_total - 1e-6:
+                filled_amount = target_total
+
+            log_needed = False
+            if state.status != state.last_reported_status:
+                log_needed = True
+            elif abs(filled_amount - state.filled_size) > 1e-6:
+                log_needed = True
+            elif now - state.last_status_log >= max(self.liquidity_status_poll_interval, 5.0):
+                log_needed = True
+
+            if log_needed:
+                print(
+                    f"🔍 Opinion 状态: {order_id[:10]} status={state.status or previous_status} "
+                    f"filled={filled_amount:.2f}/{target_total:.2f}"
+                )
+                state.last_reported_status = state.status
+                state.last_status_log = now
 
             if filled_amount > state.filled_size + 1e-6:
                 delta = filled_amount - state.filled_size
@@ -2287,7 +2351,7 @@ class CrossPlatformArbitrage:
                 self._monitor_stop_event.wait(timeout=sleep_time)
         finally:
             self._monitor_stop_event.set()
-            self._stop_liquidity_status_thread()
+            self.wait_for_liquidity_orders()
 
 
 # ==================== 主程序 ====================
@@ -2423,7 +2487,7 @@ def main():
                 liquidity_interval = scanner.liquidity_loop_interval
             if args.liquidity_once or liquidity_interval <= 0:
                 scanner.run_liquidity_provider_cycle()
-                scanner._stop_liquidity_status_thread()
+                scanner.wait_for_liquidity_orders()
             else:
                 scanner.run_liquidity_provider_loop(liquidity_interval)
             return
