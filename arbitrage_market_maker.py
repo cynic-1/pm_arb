@@ -664,9 +664,31 @@ class CrossPlatformArbitrage:
         return normalized
 
     def _parse_opinion_status(self, entry: Any) -> Optional[str]:
+        """
+        解析 Opinion 订单状态，统一为标准格式
+
+        Opinion API 返回的状态可能是：
+        - 文本: "Pending", "Finished", "Canceled" 等
+        - 数字: 0, 1, 2, 3, 4
+
+        统一返回小写格式: "pending", "filled", "cancelled", "partial", "unknown"
+        注意: "Pending" 和 "open" 都统一为 "pending"
+        """
         text_value = self._extract_from_entry(entry, ['status_enum', 'statusEnum', 'status_text', 'statusText'])
         if text_value:
-            return str(text_value)
+            status_str = str(text_value).lower()
+            # 标准化状态名称
+            if status_str in ('pending', 'open'):
+                return 'pending'
+            elif status_str in ('finished', 'filled', 'completed'):
+                return 'filled'
+            elif status_str in ('canceled', 'cancelled'):
+                return 'cancelled'
+            elif status_str == 'partial':
+                return 'partial'
+            else:
+                return status_str
+
         raw = self._extract_from_entry(entry, ['status'])
         if raw is None:
             return None
@@ -675,11 +697,23 @@ class CrossPlatformArbitrage:
                 0: 'unknown',
                 1: 'pending',
                 2: 'filled',
-                3: 'canceled',
+                3: 'cancelled',
                 4: 'partial',
             }
             return mapping.get(int(raw), str(raw))
-        return str(raw)
+
+        # 处理字符串状态
+        status_str = str(raw).lower()
+        if status_str in ('pending', 'open'):
+            return 'pending'
+        elif status_str in ('finished', 'filled', 'completed'):
+            return 'filled'
+        elif status_str in ('canceled', 'cancelled'):
+            return 'cancelled'
+        elif status_str == 'partial':
+            return 'partial'
+        else:
+            return status_str
 
     def _sum_trade_shares(self, trades: Any) -> Optional[float]:
         if not trades or not isinstance(trades, (list, tuple)):
@@ -2214,6 +2248,10 @@ class CrossPlatformArbitrage:
             result = getattr(verify_response, 'result', None)
             data = getattr(result, 'data', None) if result is not None else None
 
+            # 如果 data 为空，尝试直接从 result 获取
+            if not data and result:
+                data = result
+
             if data:
                 current_status = self._parse_opinion_status(data)
                 print(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
@@ -2565,11 +2603,15 @@ class CrossPlatformArbitrage:
                 filled_amount = target_total
 
             log_needed = False
+            # 只有在真正需要时才打印日志
             if state.status != state.last_reported_status:
+                # 状态变化，必须记录
                 log_needed = True
             elif abs(filled_amount - state.filled_size) > 1e-6:
+                # 成交数量变化，必须记录
                 log_needed = True
-            elif now - state.last_status_log >= max(self.liquidity_status_poll_interval, 5.0):
+            elif now - state.last_status_log >= 30.0:
+                # 超过30秒未记录，定期打印一次
                 log_needed = True
 
             if log_needed:
@@ -2644,6 +2686,17 @@ class CrossPlatformArbitrage:
             shares = self._to_float(
                 self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
             )
+
+            # 跳过无效交易（shares=0 或 None）
+            if shares is None or shares <= 1e-6:
+                # 尝试从 amount 字段获取
+                amount = self._to_float(self._extract_from_entry(trade, ['amount', 'order_shares']))
+                if amount and amount > 1e-6:
+                    shares = amount
+                else:
+                    # 仍然是0或None，跳过此交易
+                    continue
+
             price = self._to_float(self._extract_from_entry(trade, ['price']))
             side = self._extract_from_entry(trade, ['side', 'side_enum'])
             market_id = self._extract_from_entry(trade, ['market_id', 'marketId'])
