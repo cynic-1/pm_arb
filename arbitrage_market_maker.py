@@ -381,6 +381,13 @@ class CrossPlatformArbitrage:
             self.liquidity_trade_limit = 40
         self.liquidity_debug = os.getenv("LIQUIDITY_DEBUG", "1") not in {"0", "false", "False"}
 
+        # 全量订单同步配置
+        try:
+            self.full_order_sync_interval = max(10.0, float(os.getenv("FULL_ORDER_SYNC_INTERVAL", "30.0")))
+        except Exception:
+            self.full_order_sync_interval = 30.0
+        self._last_full_order_sync = 0.0
+
         # 跟踪启动的即时执行线程（仅用于信息/清理）
         self._active_exec_threads: List[threading.Thread] = []
         self.liquidity_orders: Dict[str, LiquidityOrderState] = {}
@@ -2167,24 +2174,110 @@ class CrossPlatformArbitrage:
         if self.liquidity_debug:
             print(f"📤 移除流动性挂单 {state.order_id} -> {key}")
 
-    def _cancel_liquidity_order(self, state: LiquidityOrderState, reason: str = "") -> None:
+    def _cancel_liquidity_order(self, state: LiquidityOrderState, reason: str = "") -> bool:
+        """
+        取消流动性订单，并验证取消是否成功
+
+        Returns:
+            bool: True表示订单已确认取消，False表示取消失败或订单仍然活跃
+        """
         if not state or not state.order_id:
-            return
+            return False
+
+        # 步骤1: 发送取消请求
         try:
-            self.opinion_client.cancel_order(state.order_id)
-            print(f"🚫 取消 Opinion 流动性挂单 {state.order_id[:10]}... ({reason})")
-            self._remove_liquidity_order_state(state.key)
+            self._throttle_opinion_request()
+            response = self.opinion_client.cancel_order(state.order_id)
+            print(f"🚫 已发送取消请求 Opinion 流动性挂单 {state.order_id[:10]}... ({reason})")
+
+            # 检查取消请求的返回结果
+            if hasattr(response, 'errno') and response.errno != 0:
+                print(f"⚠️ 取消请求返回错误码 {response.errno}: {getattr(response, 'errmsg', 'N/A')}")
+                return False
+
         except Exception as exc:
-            print(f"⚠️ 取消 Opinion 流动性挂单失败 {state.order_id}: {exc}")
-            # 不移除状态，以便重试或后续处理
+            print(f"⚠️ 发送取消请求失败 {state.order_id[:10]}...: {exc}")
+            return False
+
+        # 步骤2: 验证订单是否真的被取消（等待一小段时间后查询状态）
+        time.sleep(0.5)  # 给服务器一点时间处理取消请求
+
+        try:
+            self._throttle_opinion_request()
+            verify_response = self.opinion_client.get_order_by_id(state.order_id)
+
+            if getattr(verify_response, 'errno', 0) != 0:
+                print(f"⚠️ 验证取消状态失败，无法查询订单 {state.order_id[:10]}... errno={getattr(verify_response, 'errno', 'N/A')}")
+                # 无法验证，保守起见不移除状态
+                return False
+
+            result = getattr(verify_response, 'result', None)
+            data = getattr(result, 'data', None) if result is not None else None
+
+            if data:
+                current_status = self._parse_opinion_status(data)
+                print(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
+
+                # 检查是否真的被取消
+                if self._status_is_cancelled(current_status):
+                    print(f"✅ 确认订单已取消: {state.order_id[:10]}...")
+                    self._remove_liquidity_order_state(state.key)
+                    return True
+                else:
+                    # 订单仍然活跃，取消失败
+                    filled_amount = self._to_float(
+                        self._extract_from_entry(data, ['filled_amount', 'filledAmount', 'filled_base_amount', 'filledBaseAmount'])
+                    ) or 0.0
+
+                    total_amount = self._to_float(
+                        self._extract_from_entry(data, ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken'])
+                    )
+
+                    print(f"❌ 取消失败！订单仍处于 {current_status} 状态，filled={filled_amount:.2f}/{total_amount}, order_id={state.order_id[:10]}...")
+
+                    # 如果订单已经完全成交，立即处理
+                    if self._status_is_filled(current_status, filled_amount, total_amount):
+                        print(f"⚠️ 订单在取消过程中已成交！需要立即对冲: {state.order_id[:10]}...")
+                        # 更新成交数量并触发对冲
+                        if filled_amount > state.filled_size + 1e-6:
+                            delta = filled_amount - state.filled_size
+                            state.filled_size = filled_amount
+                            if self.polymarket_trading_enabled:
+                                self._hedge_polymarket(state, delta)
+                        self._remove_liquidity_order_state(state.key)
+                        return True
+
+                    return False
+            else:
+                print(f"⚠️ 验证取消状态失败，未返回订单数据 {state.order_id[:10]}...")
+                return False
+
+        except Exception as exc:
+            print(f"⚠️ 验证订单取消状态时异常 {state.order_id[:10]}...: {exc}")
+            traceback.print_exc()
+            return False
 
     def _cancel_obsolete_liquidity_orders(self, desired_keys: set) -> None:
+        """取消不再需要的流动性订单"""
         with self._liquidity_orders_lock:
             items = list(self.liquidity_orders.items())
+
+        cancelled_count = 0
+        failed_count = 0
+
         for key, state in items:
             if key in desired_keys:
                 continue
-            self._cancel_liquidity_order(state, reason="opportunity gone")
+
+            # 尝试取消订单，并验证取消结果
+            success = self._cancel_liquidity_order(state, reason="opportunity gone")
+            if success:
+                cancelled_count += 1
+            else:
+                failed_count += 1
+
+        if cancelled_count > 0 or failed_count > 0:
+            print(f"📊 订单取消结果: 成功={cancelled_count}, 失败={failed_count}")
 
     def _ensure_liquidity_status_thread(self) -> None:
         if self._liquidity_status_thread and self._liquidity_status_thread.is_alive():
@@ -2220,7 +2313,13 @@ class CrossPlatformArbitrage:
                 self._liquidity_status_stop.wait(timeout=max(2.0, self.liquidity_status_poll_interval))
                 continue
             try:
+                # 定期进行全量订单同步
+                self._sync_all_orders_if_needed()
+
+                # 更新单个订单状态
                 self._update_liquidity_order_statuses(tracked_states=tracked)
+
+                # 轮询交易记录
                 self._poll_opinion_trades()
             except KeyboardInterrupt:
                 raise
@@ -2246,6 +2345,151 @@ class CrossPlatformArbitrage:
             time.sleep(min(self.liquidity_status_poll_interval, 2.0))
 
         self._stop_liquidity_status_thread()
+
+    def _sync_all_orders_if_needed(self) -> None:
+        """
+        定期从 Opinion API 获取所有订单状态，与本地状态进行对比和同步
+        用于发现本地状态与实际订单状态不一致的情况
+        """
+        now = time.time()
+        if now - self._last_full_order_sync < self.full_order_sync_interval:
+            return
+
+        self._last_full_order_sync = now
+
+        try:
+            # 获取本地跟踪的所有订单ID
+            with self._liquidity_orders_lock:
+                if not self.liquidity_orders_by_id:
+                    return
+                local_order_ids = set(self.liquidity_orders_by_id.keys())
+
+            print(f"🔄 开始全量订单同步，本地跟踪 {len(local_order_ids)} 个订单...")
+
+            # 从API获取所有活跃订单
+            self._throttle_opinion_request()
+            response = self.opinion_client.get_my_orders(status="", limit=100, page=1)
+
+            if getattr(response, 'errno', 0) != 0:
+                print(f"⚠️ 全量订单同步失败: errno={getattr(response, 'errno', 'N/A')}")
+                return
+
+            order_list = getattr(getattr(response, 'result', None), 'list', None)
+            if not order_list:
+                print(f"⚠️ 全量订单同步未返回订单列表")
+                return
+
+            # 构建API返回的订单状态映射
+            api_orders = {}
+            for order_entry in order_list:
+                order_id = str(self._extract_from_entry(order_entry, ['order_id', 'orderId']))
+                if not order_id or order_id not in local_order_ids:
+                    continue
+
+                status = self._parse_opinion_status(order_entry)
+                filled_amount = self._to_float(
+                    self._extract_from_entry(order_entry, ['filled_amount', 'filledAmount', 'filled_base_amount', 'filledBaseAmount'])
+                ) or 0.0
+                total_amount = self._to_float(
+                    self._extract_from_entry(order_entry, ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken'])
+                )
+
+                api_orders[order_id] = {
+                    'status': status,
+                    'filled': filled_amount,
+                    'total': total_amount,
+                    'entry': order_entry
+                }
+
+            # 检查本地订单状态与API状态的一致性
+            inconsistencies = []
+            missing_from_api = []
+
+            with self._liquidity_orders_lock:
+                for order_id, state in list(self.liquidity_orders_by_id.items()):
+                    if order_id not in api_orders:
+                        missing_from_api.append(order_id)
+                        continue
+
+                    api_data = api_orders[order_id]
+                    api_status = api_data['status']
+                    api_filled = api_data['filled']
+
+                    # 检测状态不一致
+                    if state.status != api_status:
+                        inconsistencies.append({
+                            'order_id': order_id,
+                            'local_status': state.status,
+                            'api_status': api_status,
+                            'local_filled': state.filled_size,
+                            'api_filled': api_filled,
+                            'state': state,
+                            'api_data': api_data
+                        })
+
+                    # 检测成交数量不一致
+                    elif abs(state.filled_size - api_filled) > 1e-6:
+                        inconsistencies.append({
+                            'order_id': order_id,
+                            'local_status': state.status,
+                            'api_status': api_status,
+                            'local_filled': state.filled_size,
+                            'api_filled': api_filled,
+                            'state': state,
+                            'api_data': api_data
+                        })
+
+            # 处理不一致情况
+            if inconsistencies:
+                print(f"⚠️ 发现 {len(inconsistencies)} 个订单状态不一致！")
+                for item in inconsistencies:
+                    print(f"  订单 {item['order_id'][:10]}... 本地状态={item['local_status']}, API状态={item['api_status']}, "
+                          f"本地filled={item['local_filled']:.2f}, API filled={item['api_filled']:.2f}")
+
+                    state = item['state']
+                    api_data = item['api_data']
+
+                    # 修正本地状态
+                    state.status = item['api_status']
+
+                    # 处理成交数量增加的情况
+                    if item['api_filled'] > state.filled_size + 1e-6:
+                        delta = item['api_filled'] - state.filled_size
+                        state.filled_size = item['api_filled']
+                        print(f"  🔧 修正成交数量: {item['order_id'][:10]}... 增加 {delta:.2f}")
+
+                        # 触发对冲
+                        if self.polymarket_trading_enabled:
+                            print(f"  💰 触发补偿对冲: {item['order_id'][:10]}... delta={delta:.2f}")
+                            self._hedge_polymarket(state, delta)
+
+                    # 处理订单已取消的情况
+                    if self._status_is_cancelled(item['api_status']):
+                        print(f"  ❌ API显示订单已取消，移除本地状态: {item['order_id'][:10]}...")
+                        self._remove_liquidity_order_state(state.key)
+
+                    # 处理订单已完成的情况
+                    elif self._status_is_filled(item['api_status'], item['api_filled'], item.get('api_data', {}).get('total')):
+                        print(f"  ✅ API显示订单已完成，移除本地状态: {item['order_id'][:10]}...")
+                        self._remove_liquidity_order_state(state.key)
+
+            # 处理API中找不到的订单（可能已被删除或取消）
+            if missing_from_api:
+                print(f"⚠️ {len(missing_from_api)} 个订单在API中未找到（可能已取消或完成）")
+                for order_id in missing_from_api:
+                    print(f"  ⚠️ 订单 {order_id[:10]}... 在API中不存在，尝试查询详细状态")
+                    # 单独查询订单状态以确认
+                    status_entry = self._fetch_opinion_order_status(order_id)
+                    if status_entry:
+                        status = self._parse_opinion_status(status_entry)
+                        print(f"    订单 {order_id[:10]}... 详细状态={status}")
+
+            if not inconsistencies and not missing_from_api:
+                print(f"✅ 全量订单同步完成，{len(local_order_ids)} 个订单状态一致")
+
+        except Exception as exc:
+            print(f"⚠️ 全量订单同步异常: {exc}")
+            traceback.print_exc()
 
     def _fetch_opinion_order_status(self, order_id: str) -> Optional[Any]:
         try:
@@ -2360,10 +2604,6 @@ class CrossPlatformArbitrage:
             return
         self._last_trade_poll = now
 
-        with self._liquidity_orders_lock:
-            if not self.liquidity_orders_by_id:
-                return
-
         try:
             response = self.opinion_client.get_my_trades(limit=self.liquidity_trade_limit)
         except Exception as exc:
@@ -2378,24 +2618,57 @@ class CrossPlatformArbitrage:
         if not trade_list:
             return
 
+        # 统计新交易
+        new_trades_count = 0
+        tracked_trades_count = 0
+        untracked_trades_count = 0
+
         for trade in trade_list:
             order_no = self._extract_from_entry(trade, ['order_no', 'orderNo', 'order_id', 'orderId'])
             trade_no = self._extract_from_entry(trade, ['trade_no', 'tradeNo', 'id'])
             if not order_no or not trade_no:
                 continue
+
             # 确保类型一致性
             order_no = str(order_no)
             trade_no = str(trade_no)
+
+            # 检查是否已处理过该交易
             if trade_no in self._recent_trade_ids:
                 continue
+
             self._recent_trade_ids.append(trade_no)
+            new_trades_count += 1
+
+            # 提取交易信息用于日志
+            shares = self._to_float(
+                self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
+            )
+            price = self._to_float(self._extract_from_entry(trade, ['price']))
+            side = self._extract_from_entry(trade, ['side', 'side_enum'])
+            market_id = self._extract_from_entry(trade, ['market_id', 'marketId'])
+            created_at = self._extract_from_entry(trade, ['created_at', 'createdAt', 'timestamp'])
+            status = self._parse_opinion_status(trade)
+
+            # 检查是否在本地跟踪
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
-            if not state:
-                if self.liquidity_debug:
-                    print(f"⚠️ 收到未跟踪订单的交易: order_no={order_no}, trade_no={trade_no}")
-                continue
-            self._handle_opinion_trade(trade, state)
+
+            if state:
+                # 跟踪的订单交易
+                tracked_trades_count += 1
+                print(f"📊 [跟踪订单交易] order={order_no[:10]}..., trade={trade_no[:10]}..., "
+                      f"side={side}, shares={shares}, price={price}, status={status}, market={market_id}, time={created_at}")
+                self._handle_opinion_trade(trade, state)
+            else:
+                # 未跟踪的订单交易（可能是其他策略的订单，或已完成的订单）
+                untracked_trades_count += 1
+                print(f"📊 [未跟踪订单交易] order={order_no[:10]}..., trade={trade_no[:10]}..., "
+                      f"side={side}, shares={shares}, price={price}, status={status}, market={market_id}, time={created_at}")
+
+        # 打印轮询摘要
+        if new_trades_count > 0:
+            print(f"📊 交易轮询摘要: 新交易={new_trades_count}, 跟踪订单={tracked_trades_count}, 未跟踪订单={untracked_trades_count}")
 
     def _handle_opinion_trade(self, trade_entry: Any, state: LiquidityOrderState) -> None:
         shares = self._to_float(
