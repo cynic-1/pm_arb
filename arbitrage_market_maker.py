@@ -864,7 +864,7 @@ class CrossPlatformArbitrage:
         def _fetch_orderbook():
             self._throttle_opinion_request()
             response = self.opinion_client.get_orderbook(token_id)
-            logger.info(f"Opinion order book for {token_id}")
+            logger.debug(f"Opinion order book for {token_id}")
             if response.errno != 0:
                 raise Exception(f"Opinion API 返回错误码 {response.errno}")
             book = response.result
@@ -969,7 +969,7 @@ class CrossPlatformArbitrage:
         
         def _fetch_orderbook():
             book = self.polymarket_client.get_order_book(token_id)
-            logger.info(f"Polymarket order book for {token_id}")
+            logger.debug(f"Polymarket order book for {token_id}")
             if not book:
                 raise Exception("Polymarket 返回空订单簿")
             bids = self._normalize_polymarket_levels(getattr(book, "bids", []), depth, reverse=True)
@@ -1510,7 +1510,7 @@ class CrossPlatformArbitrage:
                 )
 
                 completed_count += 1
-                print(f"[{completed_count}/{total_matches}] 扫描: {match.question[:70]}...")
+                logger.debug(f"[{completed_count}/{total_matches}] 扫描: {match.question[:70]}...")
 
                 local_immediate = scan_opportunities(match, opinion_yes_book, poly_yes_book)
 
@@ -2127,6 +2127,9 @@ class CrossPlatformArbitrage:
             print("⚠️ 未返回 Opinion 订单编号，无法跟踪流动性挂单")
             return None
 
+        # 确保order_id为字符串类型，以便与get_my_trades返回的数据一致匹配
+        order_id = str(order_id)
+
         print(
             f"✅ 已在 Opinion 挂单 {order_id[:10]}... price={opinion_price:.3f}, size={order_size:.2f}, 目标净数量={effective_size:.2f}"
         )
@@ -2170,10 +2173,10 @@ class CrossPlatformArbitrage:
         try:
             self.opinion_client.cancel_order(state.order_id)
             print(f"🚫 取消 Opinion 流动性挂单 {state.order_id[:10]}... ({reason})")
+            self._remove_liquidity_order_state(state.key)
         except Exception as exc:
             print(f"⚠️ 取消 Opinion 流动性挂单失败 {state.order_id}: {exc}")
-        finally:
-            self._remove_liquidity_order_state(state.key)
+            # 不移除状态，以便重试或后续处理
 
     def _cancel_obsolete_liquidity_orders(self, desired_keys: set) -> None:
         with self._liquidity_orders_lock:
@@ -2380,6 +2383,8 @@ class CrossPlatformArbitrage:
             trade_no = self._extract_from_entry(trade, ['trade_no', 'tradeNo', 'id'])
             if not order_no or not trade_no:
                 continue
+            # 确保类型一致性
+            order_no = str(order_no)
             trade_no = str(trade_no)
             if trade_no in self._recent_trade_ids:
                 continue
@@ -2387,6 +2392,8 @@ class CrossPlatformArbitrage:
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
             if not state:
+                if self.liquidity_debug:
+                    print(f"⚠️ 收到未跟踪订单的交易: order_no={order_no}, trade_no={trade_no}")
                 continue
             self._handle_opinion_trade(trade, state)
 
