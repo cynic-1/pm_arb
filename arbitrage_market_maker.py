@@ -208,7 +208,7 @@ class LiquidityOrderState:
     hedge_token: str
     hedge_side: Any
     hedge_price: float
-    status: str = "open"
+    status: str = "pending"  # 新订单初始状态为 pending，与 Opinion API 一致
     filled_size: float = 0.0
     hedged_size: float = 0.0
     created_at: float = field(default_factory=time.time)
@@ -2253,26 +2253,6 @@ class CrossPlatformArbitrage:
                 data = result
 
             if data:
-                # DEBUG: Print all available fields
-                if isinstance(data, dict):
-                    print(f"🐛 DEBUG: data is dict with keys: {list(data.keys())}")
-                    if 'status' in data:
-                        print(f"🐛 DEBUG: data['status'] = {data['status']}")
-                    if 'status_enum' in data:
-                        print(f"🐛 DEBUG: data['status_enum'] = {data['status_enum']}")
-                    if 'statusEnum' in data:
-                        print(f"🐛 DEBUG: data['statusEnum'] = {data['statusEnum']}")
-                elif hasattr(data, '__dict__'):
-                    print(f"🐛 DEBUG: data is object with attributes: {list(data.__dict__.keys())}")
-                    if hasattr(data, 'status'):
-                        print(f"🐛 DEBUG: data.status = {data.status}")
-                    if hasattr(data, 'status_enum'):
-                        print(f"🐛 DEBUG: data.status_enum = {data.status_enum}")
-                    if hasattr(data, 'statusEnum'):
-                        print(f"🐛 DEBUG: data.statusEnum = {data.statusEnum}")
-                else:
-                    print(f"🐛 DEBUG: data type = {type(data)}, value = {data}")
-
                 current_status = self._parse_opinion_status(data)
                 print(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
 
@@ -2439,17 +2419,10 @@ class CrossPlatformArbitrage:
 
             # 构建API返回的订单状态映射
             api_orders = {}
-            for idx, order_entry in enumerate(order_list):
+            for order_entry in order_list:
                 order_id = str(self._extract_from_entry(order_entry, ['order_id', 'orderId']))
                 if not order_id or order_id not in local_order_ids:
                     continue
-
-                # DEBUG: Print first order's fields
-                if idx == 0:
-                    if isinstance(order_entry, dict):
-                        print(f"🐛 DEBUG: First order_entry is dict with keys: {list(order_entry.keys())}")
-                    elif hasattr(order_entry, '__dict__'):
-                        print(f"🐛 DEBUG: First order_entry is object with attributes: {list(order_entry.__dict__.keys())}")
 
                 status = self._parse_opinion_status(order_entry)
                 filled_amount = self._to_float(
