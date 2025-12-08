@@ -381,13 +381,6 @@ class CrossPlatformArbitrage:
             self.liquidity_trade_limit = 40
         self.liquidity_debug = os.getenv("LIQUIDITY_DEBUG", "1") not in {"0", "false", "False"}
 
-        # 全量订单同步配置
-        try:
-            self.full_order_sync_interval = max(10.0, float(os.getenv("FULL_ORDER_SYNC_INTERVAL", "30.0")))
-        except Exception:
-            self.full_order_sync_interval = 30.0
-        self._last_full_order_sync = 0.0
-
         # 跟踪启动的即时执行线程（仅用于信息/清理）
         self._active_exec_threads: List[threading.Thread] = []
         self.liquidity_orders: Dict[str, LiquidityOrderState] = {}
@@ -397,6 +390,15 @@ class CrossPlatformArbitrage:
         self._liquidity_status_thread: Optional[threading.Thread] = None
         self._last_trade_poll = 0.0
         self._recent_trade_ids: Deque[str] = deque(maxlen=500)
+
+        # 成交和对冲统计
+        self._total_fills_count = 0  # 总成交次数
+        self._total_fills_volume = 0.0  # 总成交数量
+        self._total_hedge_count = 0  # 总对冲次数
+        self._total_hedge_volume = 0.0  # 总对冲数量
+        self._hedge_failures = 0  # 对冲失败次数
+        self._stats_start_time = time.time()  # 统计开始时间
+
         fallback_env = os.getenv("ORDER_STATUS_FALLBACK_AFTER")
         self.order_status_fallback_after: Optional[float] = None
         if fallback_env:
@@ -2355,9 +2357,6 @@ class CrossPlatformArbitrage:
                 self._liquidity_status_stop.wait(timeout=max(2.0, self.liquidity_status_poll_interval))
                 continue
             try:
-                # 定期进行全量订单同步
-                self._sync_all_orders_if_needed()
-
                 # 更新单个订单状态
                 self._update_liquidity_order_statuses(tracked_states=tracked)
 
@@ -2387,151 +2386,6 @@ class CrossPlatformArbitrage:
             time.sleep(min(self.liquidity_status_poll_interval, 2.0))
 
         self._stop_liquidity_status_thread()
-
-    def _sync_all_orders_if_needed(self) -> None:
-        """
-        定期从 Opinion API 获取所有订单状态，与本地状态进行对比和同步
-        用于发现本地状态与实际订单状态不一致的情况
-        """
-        now = time.time()
-        if now - self._last_full_order_sync < self.full_order_sync_interval:
-            return
-
-        self._last_full_order_sync = now
-
-        try:
-            # 获取本地跟踪的所有订单ID
-            with self._liquidity_orders_lock:
-                if not self.liquidity_orders_by_id:
-                    return
-                local_order_ids = set(self.liquidity_orders_by_id.keys())
-
-            print(f"🔄 开始全量订单同步，本地跟踪 {len(local_order_ids)} 个订单...")
-
-            # 从API获取所有活跃订单
-            self._throttle_opinion_request()
-            response = self.opinion_client.get_my_orders(status="", limit=100, page=1)
-
-            if getattr(response, 'errno', 0) != 0:
-                print(f"⚠️ 全量订单同步失败: errno={getattr(response, 'errno', 'N/A')}")
-                return
-
-            order_list = getattr(getattr(response, 'result', None), 'list', None)
-            if not order_list:
-                print(f"⚠️ 全量订单同步未返回订单列表")
-                return
-
-            # 构建API返回的订单状态映射
-            api_orders = {}
-            for order_entry in order_list:
-                order_id = str(self._extract_from_entry(order_entry, ['order_id', 'orderId']))
-                if not order_id or order_id not in local_order_ids:
-                    continue
-
-                status = self._parse_opinion_status(order_entry)
-                filled_amount = self._to_float(
-                    self._extract_from_entry(order_entry, ['filled_amount', 'filledAmount', 'filled_base_amount', 'filledBaseAmount'])
-                ) or 0.0
-                total_amount = self._to_float(
-                    self._extract_from_entry(order_entry, ['maker_amount', 'makerAmount', 'maker_amount_in_base_token', 'makerAmountInBaseToken'])
-                )
-
-                api_orders[order_id] = {
-                    'status': status,
-                    'filled': filled_amount,
-                    'total': total_amount,
-                    'entry': order_entry
-                }
-
-            # 检查本地订单状态与API状态的一致性
-            inconsistencies = []
-            missing_from_api = []
-
-            with self._liquidity_orders_lock:
-                for order_id, state in list(self.liquidity_orders_by_id.items()):
-                    if order_id not in api_orders:
-                        missing_from_api.append(order_id)
-                        continue
-
-                    api_data = api_orders[order_id]
-                    api_status = api_data['status']
-                    api_filled = api_data['filled']
-
-                    # 检测状态不一致
-                    if state.status != api_status:
-                        inconsistencies.append({
-                            'order_id': order_id,
-                            'local_status': state.status,
-                            'api_status': api_status,
-                            'local_filled': state.filled_size,
-                            'api_filled': api_filled,
-                            'state': state,
-                            'api_data': api_data
-                        })
-
-                    # 检测成交数量不一致
-                    elif abs(state.filled_size - api_filled) > 1e-6:
-                        inconsistencies.append({
-                            'order_id': order_id,
-                            'local_status': state.status,
-                            'api_status': api_status,
-                            'local_filled': state.filled_size,
-                            'api_filled': api_filled,
-                            'state': state,
-                            'api_data': api_data
-                        })
-
-            # 处理不一致情况
-            if inconsistencies:
-                print(f"⚠️ 发现 {len(inconsistencies)} 个订单状态不一致！")
-                for item in inconsistencies:
-                    print(f"  订单 {item['order_id'][:10]}... 本地状态={item['local_status']}, API状态={item['api_status']}, "
-                          f"本地filled={item['local_filled']:.2f}, API filled={item['api_filled']:.2f}")
-
-                    state = item['state']
-                    api_data = item['api_data']
-
-                    # 修正本地状态
-                    state.status = item['api_status']
-
-                    # 处理成交数量增加的情况
-                    if item['api_filled'] > state.filled_size + 1e-6:
-                        delta = item['api_filled'] - state.filled_size
-                        state.filled_size = item['api_filled']
-                        print(f"  🔧 修正成交数量: {item['order_id'][:10]}... 增加 {delta:.2f}")
-
-                        # 触发对冲
-                        if self.polymarket_trading_enabled:
-                            print(f"  💰 触发补偿对冲: {item['order_id'][:10]}... delta={delta:.2f}")
-                            self._hedge_polymarket(state, delta)
-
-                    # 处理订单已取消的情况
-                    if self._status_is_cancelled(item['api_status']):
-                        print(f"  ❌ API显示订单已取消，移除本地状态: {item['order_id'][:10]}...")
-                        self._remove_liquidity_order_state(state.key)
-
-                    # 处理订单已完成的情况
-                    elif self._status_is_filled(item['api_status'], item['api_filled'], item.get('api_data', {}).get('total')):
-                        print(f"  ✅ API显示订单已完成，移除本地状态: {item['order_id'][:10]}...")
-                        self._remove_liquidity_order_state(state.key)
-
-            # 处理API中找不到的订单（可能已被删除或取消）
-            if missing_from_api:
-                print(f"⚠️ {len(missing_from_api)} 个订单在API中未找到（可能已取消或完成）")
-                for order_id in missing_from_api:
-                    print(f"  ⚠️ 订单 {order_id[:10]}... 在API中不存在，尝试查询详细状态")
-                    # 单独查询订单状态以确认
-                    status_entry = self._fetch_opinion_order_status(order_id)
-                    if status_entry:
-                        status = self._parse_opinion_status(status_entry)
-                        print(f"    订单 {order_id[:10]}... 详细状态={status}")
-
-            if not inconsistencies and not missing_from_api:
-                print(f"✅ 全量订单同步完成，{len(local_order_ids)} 个订单状态一致")
-
-        except Exception as exc:
-            print(f"⚠️ 全量订单同步异常: {exc}")
-            traceback.print_exc()
 
     def _fetch_opinion_order_status(self, order_id: str) -> Optional[Any]:
         try:
@@ -2650,19 +2504,37 @@ class CrossPlatformArbitrage:
             return
         self._last_trade_poll = now
 
-        try:
-            response = self.opinion_client.get_my_trades(limit=self.liquidity_trade_limit)
-        except Exception as exc:
-            print(f"⚠️ Opinion trades API 调用失败: {exc}")
-            return
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = self.opinion_client.get_my_trades(limit=self.liquidity_trade_limit)
 
-        if getattr(response, 'errno', 1) != 0:
-            print(f"⚠️ Opinion trades API errno={getattr(response, 'errno', None)}")
-            return
+                if getattr(response, 'errno', 1) != 0:
+                    if attempt < max_retries:
+                        print(f"⚠️ Opinion trades API errno={getattr(response, 'errno', None)}, 重试 {attempt}/{max_retries}")
+                        time.sleep(1.0)
+                        continue
+                    else:
+                        print(f"❌❌❌ Opinion trades API 调用失败达到最大重试次数！errno={getattr(response, 'errno', None)}")
+                        return
 
-        trade_list = getattr(getattr(response, 'result', None), 'list', None)
-        if not trade_list:
-            return
+                trade_list = getattr(getattr(response, 'result', None), 'list', None)
+                if not trade_list:
+                    # 没有交易记录是正常情况，不需要重试
+                    return
+
+                # 成功获取到交易列表，跳出重试循环
+                break
+
+            except Exception as exc:
+                if attempt < max_retries:
+                    print(f"⚠️ Opinion trades API 调用异常: {exc}, 重试 {attempt}/{max_retries}")
+                    time.sleep(1.0)
+                    continue
+                else:
+                    print(f"❌❌❌ Opinion trades API 调用失败达到最大重试次数！异常: {exc}")
+                    traceback.print_exc()
+                    return
 
         # 统计新交易
         new_trades_count = 0
@@ -2712,10 +2584,19 @@ class CrossPlatformArbitrage:
                 state = self.liquidity_orders_by_id.get(order_no)
 
             if state:
-                # 跟踪的订单交易
+                # 跟踪的订单交易 - 突出显示
                 tracked_trades_count += 1
-                print(f"📊 [跟踪订单交易] order={order_no[:10]}..., trade={trade_no[:10]}..., "
-                      f"side={side}, shares={shares}, price={price}, status={status}, market={market_id}, time={created_at}")
+                print("=" * 80)
+                print(f"💰💰💰 【新成交】检测到流动性订单成交！")
+                print(f"    订单ID: {order_no[:10]}...")
+                print(f"    成交ID: {trade_no[:10]}...")
+                print(f"    方向: {side}")
+                print(f"    数量: {shares}")
+                print(f"    价格: {price}")
+                print(f"    状态: {status}")
+                print(f"    市场: {market_id}")
+                print(f"    时间: {created_at}")
+                print("=" * 80)
                 self._handle_opinion_trade(trade, state)
             else:
                 # 未跟踪的订单交易（可能是其他策略的订单，或已完成的订单）
@@ -2745,13 +2626,25 @@ class CrossPlatformArbitrage:
             return
 
         state.filled_size += delta
-        print(
-            f"✅ Opinion trade {state.order_id[:10]}... delta={delta:.2f}, 累计 {state.filled_size:.2f}, price={price if price is not None else 'n/a'}"
-        )
+
+        # 更新统计
+        self._total_fills_count += 1
+        self._total_fills_volume += delta
+
+        print("┌" + "─" * 78 + "┐")
+        print(f"│ ✅ 成交处理: 订单 {state.order_id[:10]}...")
+        print(f"│    本次成交: {delta:.2f}")
+        print(f"│    累计成交: {state.filled_size:.2f} / {state.effective_size:.2f}")
+        print(f"│    成交价格: {price if price is not None else 'n/a'}")
+        print(f"│    成交进度: {(state.filled_size / state.effective_size * 100) if state.effective_size > 0 else 0:.1f}%")
+        print(f"│    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
+        print("└" + "─" * 78 + "┘")
+
         if self.polymarket_trading_enabled:
+            print(f"🚀 开始执行对冲操作...")
             self._hedge_polymarket(state, delta)
         else:
-            print("⚠️ Polymarket 未启用交易，无法根据 trade 对冲")
+            print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
         if self._status_is_filled(status_text, state.filled_size, state.effective_size):
             print(f"🏁 Opinion 挂单 {state.order_id[:10]}... 通过 trade 完成")
@@ -2764,15 +2657,26 @@ class CrossPlatformArbitrage:
         if not self.polymarket_trading_enabled:
             return
 
+        print("╔" + "═" * 78 + "╗")
+        print(f"║ 🛡️ 【对冲下单】开始执行 Polymarket 对冲")
+        print(f"║    需对冲数量: {hedge_size:.2f}")
+        print(f"║    对冲代币: {state.hedge_token}")
+        print(f"║    对冲方向: {state.hedge_side}")
+        print("╠" + "═" * 78 + "╣")
+
+        hedge_attempts = 0
+        total_hedged = 0.0
+
         while remaining > 1e-6:
+            hedge_attempts += 1
             book = self.get_polymarket_orderbook(state.hedge_token, depth=1)
             if not book or not book.asks:
-                print(f"⚠️ 无法对冲 {state.hedge_token}，缺少 Polymarket 流动性")
+                print(f"║ ❌ 对冲失败：缺少 Polymarket 流动性")
                 break
             best_ask = book.asks[0]
             tradable = min(remaining, best_ask.size or 0.0)
             if tradable <= 1e-6:
-                print(f"⚠️ 对冲数量 {remaining:.4f} 超出当前卖单数量，等待下一次机会")
+                print(f"║ ⚠️ 对冲数量 {remaining:.4f} 超出当前卖单数量，等待下一次机会")
                 break
 
             order = OrderArgs(
@@ -2781,16 +2685,42 @@ class CrossPlatformArbitrage:
                 size=tradable,
                 side=state.hedge_side,
             )
+
+            print(f"║ 📤 正在下单：数量 {tradable:.2f}, 价格 {best_ask.price}, 尝试 {hedge_attempts}")
+
             success, result = self._place_polymarket_order_with_retries(order, OrderType.GTC, context="流动性对冲")
             if not success:
-                print(f"❌ Polymarket 对冲下单失败，剩余 {remaining:.2f}")
+                print(f"║ ❌ 对冲下单失败，剩余 {remaining:.2f}")
+                self._hedge_failures += 1
                 break
 
             remaining -= tradable
             state.hedged_size += tradable
-            print(f"🛡️ 已在 Polymarket 对冲 {tradable:.2f} / token={state.hedge_token[:8]}...")
+            total_hedged += tradable
+
+            # 更新统计
+            self._total_hedge_count += 1
+            self._total_hedge_volume += tradable
+
+            print(f"║ ✅ 对冲成功：本次 {tradable:.2f}, 累计已对冲 {state.hedged_size:.2f}")
+
             if remaining > 1e-6:
                 time.sleep(0.2)
+
+        print("╠" + "═" * 78 + "╣")
+        if remaining <= 1e-6:
+            print(f"║ 🎉🎉🎉 对冲完成！总计对冲 {total_hedged:.2f}")
+        else:
+            print(f"║ ⚠️⚠️⚠️ 对冲未完成！已对冲 {total_hedged:.2f}, 剩余 {remaining:.2f}")
+
+        # 显示累计统计
+        uptime = time.time() - self._stats_start_time
+        hours = uptime / 3600
+        print(f"║ 【累计统计】成交: {self._total_hedge_count}次/{self._total_hedge_volume:.2f}量, "
+              f"对冲: {self._total_hedge_count}次/{self._total_hedge_volume:.2f}量, "
+              f"失败: {self._hedge_failures}次, "
+              f"运行: {hours:.1f}小时")
+        print("╚" + "═" * 78 + "╝")
 
     def run_liquidity_provider_cycle(self) -> None:
         candidates = self._scan_liquidity_opportunities()
