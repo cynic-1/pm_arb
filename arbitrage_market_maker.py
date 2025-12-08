@@ -2252,15 +2252,11 @@ class CrossPlatformArbitrage:
             if not data and result:
                 data = result
 
-            if data:
-                # DEBUG: 查看 get_order_by_id 返回的数据结构
-                if isinstance(data, dict):
-                    print(f"🐛 DEBUG get_order_by_id: dict with keys: {list(data.keys())}")
-                elif hasattr(data, '__dict__'):
-                    print(f"🐛 DEBUG get_order_by_id: object with attributes: {list(data.__dict__.keys())}")
-                else:
-                    print(f"🐛 DEBUG get_order_by_id: type={type(data)}")
+            # get_order_by_id 返回的对象可能有 order_data 属性
+            if data and hasattr(data, 'order_data'):
+                data = data.order_data
 
+            if data:
                 current_status = self._parse_opinion_status(data)
                 print(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
 
