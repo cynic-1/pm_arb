@@ -1450,7 +1450,7 @@ class CrossPlatformArbitrage:
             except Exception:
                 default_size = 200.0
 
-            order_size = float(default_size)
+            order_size = min(max(float(default_size), 0.9 * float(opp.get('min_size', 0.0))), 1000.0)
             # 保证不为零
             if not order_size or order_size <= 0:
                 order_size = default_size
