@@ -2563,6 +2563,10 @@ class CrossPlatformArbitrage:
                 self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
             )
 
+            # DEBUG: 检查是否是跟踪的订单
+            with self._liquidity_orders_lock:
+                is_tracked_order = order_no in self.liquidity_orders_by_id
+
             # 跳过无效交易（shares=0 或 None）
             if shares is None or shares <= 1e-6:
                 # 尝试从 amount 字段获取
@@ -2570,6 +2574,21 @@ class CrossPlatformArbitrage:
                 if amount and amount > 1e-6:
                     shares = amount
                 else:
+                    # 如果是跟踪的订单但shares=0，打印详细信息
+                    if is_tracked_order:
+                        print("=" * 80)
+                        print(f"⚠️⚠️⚠️ 【严重警告】跟踪订单成交但shares无效！")
+                        print(f"    订单ID: {order_no}")
+                        print(f"    成交ID: {trade_no}")
+                        raw_shares = self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
+                        print(f"    原始shares值: {raw_shares} (类型: {type(raw_shares).__name__})")
+                        raw_amount = self._extract_from_entry(trade, ['amount', 'order_shares'])
+                        print(f"    原始amount值: {raw_amount} (类型: {type(raw_amount).__name__})")
+                        print(f"    转换后shares: {shares}")
+                        status_val = self._extract_from_entry(trade, ['status', 'status_enum'])
+                        print(f"    状态: {status_val}")
+                        print("    ❌ 此成交将被跳过，不会触发对冲！")
+                        print("=" * 80)
                     # 仍然是0或None，跳过此交易
                     continue
 
