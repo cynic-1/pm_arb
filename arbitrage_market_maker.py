@@ -2582,6 +2582,12 @@ class CrossPlatformArbitrage:
             # 检查是否在本地跟踪
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
+                # DEBUG: 打印本地跟踪的所有订单ID
+                if not state and len(self.liquidity_orders_by_id) > 0:
+                    print(f"🔍 DEBUG: 成交订单 {order_no[:10]}... 不在本地跟踪中")
+                    print(f"🔍 DEBUG: 本地跟踪的订单ID列表:")
+                    for tracked_id in list(self.liquidity_orders_by_id.keys())[:5]:  # 只显示前5个
+                        print(f"    - {tracked_id}")
 
             if state:
                 # 跟踪的订单交易 - 突出显示
