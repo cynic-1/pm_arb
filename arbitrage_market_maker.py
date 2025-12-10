@@ -2570,9 +2570,6 @@ class CrossPlatformArbitrage:
             if trade_no in self._recent_trade_ids:
                 continue
 
-            self._recent_trade_ids.append(trade_no)
-            new_trades_count += 1
-
             # 先检查交易状态，只处理已完成的交易（status=2 或 status_enum="Finished"）
             status = self._parse_opinion_status(trade)
 
@@ -2580,6 +2577,10 @@ class CrossPlatformArbitrage:
             # 只处理 filled 状态的交易（status=2 或 status_enum="Finished"）
             if status != 'filled':
                 continue
+
+            # 只有 filled 状态的交易才记录和计数
+            self._recent_trade_ids.append(trade_no)
+            new_trades_count += 1
 
             # 提取交易信息用于日志
             shares = self._to_float(
