@@ -289,13 +289,13 @@ class CrossPlatformArbitrage:
         # 表示当扫描到的套利机会的利润率在[min,max]（百分比）之间时，立即用新线程执行
         self.immediate_exec_enabled = os.getenv("IMMEDIATE_EXEC_ENABLED", "1") not in {"0", "false", "False"}
         try:
-            self.immediate_min_percent = float(os.getenv("IMMEDIATE_MIN_PERCENT", "3.0"))
+            self.immediate_min_percent = float(os.getenv("IMMEDIATE_MIN_PERCENT", "2.0"))
         except Exception:
-            self.immediate_min_percent = 3.0
+            self.immediate_min_percent = 2.0
         try:
-            self.immediate_max_percent = float(os.getenv("IMMEDIATE_MAX_PERCENT", "20.0"))
+            self.immediate_max_percent = float(os.getenv("IMMEDIATE_MAX_PERCENT", "50.0"))
         except Exception:
-            self.immediate_max_percent = 20.0
+            self.immediate_max_percent = 50.0
         
         # 显示即时执行配置
         if self.immediate_exec_enabled:
@@ -494,8 +494,21 @@ class CrossPlatformArbitrage:
                     return True, result
                 err_msg = getattr(result, "errmsg", "unknown error")
                 print(f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.order_max_retries}): {err_msg}")
+                # 检测余额不足错误
+                if "Insufficient balance" in err_msg or "insufficient balance" in err_msg.lower():
+                    print(f"\n❌ 检测到余额不足，立即退出程序")
+                    print(f"错误详情: {err_msg}")
+                    import sys
+                    sys.exit(1)
             except Exception as exc:
+                exc_str = str(exc)
                 print(f"⚠️ {prefix}Opinion 下单异常 (尝试 {attempt}/{self.order_max_retries}): {exc}")
+                # 检测余额不足错误
+                if "Insufficient balance" in exc_str or "insufficient balance" in exc_str.lower():
+                    print(f"\n❌ 检测到余额不足，立即退出程序")
+                    print(f"错误详情: {exc_str}")
+                    import sys
+                    sys.exit(1)
                 last_result = None
             if attempt < self.order_max_retries:
                 time.sleep(self.order_retry_delay)
@@ -524,8 +537,21 @@ class CrossPlatformArbitrage:
                 if not error_msg:
                     return True, result
                 print(f"⚠️ {prefix}Polymarket 下单失败 (尝试 {attempt}/{self.order_max_retries}): {error_msg}")
+                # 检测余额不足错误
+                if error_msg and ("not enough balance" in error_msg.lower() or "insufficient balance" in error_msg.lower()):
+                    print(f"\n❌ 检测到余额不足，立即退出程序")
+                    print(f"错误详情: {error_msg}")
+                    import sys
+                    sys.exit(1)
             except Exception as exc:
+                exc_str = str(exc)
                 print(f"⚠️ {prefix}Polymarket 下单异常 (尝试 {attempt}/{self.order_max_retries}): {exc}")
+                # 检测余额不足错误
+                if "not enough balance" in exc_str.lower() or "insufficient balance" in exc_str.lower():
+                    print(f"\n❌ 检测到余额不足，立即退出程序")
+                    print(f"错误详情: {exc_str}")
+                    import sys
+                    sys.exit(1)
                 last_result = None
             if attempt < self.order_max_retries:
                 time.sleep(self.order_retry_delay)
