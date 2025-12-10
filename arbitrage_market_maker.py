@@ -2483,11 +2483,25 @@ class CrossPlatformArbitrage:
             if filled_amount > state.filled_size + 1e-6:
                 delta = filled_amount - state.filled_size
                 state.filled_size = filled_amount
-                print(f"✅ Opinion 挂单 {order_id[:10]}... 新成交 {delta:.2f} (累计 {state.filled_size:.2f})")
+
+                # 更新统计
+                self._total_fills_count += 1
+                self._total_fills_volume += delta
+
+                print("=" * 80)
+                print(f"💰💰💰 【订单状态检测到成交】")
+                print(f"    订单ID: {order_id}")
+                print(f"    本次成交: {delta:.2f}")
+                print(f"    累计成交: {state.filled_size:.2f} / {target_total:.2f}")
+                print(f"    成交进度: {(state.filled_size / target_total * 100) if target_total > 0 else 0:.1f}%")
+                print(f"    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
+                print("=" * 80)
+
                 if self.polymarket_trading_enabled:
+                    print(f"🚀 开始执行对冲操作...")
                     self._hedge_polymarket(state, delta)
                 else:
-                    print("⚠️ Polymarket 未启用交易，无法对冲")
+                    print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
             if self._status_is_cancelled(state.status):
                 print(f"⚠️ Opinion 挂单 {order_id[:10]}... 状态 {state.status}，停止跟踪")
@@ -2542,6 +2556,7 @@ class CrossPlatformArbitrage:
         untracked_trades_count = 0
 
         for trade in trade_list:
+            print(trade)
             order_no = self._extract_from_entry(trade, ['order_no', 'orderNo', 'order_id', 'orderId'])
             trade_no = self._extract_from_entry(trade, ['trade_no', 'tradeNo', 'id'])
             if not order_no or not trade_no:
@@ -2558,14 +2573,18 @@ class CrossPlatformArbitrage:
             self._recent_trade_ids.append(trade_no)
             new_trades_count += 1
 
+            # 先检查交易状态，只处理已完成的交易（status=2 或 status_enum="Finished"）
+            status = self._parse_opinion_status(trade)
+
+            # 跳过非 filled 状态的交易（status=1 pending, status=3 cancelled 等）
+            # 只处理 filled 状态的交易（status=2 或 status_enum="Finished"）
+            if status != 'filled':
+                continue
+
             # 提取交易信息用于日志
             shares = self._to_float(
                 self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
             )
-
-            # DEBUG: 检查是否是跟踪的订单
-            with self._liquidity_orders_lock:
-                is_tracked_order = order_no in self.liquidity_orders_by_id
 
             # 跳过无效交易（shares=0 或 None）
             if shares is None or shares <= 1e-6:
@@ -2574,39 +2593,17 @@ class CrossPlatformArbitrage:
                 if amount and amount > 1e-6:
                     shares = amount
                 else:
-                    # 如果是跟踪的订单但shares=0，打印详细信息
-                    if is_tracked_order:
-                        print("=" * 80)
-                        print(f"⚠️⚠️⚠️ 【严重警告】跟踪订单成交但shares无效！")
-                        print(f"    订单ID: {order_no}")
-                        print(f"    成交ID: {trade_no}")
-                        raw_shares = self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
-                        print(f"    原始shares值: {raw_shares} (类型: {type(raw_shares).__name__})")
-                        raw_amount = self._extract_from_entry(trade, ['amount', 'order_shares'])
-                        print(f"    原始amount值: {raw_amount} (类型: {type(raw_amount).__name__})")
-                        print(f"    转换后shares: {shares}")
-                        status_val = self._extract_from_entry(trade, ['status', 'status_enum'])
-                        print(f"    状态: {status_val}")
-                        print("    ❌ 此成交将被跳过，不会触发对冲！")
-                        print("=" * 80)
-                    # 仍然是0或None，跳过此交易
+                    # shares 仍然无效，跳过
                     continue
 
             price = self._to_float(self._extract_from_entry(trade, ['price']))
             side = self._extract_from_entry(trade, ['side', 'side_enum'])
             market_id = self._extract_from_entry(trade, ['market_id', 'marketId'])
             created_at = self._extract_from_entry(trade, ['created_at', 'createdAt', 'timestamp'])
-            status = self._parse_opinion_status(trade)
 
             # 检查是否在本地跟踪
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
-                # DEBUG: 打印本地跟踪的所有订单ID
-                if not state and len(self.liquidity_orders_by_id) > 0:
-                    print(f"🔍 DEBUG: 成交订单 {order_no[:10]}... 不在本地跟踪中")
-                    print(f"🔍 DEBUG: 本地跟踪的订单ID列表:")
-                    for tracked_id in list(self.liquidity_orders_by_id.keys())[:5]:  # 只显示前5个
-                        print(f"    - {tracked_id}")
 
             if state:
                 # 跟踪的订单交易 - 突出显示
