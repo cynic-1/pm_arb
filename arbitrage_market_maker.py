@@ -2582,22 +2582,29 @@ class CrossPlatformArbitrage:
             self._recent_trade_ids.append(trade_no)
             new_trades_count += 1
 
-            # 提取交易信息用于日志
+            # 提取交易信息
+            price = self._to_float(self._extract_from_entry(trade, ['price']))
             shares = self._to_float(
                 self._extract_from_entry(trade, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
             )
 
-            # 跳过无效交易（shares=0 或 None）
+            # 如果 shares 无效，尝试其他字段
             if shares is None or shares <= 1e-6:
                 # 尝试从 amount 字段获取
                 amount = self._to_float(self._extract_from_entry(trade, ['amount', 'order_shares']))
                 if amount and amount > 1e-6:
                     shares = amount
                 else:
-                    # shares 仍然无效，跳过
-                    continue
-
-            price = self._to_float(self._extract_from_entry(trade, ['price']))
+                    # 尝试从 usd_amount 和 price 计算
+                    usd_amount = self._to_float(self._extract_from_entry(trade, ['usd_amount', 'usdAmount']))
+                    if usd_amount and usd_amount > 1e-6 and price and price > 1e-6:
+                        # usd_amount 是 Wei 格式 (18位小数)，需要除以 1e18
+                        usd_value = usd_amount / 1e18
+                        shares = usd_value / price
+                        print(f"📊 从 usd_amount 计算 shares: usd_amount={usd_value:.2f}, price={price}, shares={shares:.2f}")
+                    else:
+                        # shares 仍然无效，跳过
+                        continue
             side = self._extract_from_entry(trade, ['side', 'side_enum'])
             market_id = self._extract_from_entry(trade, ['market_id', 'marketId'])
             created_at = self._extract_from_entry(trade, ['created_at', 'createdAt', 'timestamp'])
@@ -2605,6 +2612,13 @@ class CrossPlatformArbitrage:
             # 检查是否在本地跟踪
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
+                # DEBUG: 如果找不到订单，打印调试信息
+                if not state:
+                    print(f"⚠️ 成交订单 {order_no} 不在本地跟踪中")
+                    print(f"   本地跟踪的订单ID (前5个):")
+                    for tracked_id in list(self.liquidity_orders_by_id.keys())[:5]:
+                        match_prefix = "✓" if order_no.startswith(tracked_id[:10]) or tracked_id.startswith(order_no[:10]) else "✗"
+                        print(f"   {match_prefix} {tracked_id}")
 
             if state:
                 # 跟踪的订单交易 - 突出显示
