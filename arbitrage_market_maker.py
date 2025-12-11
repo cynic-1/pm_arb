@@ -2646,6 +2646,7 @@ class CrossPlatformArbitrage:
             print(f"📊 交易轮询摘要: 新交易={new_trades_count}, 跟踪订单={tracked_trades_count}, 未跟踪订单={untracked_trades_count}")
 
     def _handle_opinion_trade(self, trade_entry: Any, state: LiquidityOrderState) -> None:
+        price = self._to_float(self._extract_from_entry(trade_entry, ['price']))
         shares = self._to_float(
             self._extract_from_entry(trade_entry, ['shares', 'filled_shares', 'filledAmount', 'filled_amount'])
         )
@@ -2653,11 +2654,19 @@ class CrossPlatformArbitrage:
             amount = self._to_float(self._extract_from_entry(trade_entry, ['amount', 'order_shares']))
             if amount and amount > 0:
                 shares = amount
+            else:
+                # 尝试从 usd_amount 和 price 计算
+                usd_amount = self._to_float(self._extract_from_entry(trade_entry, ['usd_amount', 'usdAmount']))
+                if usd_amount and usd_amount > 1e-6 and price and price > 1e-6:
+                    # usd_amount 是 Wei 格式 (18位小数)，需要除以 1e18
+                    usd_value = usd_amount / 1e18
+                    shares = usd_value / price
+                    print(f"📊 [_handle_opinion_trade] 从 usd_amount 计算 shares: usd={usd_value:.2f}, price={price}, shares={shares:.2f}")
         if shares is None or shares <= 0:
+            print(f"⚠️ [_handle_opinion_trade] 无法获取有效的 shares，跳过处理")
             return
 
         status_text = self._parse_opinion_status(trade_entry)
-        price = self._to_float(self._extract_from_entry(trade_entry, ['price']))
         delta = min(shares, max(state.effective_size - state.filled_size, 0.0))
         if delta <= 0:
             return
