@@ -2555,8 +2555,10 @@ class CrossPlatformArbitrage:
         tracked_trades_count = 0
         untracked_trades_count = 0
 
+        # 聚合同一订单的所有交易：order_no -> [trades]
+        trades_by_order = {}
+
         for trade in trade_list:
-            print(trade)
             order_no = self._extract_from_entry(trade, ['order_no', 'orderNo', 'order_id', 'orderId'])
             trade_no = self._extract_from_entry(trade, ['trade_no', 'tradeNo', 'id'])
             if not order_no or not trade_no:
@@ -2609,41 +2611,105 @@ class CrossPlatformArbitrage:
             market_id = self._extract_from_entry(trade, ['market_id', 'marketId'])
             created_at = self._extract_from_entry(trade, ['created_at', 'createdAt', 'timestamp'])
 
+            # 聚合到对应的订单
+            if order_no not in trades_by_order:
+                trades_by_order[order_no] = []
+            trades_by_order[order_no].append({
+                'trade': trade,
+                'trade_no': trade_no,
+                'shares': shares,
+                'price': price,
+                'side': side,
+                'status': status,
+                'market_id': market_id,
+                'created_at': created_at
+            })
+
+        # 按订单聚合后统一处理
+        for order_no, trade_list_for_order in trades_by_order.items():
             # 检查是否在本地跟踪
             with self._liquidity_orders_lock:
                 state = self.liquidity_orders_by_id.get(order_no)
-                # DEBUG: 如果找不到订单，打印调试信息
-                if not state:
-                    print(f"⚠️ 成交订单 {order_no} 不在本地跟踪中")
-                    print(f"   本地跟踪的订单ID (前5个):")
-                    for tracked_id in list(self.liquidity_orders_by_id.keys())[:5]:
-                        match_prefix = "✓" if order_no.startswith(tracked_id[:10]) or tracked_id.startswith(order_no[:10]) else "✗"
-                        print(f"   {match_prefix} {tracked_id}")
 
             if state:
-                # 跟踪的订单交易 - 突出显示
-                tracked_trades_count += 1
+                # 跟踪的订单 - 处理所有交易
+                tracked_trades_count += len(trade_list_for_order)
+
+                # 计算总成交量
+                total_shares = sum(t['shares'] for t in trade_list_for_order)
+
                 print("=" * 80)
                 print(f"💰💰💰 【新成交】检测到流动性订单成交！")
                 print(f"    订单ID: {order_no[:10]}...")
-                print(f"    成交ID: {trade_no[:10]}...")
-                print(f"    方向: {side}")
-                print(f"    数量: {shares}")
-                print(f"    价格: {price}")
-                print(f"    状态: {status}")
-                print(f"    市场: {market_id}")
-                print(f"    时间: {created_at}")
+                print(f"    成交笔数: {len(trade_list_for_order)}")
+                print(f"    总成交量: {total_shares:.2f}")
+                print("    成交明细:")
+                for idx, t in enumerate(trade_list_for_order, 1):
+                    print(f"      {idx}. trade={t['trade_no'][:10]}..., shares={t['shares']:.2f}, price={t['price']}, time={t['created_at']}")
                 print("=" * 80)
-                self._handle_opinion_trade(trade, state)
+
+                # 统一处理所有交易（聚合后一次性对冲）
+                self._handle_opinion_trades_aggregated(trade_list_for_order, state)
             else:
-                # 未跟踪的订单交易（可能是其他策略的订单，或已完成的订单）
-                untracked_trades_count += 1
-                print(f"📊 [未跟踪订单交易] order={order_no[:10]}..., trade={trade_no[:10]}..., "
-                      f"side={side}, shares={shares}, price={price}, status={status}, market={market_id}, time={created_at}")
+                # 未跟踪的订单
+                untracked_trades_count += len(trade_list_for_order)
+                for t in trade_list_for_order:
+                    print(f"📊 [未跟踪订单交易] order={order_no[:10]}..., trade={t['trade_no'][:10]}..., "
+                          f"side={t['side']}, shares={t['shares']}, price={t['price']}, status={t['status']}, market={t['market_id']}, time={t['created_at']}")
 
         # 打印轮询摘要
         if new_trades_count > 0:
             print(f"📊 交易轮询摘要: 新交易={new_trades_count}, 跟踪订单={tracked_trades_count}, 未跟踪订单={untracked_trades_count}")
+
+    def _handle_opinion_trades_aggregated(self, trade_list: list, state: LiquidityOrderState) -> None:
+        """
+        处理同一订单的聚合交易列表
+        Args:
+            trade_list: 交易信息列表，每个元素包含 trade, shares, price 等
+            state: 订单状态
+        """
+        # 计算总成交量
+        total_shares = sum(t['shares'] for t in trade_list)
+
+        # 计算平均价格（按成交量加权）
+        if total_shares > 0:
+            avg_price = sum(t['shares'] * t['price'] for t in trade_list) / total_shares
+        else:
+            avg_price = trade_list[0]['price'] if trade_list else 0
+
+        # 计算实际需要对冲的数量（不能超过剩余未成交数量）
+        delta = min(total_shares, max(state.effective_size - state.filled_size, 0.0))
+        if delta <= 0:
+            print(f"⚠️ 订单已完全成交，无需处理新交易（filled={state.filled_size}, effective={state.effective_size}）")
+            return
+
+        # 更新订单成交量
+        state.filled_size += delta
+
+        # 更新统计
+        self._total_fills_count += 1
+        self._total_fills_volume += delta
+
+        print("┌" + "─" * 78 + "┐")
+        print(f"│ ✅ 成交处理: 订单 {state.order_id[:10]}...")
+        print(f"│    本次成交: {delta:.2f} (聚合 {len(trade_list)} 笔交易)")
+        print(f"│    累计成交: {state.filled_size:.2f} / {state.effective_size:.2f}")
+        print(f"│    平均价格: {avg_price:.4f}")
+        print(f"│    成交进度: {(state.filled_size / state.effective_size * 100) if state.effective_size > 0 else 0:.1f}%")
+        print(f"│    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
+        print("└" + "─" * 78 + "┘")
+
+        # 执行对冲
+        if self.polymarket_trading_enabled:
+            print(f"🚀 开始执行对冲操作...")
+            self._hedge_polymarket(state, delta)
+        else:
+            print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
+
+        # 检查订单是否完全成交
+        if state.filled_size >= state.effective_size - 1e-6:
+            print(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交")
+            self._remove_liquidity_order_state(state.key)
 
     def _handle_opinion_trade(self, trade_entry: Any, state: LiquidityOrderState) -> None:
         price = self._to_float(self._extract_from_entry(trade_entry, ['price']))
