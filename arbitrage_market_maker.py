@@ -2668,7 +2668,7 @@ class CrossPlatformArbitrage:
             trade_list: 交易信息列表，每个元素包含 trade, shares, price 等
             state: 订单状态
         """
-        # 计算总成交量
+        # 计算总成交量 - 直接使用检测到的成交数量
         total_shares = sum(t['shares'] for t in trade_list)
 
         # 计算平均价格（按成交量加权）
@@ -2677,11 +2677,9 @@ class CrossPlatformArbitrage:
         else:
             avg_price = trade_list[0]['price'] if trade_list else 0
 
-        # 计算实际需要对冲的数量（不能超过剩余未成交数量）
-        delta = min(total_shares, max(state.effective_size - state.filled_size, 0.0))
-        if delta <= 0:
-            print(f"⚠️ 订单已完全成交，无需处理新交易（filled={state.filled_size}, effective={state.effective_size}）")
-            return
+        # 检测到的成交直接对冲，不需要用 effective_size 限制
+        # 因为检测到的成交就是实际成交的数量
+        delta = total_shares
 
         # 更新订单成交量
         state.filled_size += delta
@@ -2693,9 +2691,8 @@ class CrossPlatformArbitrage:
         print("┌" + "─" * 78 + "┐")
         print(f"│ ✅ 成交处理: 订单 {state.order_id[:10]}...")
         print(f"│    本次成交: {delta:.2f} (聚合 {len(trade_list)} 笔交易)")
-        print(f"│    累计成交: {state.filled_size:.2f} / {state.effective_size:.2f}")
+        print(f"│    累计成交: {state.filled_size:.2f}")
         print(f"│    平均价格: {avg_price:.4f}")
-        print(f"│    成交进度: {(state.filled_size / state.effective_size * 100) if state.effective_size > 0 else 0:.1f}%")
         print(f"│    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
         print("└" + "─" * 78 + "┘")
 
@@ -2706,7 +2703,7 @@ class CrossPlatformArbitrage:
         else:
             print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
-        # 检查订单是否完全成交
+        # 检查订单是否完全成交 - 当累计成交量达到订单规模时认为完成
         if state.filled_size >= state.effective_size - 1e-6:
             print(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交")
             self._remove_liquidity_order_state(state.key)
