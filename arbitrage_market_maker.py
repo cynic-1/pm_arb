@@ -2194,6 +2194,14 @@ class CrossPlatformArbitrage:
 
     def _register_liquidity_order_state(self, state: LiquidityOrderState) -> None:
         with self._liquidity_orders_lock:
+            # 如果该 key 已存在旧订单，先移除旧订单的 order_id 引用
+            old_state = self.liquidity_orders.get(state.key)
+            if old_state and old_state.order_id != state.order_id:
+                # 移除旧订单的 order_id 引用，避免重复监控
+                self.liquidity_orders_by_id.pop(old_state.order_id, None)
+                if self.liquidity_debug:
+                    print(f"🗑️ 移除旧订单 {old_state.order_id[:10]}... 的引用 (被新订单 {state.order_id[:10]}... 替代)")
+
             self.liquidity_orders[state.key] = state
             self.liquidity_orders_by_id[state.order_id] = state
         if self.liquidity_debug:
