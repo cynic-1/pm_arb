@@ -348,9 +348,9 @@ class CrossPlatformArbitrage:
         except Exception:
             self.liquidity_target_size = max(250.0, self.liquidity_min_size)
         try:
-            self.max_liquidity_orders = max(1, int(os.getenv("LIQUIDITY_MAX_ACTIVE", "10")))
+            self.max_liquidity_orders = max(1, int(os.getenv("LIQUIDITY_MAX_ACTIVE", "20")))
         except Exception:
-            self.max_liquidity_orders = 5
+            self.max_liquidity_orders = 10
         try:
             self.liquidity_price_tolerance = max(0.0, float(os.getenv("LIQUIDITY_PRICE_TOLERANCE", "0.003")))
         except Exception:
