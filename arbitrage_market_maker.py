@@ -2111,7 +2111,15 @@ class CrossPlatformArbitrage:
                         need_requote = True
 
             if need_requote:
-                self._cancel_liquidity_order(existing, reason="repricing")
+                # 尝试取消旧订单，只有取消成功才能下新单
+                cancel_success = self._cancel_liquidity_order(existing, reason="repricing")
+                if not cancel_success:
+                    # 取消失败，保持旧订单继续监控，不下新单
+                    print(f"⚠️ 取消订单失败，保持旧订单 {existing.order_id[:10]}... 继续监控")
+                    existing.hedge_price = opportunity['polymarket_price']
+                    existing.updated_at = time.time()
+                    return True
+                # 取消成功，existing 已被移除，可以继续下新单
                 existing = None
             else:
                 existing.hedge_price = opportunity['polymarket_price']
