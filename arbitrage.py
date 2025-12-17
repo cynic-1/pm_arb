@@ -1329,8 +1329,8 @@ class CrossPlatformArbitrage:
                             'poly_yes_book': poly_yes_book,
                             'poly_no_book': poly_no_book,
                         })
-                        ann_text = f", 年化收益率={annualized_rate:.2f}%" if annualized_rate is not None else ""
-                        print(f"  ✓ 发现立即套利: Opinion NO ask + Poly YES ask, 成本(含手续费)=${cost:.3f}, 收益率={profit_rate:.2f}%{ann_text}, 数量={min_size:.2f}")
+                            ann_text = f", 年化收益率={annualized_rate:.2f}%" if annualized_rate is not None else ""
+                            print(f"  ✓ 发现立即套利: Opinion NO ask + Poly YES ask, 成本(含手续费)=${cost:.3f}, 收益率={profit_rate:.2f}%{ann_text}, 数量={min_size:.2f}")
             return local_immediate 
 
         completed_count = 0
