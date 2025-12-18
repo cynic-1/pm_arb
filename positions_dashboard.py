@@ -168,6 +168,8 @@ class PortfolioFetcher:
                         "icon": pos.get("icon"),
                     }
                 )
+            
+            filtered_positions.sort(key=lambda x: x["size"], reverse=True)
 
             payload["positions"] = filtered_positions
 
@@ -218,10 +220,17 @@ class PortfolioFetcher:
                 if current_value < VALUE_THRESHOLD:
                     continue
                 total_value += current_value
+                # Construct full title with parent title if available
+                parent_title = _safe_get(pos, "root_market_title")
+                market_title = _safe_get(pos, "market_title")
+                full_title = f"{parent_title} - {market_title}" if parent_title else market_title
+
                 filtered_positions.append(
                     {
                         "marketId": _safe_get(pos, "market_id"),
-                        "marketTitle": _safe_get(pos, "market_title"),
+                        "marketTitle": full_title,
+                        "parentTitle": parent_title,
+                        "subtitle": market_title,
                         "side": _safe_get(pos, "outcome_side_enum"),
                         "shares": float(_safe_get(pos, "shares_owned", 0)),
                         "avgPrice": float(_safe_get(pos, "avg_entry_price", 0)),
@@ -232,6 +241,9 @@ class PortfolioFetcher:
                         ),
                     }
                 )
+
+            # Sort positions by shares (descending)
+            filtered_positions.sort(key=lambda x: x["shares"], reverse=True)
 
             payload["positions"] = filtered_positions
             payload["totalValue"] = total_value
