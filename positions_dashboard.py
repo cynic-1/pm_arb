@@ -202,7 +202,7 @@ class PortfolioFetcher:
         try:
             positions: List[Any] = []
             page = 1
-            limit = 50
+            limit = 20
             while True:
                 response = self._opinion_client.get_my_positions(page=page, limit=limit)
                 if response.errno != 0:
