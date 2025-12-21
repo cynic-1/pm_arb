@@ -444,18 +444,6 @@
     "cutoff_at": 1767657600
   },
   {
-    "question": "Aster “Human vs AI”: How many AI traders will place in the top 10? - 0",
-    "opinion_market_id": 2645,
-    "opinion_yes_token": "101679601900216189671522026357830444177624644691876161007077754621135553951089",
-    "opinion_no_token": "15267448900100280846320425582095644929475821877711918128869355140446668297058",
-    "polymarket_condition_id": "0xeeff10454126e082d3c16542e2c91f6b9930bdcecde06a92600b1a26fec8cb08",
-    "polymarket_yes_token": "41687852182839125533475451537681544425533330386670924157114853933741400311876",
-    "polymarket_no_token": "13320751337227012733296336300861899679351670628170220032640641283733490053661",
-    "polymarket_slug": "will-0xjack-win-the-aster-trading-competition-847",
-    "similarity_score": 1.0,
-    "cutoff_at": 1766448000
-  },
-  {
     "question": "Will Paradex launch a token by ...? - February 28, 2026",
     "opinion_market_id": 2607,
     "opinion_yes_token": "18568430249427019270202984814264355629680365141486647833183735458121155587578",
