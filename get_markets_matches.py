@@ -371,7 +371,7 @@ class CrossPlatformArbitrage:
                 else:
                     print("  ✗ 未找到匹配")
 
-                time.sleep(0.3)
+                time.sleep(1)
 
         if process_categorical:
             print(f"\n📊 处理 {len(categorical_groups)} 个 CATEGORICAL 市场组...")
@@ -433,7 +433,7 @@ class CrossPlatformArbitrage:
                         }
                     )
 
-                time.sleep(0.3)
+                time.sleep(1)
 
         if unmatched_groups:
             self._save_unmatched_groups(unmatched_groups)
@@ -605,7 +605,7 @@ def main() -> None:
             print(f"❌ 无效的 topic_type: {topic_value}。仅支持 BINARY/CATEGORICAL。")
             sys.exit(1)
         try:
-            opinion_markets = scanner.fetch_opinion_markets(500, topic_type=TopicType[topic_value.upper()])
+            opinion_markets = scanner.fetch_opinion_markets(600, topic_type=TopicType[topic_value.upper()])
         except Exception as exc:
             print(f"❌ 无法加载 Opinion 市场文件: {exc}")
             sys.exit(1)
