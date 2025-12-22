@@ -3,7 +3,7 @@
 .env.new
 
 /venv/
-/__pycache__/
 /output/
 /logs/
 /input/
+__pycache__

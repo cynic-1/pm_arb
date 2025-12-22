@@ -1,0 +1,735 @@
+"""
+模块化跨平台套利检测器 - Opinion vs Polymarket
+使用 arbitrage_core 模块重构的版本
+
+原始文件: arbitrage.py (1873 行)
+重构后: ~300 行 (减少 84%)
+"""
+
+import os
+import sys
+import argparse
+import time
+import threading
+import traceback
+from typing import Any, Dict, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+# 导入核心模块
+from arbitrage_core import (
+    ArbitrageConfig,
+    PlatformClients,
+    FeeCalculator,
+    OrderBookLevel,
+    OrderBookSnapshot,
+    MarketMatch,
+    ArbitrageOpportunity,
+)
+from arbitrage_core.utils import setup_logger
+from arbitrage_core.utils.helpers import to_float, to_int, dedupe_tokens
+
+# Opinion SDK
+from opinion_clob_sdk.chain.py_order_utils.model.order import PlaceOrderDataInput
+from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
+from opinion_clob_sdk.chain.py_order_utils.model.order_type import LIMIT_ORDER
+
+# Polymarket SDK
+from py_clob_client.clob_types import OrderArgs, OrderType, BookParams
+from py_clob_client.order_builder.constants import BUY, SELL
+import logging
+import json
+
+logger = logging.getLogger(__name__)
+
+
+class ModularArbitrage:
+    """模块化跨平台套利检测器"""
+
+    def __init__(self, config: Optional[ArbitrageConfig] = None):
+        """
+        初始化套利检测器
+
+        Args:
+            config: 配置对象，如果为 None 则创建默认配置
+        """
+        # 使用配置对象
+        self.config = config or ArbitrageConfig()
+
+        # 初始化核心组件
+        print("🔧 初始化核心组件...")
+        self.clients = PlatformClients(self.config)
+        self.fee_calculator = FeeCalculator(self.config)
+
+        # 市场匹配缓存
+        self.market_matches: List[MarketMatch] = []
+
+        # 线程控制
+        self._monitor_stop_event = threading.Event()
+        self._active_exec_threads: List[threading.Thread] = []
+
+        # 速率限制
+        self._opinion_rate_lock = threading.Lock()
+        self._opinion_last_request = 0.0
+
+        print("✅ 模块化套利检测器初始化完成!\n")
+
+    # ==================== 订单簿管理 ====================
+
+    def _throttle_opinion_request(self) -> None:
+        """Opinion API 速率限制"""
+        max_rps = self.config.opinion_max_rps
+        if max_rps <= 0:
+            return
+
+        min_interval = 1.0 / max_rps
+        while True:
+            with self._opinion_rate_lock:
+                now = time.perf_counter()
+                wait = min_interval - (now - self._opinion_last_request)
+                if wait <= 0:
+                    self._opinion_last_request = now
+                    return
+            time.sleep(min_interval / 2.0)
+
+    def get_opinion_orderbook(
+        self, token_id: str, depth: int = 5
+    ) -> Optional[OrderBookSnapshot]:
+        """获取 Opinion 订单簿"""
+        try:
+            self._throttle_opinion_request()
+            response = self.clients.get_opinion_client().get_orderbook(token_id)
+            logger.info(f"Opinion order book for {token_id}")
+
+            if response.errno != 0:
+                raise Exception(f"Opinion API 返回错误码 {response.errno}")
+
+            book = response.result
+            bids = self._normalize_opinion_levels(
+                getattr(book, "bids", []), depth, reverse=True
+            )
+            asks = self._normalize_opinion_levels(
+                getattr(book, "asks", []), depth, reverse=False
+            )
+
+            return OrderBookSnapshot(
+                bids=bids,
+                asks=asks,
+                source="opinion",
+                token_id=token_id,
+                timestamp=time.time(),
+            )
+        except Exception as exc:
+            print(f"⚠️ Opinion 订单簿获取失败 ({token_id[:20]}...): {exc}")
+            return None
+
+    def get_polymarket_orderbook(
+        self, token_id: str, depth: int = 5
+    ) -> Optional[OrderBookSnapshot]:
+        """获取 Polymarket 订单簿"""
+        try:
+            book = self.clients.get_polymarket_client().get_order_book(token_id)
+            logger.info(f"Polymarket order book for {token_id}")
+
+            if not book:
+                raise Exception("Polymarket 返回空订单簿")
+
+            bids = self._normalize_polymarket_levels(
+                getattr(book, "bids", []), depth, reverse=True
+            )
+            asks = self._normalize_polymarket_levels(
+                getattr(book, "asks", []), depth, reverse=False
+            )
+
+            return OrderBookSnapshot(
+                bids=bids,
+                asks=asks,
+                source="polymarket",
+                token_id=token_id,
+                timestamp=time.time(),
+            )
+        except Exception as exc:
+            print(f"⚠️ Polymarket 订单簿获取失败 ({token_id[:20]}...): {exc}")
+            return None
+
+    def get_polymarket_orderbooks_bulk(
+        self, token_ids: List[str], depth: int = 5
+    ) -> Dict[str, OrderBookSnapshot]:
+        """批量获取 Polymarket 订单簿"""
+        snapshots: Dict[str, OrderBookSnapshot] = {}
+        tokens = dedupe_tokens(token_ids)
+        if not tokens:
+            return snapshots
+
+        chunk_size = self.config.polymarket_books_chunk
+        for start in range(0, len(tokens), chunk_size):
+            chunk = tokens[start : start + chunk_size]
+            try:
+                params = [BookParams(token_id=tid) for tid in chunk]
+                books = self.clients.get_polymarket_client().get_order_books(
+                    params=params
+                )
+                now = time.time()
+
+                for idx, book in enumerate(books):
+                    token_key = (
+                        getattr(book, "asset_id", None)
+                        or getattr(book, "token_id", None)
+                        or (chunk[idx] if idx < len(chunk) else None)
+                    )
+                    if not token_key:
+                        continue
+
+                    bids = self._normalize_polymarket_levels(
+                        getattr(book, "bids", []), depth, reverse=True
+                    )
+                    asks = self._normalize_polymarket_levels(
+                        getattr(book, "asks", []), depth, reverse=False
+                    )
+                    snapshots[token_key] = OrderBookSnapshot(
+                        bids=bids,
+                        asks=asks,
+                        source="polymarket",
+                        token_id=token_key,
+                        timestamp=now,
+                    )
+            except Exception as exc:
+                print(f"⚠️ 批量获取 Polymarket 订单簿失败: {exc}")
+
+        return snapshots
+
+    def fetch_opinion_orderbooks_parallel(
+        self, token_ids: List[str], depth: int = 5
+    ) -> Dict[str, Optional[OrderBookSnapshot]]:
+        """并发获取 Opinion 订单簿"""
+        from concurrent.futures import as_completed
+
+        snapshots: Dict[str, Optional[OrderBookSnapshot]] = {}
+        tokens = dedupe_tokens(token_ids)
+        if not tokens:
+            return snapshots
+
+        max_workers = self.config.opinion_orderbook_workers
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(self.get_opinion_orderbook, token, depth): token
+                for token in tokens
+            }
+            for future in as_completed(futures):
+                token = futures[future]
+                try:
+                    snapshots[token] = future.result()
+                except Exception as exc:
+                    print(f"⚠️ Opinion 订单簿获取失败 (token={token[:12]}...): {exc}")
+                    snapshots[token] = None
+
+        return snapshots
+
+    def _normalize_opinion_levels(
+        self, raw_levels: Any, depth: int, reverse: bool
+    ) -> List[OrderBookLevel]:
+        """标准化 Opinion 订单簿档位"""
+        levels: List[OrderBookLevel] = []
+        if not raw_levels:
+            return levels
+
+        sorted_levels = sorted(
+            raw_levels,
+            key=lambda x: float(getattr(x, "price", 0.0)),
+            reverse=reverse,
+        )
+
+        for entry in sorted_levels[:depth]:
+            price = self.fee_calculator.round_price(
+                to_float(getattr(entry, "price", None))
+            )
+            size = to_float(
+                getattr(entry, "size", None)
+                or getattr(entry, "quantity", None)
+                or getattr(entry, "maker_amount", None)
+                or getattr(entry, "makerAmountInBaseToken", None)
+            )
+
+            if price is None or size is None:
+                continue
+
+            levels.append(OrderBookLevel(price=price, size=size))
+
+        return levels
+
+    def _normalize_polymarket_levels(
+        self, raw_levels: Any, depth: int, reverse: bool
+    ) -> List[OrderBookLevel]:
+        """标准化 Polymarket 订单簿档位"""
+        levels: List[OrderBookLevel] = []
+        if not raw_levels:
+            return levels
+
+        sorted_levels = sorted(
+            raw_levels,
+            key=lambda x: float(getattr(x, "price", 0.0)),
+            reverse=reverse,
+        )
+
+        for entry in sorted_levels[:depth]:
+            price = self.fee_calculator.round_price(
+                to_float(getattr(entry, "price", None))
+            )
+            size = to_float(
+                getattr(entry, "size", None)
+                or getattr(entry, "quantity", None)
+                or getattr(entry, "remaining", None)
+            )
+
+            if price is None or size is None:
+                continue
+
+            levels.append(OrderBookLevel(price=price, size=size))
+
+        return levels
+
+    def derive_no_orderbook(
+        self, yes_book: OrderBookSnapshot, no_token_id: str
+    ) -> Optional[OrderBookSnapshot]:
+        """从 YES token 订单簿推导 NO token 订单簿"""
+        if not yes_book:
+            return None
+
+        # NO的bids来自YES的asks
+        no_bids: List[OrderBookLevel] = []
+        for level in yes_book.asks:
+            price = self.fee_calculator.round_price(1.0 - level.price)
+            if price is None:
+                continue
+            no_bids.append(OrderBookLevel(price=price, size=level.size))
+        no_bids.sort(key=lambda x: x.price, reverse=True)
+
+        # NO的asks来自YES的bids
+        no_asks: List[OrderBookLevel] = []
+        for level in yes_book.bids:
+            price = self.fee_calculator.round_price(1.0 - level.price)
+            if price is None:
+                continue
+            no_asks.append(OrderBookLevel(price=price, size=level.size))
+        no_asks.sort(key=lambda x: x.price)
+
+        return OrderBookSnapshot(
+            bids=no_bids,
+            asks=no_asks,
+            source=yes_book.source,
+            token_id=no_token_id,
+            timestamp=yes_book.timestamp,
+        )
+
+    # ==================== 市场匹配加载 ====================
+
+    def load_market_matches(self, filename: str = "market_matches.json") -> bool:
+        """从文件加载市场匹配"""
+        files = (
+            [filename]
+            if isinstance(filename, str) and "," not in filename
+            else [p.strip() for p in filename.split(",") if p.strip()]
+        )
+
+        combined: List[MarketMatch] = []
+
+        for fname in files:
+            if not os.path.exists(fname):
+                print(f"⚠️ 文件不存在: {fname}")
+                continue
+
+            try:
+                with open(fname, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                for item in data:
+                    if isinstance(item, dict):
+                        if "cutoff_at" in item:
+                            item["cutoff_at"] = to_int(item.get("cutoff_at"))
+                        combined.append(MarketMatch(**item))
+
+                print(f"✅ 从 {fname} 加载 {len(data)} 条匹配")
+            except Exception as e:
+                print(f"⚠️ 读取 {fname} 时出错: {e}")
+
+        if combined:
+            self.market_matches = combined
+            print(f"✅ 共加载 {len(self.market_matches)} 个市场匹配\n")
+            return True
+
+        return False
+
+    # ==================== 盈利性分析 ====================
+
+    def compute_profitability_metrics(
+        self,
+        match: MarketMatch,
+        first_platform: str,
+        first_price: Optional[float],
+        second_platform: str,
+        second_price: Optional[float],
+        min_size: Optional[float],
+    ) -> Optional[Dict[str, float]]:
+        """计算盈利性指标"""
+        assumed_size = max(self.config.roi_reference_size, min_size or 0.0)
+
+        # 计算有效价格（含手续费）
+        eff_first = self.fee_calculator.calculate_opinion_cost_per_token(
+            first_price, assumed_size
+        ) if first_platform == "opinion" else self.fee_calculator.round_price(first_price)
+
+        eff_second = self.fee_calculator.calculate_opinion_cost_per_token(
+            second_price, assumed_size
+        ) if second_platform == "opinion" else self.fee_calculator.round_price(second_price)
+
+        if eff_first is None or eff_second is None:
+            return None
+
+        total_cost = self.fee_calculator.round_price(eff_first + eff_second)
+        if total_cost is None or total_cost <= 0:
+            return None
+
+        profit = 1.0 - total_cost
+        profit_rate_decimal = profit / total_cost
+        profit_rate_pct = profit_rate_decimal * 100.0
+
+        # 计算年化收益率
+        annualized_pct = None
+        if match.cutoff_at:
+            seconds_remaining = float(match.cutoff_at) - time.time()
+            if seconds_remaining > 0:
+                annualized_decimal = profit_rate_decimal * (
+                    self.config.seconds_per_year / seconds_remaining
+                )
+                annualized_pct = annualized_decimal * 100.0
+
+        return {
+            "cost": total_cost,
+            "profit_rate": profit_rate_pct,
+            "annualized_rate": annualized_pct,
+            "assumed_size": assumed_size,
+        }
+
+    # ==================== 订单执行 ====================
+
+    def place_opinion_order_with_retries(
+        self, order: Any, context: str = ""
+    ) -> Tuple[bool, Optional[Any]]:
+        """Opinion 下单带重试"""
+        prefix = f"[{context}] " if context else ""
+        last_result = None
+
+        for attempt in range(1, self.config.order_max_retries + 1):
+            try:
+                result = self.clients.get_opinion_client().place_order(order)
+                last_result = result
+
+                if getattr(result, "errno", 0) == 0:
+                    return True, result
+
+                err_msg = getattr(result, "errmsg", "unknown error")
+                print(
+                    f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {err_msg}"
+                )
+
+                if "insufficient balance" in err_msg.lower():
+                    print(f"\n❌ 检测到余额不足，退出程序")
+                    sys.exit(1)
+
+            except Exception as exc:
+                print(f"⚠️ {prefix}Opinion 下单异常: {exc}")
+                if "insufficient balance" in str(exc).lower():
+                    sys.exit(1)
+
+            if attempt < self.config.order_max_retries:
+                time.sleep(self.config.order_retry_delay)
+
+        return False, last_result
+
+    def place_polymarket_order_with_retries(
+        self, order_args: Any, order_type: Any, context: str = ""
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """Polymarket 下单带重试"""
+        prefix = f"[{context}] " if context else ""
+        last_result = None
+
+        for attempt in range(1, self.config.order_max_retries + 1):
+            try:
+                signed_order = self.clients.get_polymarket_client().create_order(
+                    order_args
+                )
+                result = self.clients.get_polymarket_client().post_order(
+                    signed_order, order_type
+                )
+                last_result = result if isinstance(result, dict) else None
+
+                error_msg = None
+                if isinstance(result, dict):
+                    if result.get("success") is False:
+                        error_msg = result.get("message") or result.get("error")
+                    elif result.get("error"):
+                        error_msg = result.get("error")
+
+                if not error_msg:
+                    return True, result
+
+                print(f"⚠️ {prefix}Polymarket 下单失败: {error_msg}")
+
+                if error_msg and "not enough balance" in error_msg.lower():
+                    sys.exit(1)
+
+            except Exception as exc:
+                print(f"⚠️ {prefix}Polymarket 下单异常: {exc}")
+                if "not enough balance" in str(exc).lower():
+                    sys.exit(1)
+
+            if attempt < self.config.order_max_retries:
+                time.sleep(self.config.order_retry_delay)
+
+        return False, last_result
+
+    # ==================== 套利执行 ====================
+
+    def execute_arbitrage_pro(self):
+        """专业套利执行模式"""
+        if not self.market_matches:
+            print("❌ 没有可用的市场匹配")
+            return
+
+        THRESHOLD_PRICE = 0.97
+        THRESHOLD_SIZE = 200
+
+        print(f"\n{'='*100}")
+        print(f"开始扫描所有市场的套利机会...")
+        print(f"条件: 成本 < ${THRESHOLD_PRICE:.2f}, 最小数量 > {THRESHOLD_SIZE}")
+        print(f"{'='*100}\n")
+
+        start_time = time.time()
+        total_matches = len(self.market_matches)
+        completed_count = 0
+        batch_size = self.config.orderbook_batch_size
+
+        for batch_start in range(0, total_matches, batch_size):
+            batch_matches = self.market_matches[batch_start : batch_start + batch_size]
+
+            # 批量获取订单簿
+            poly_tokens = [
+                m.polymarket_yes_token for m in batch_matches if m.polymarket_yes_token
+            ]
+            opinion_tokens = [
+                m.opinion_yes_token for m in batch_matches if m.opinion_yes_token
+            ]
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                future_poly = executor.submit(
+                    self.get_polymarket_orderbooks_bulk, poly_tokens
+                )
+                future_opinion = executor.submit(
+                    self.fetch_opinion_orderbooks_parallel, opinion_tokens
+                )
+                poly_books = future_poly.result()
+                opinion_books = future_opinion.result()
+
+            # 扫描每个市场
+            for match in batch_matches:
+                opinion_yes_book = opinion_books.get(match.opinion_yes_token)
+                poly_yes_book = poly_books.get(match.polymarket_yes_token)
+
+                completed_count += 1
+                print(f"[{completed_count}/{total_matches}] 扫描: {match.question[:70]}...")
+
+                if not opinion_yes_book or not poly_yes_book:
+                    continue
+
+                # 推导 NO 订单簿
+                opinion_no_book = self.derive_no_orderbook(
+                    opinion_yes_book, match.opinion_no_token
+                )
+                poly_no_book = self.derive_no_orderbook(
+                    poly_yes_book, match.polymarket_no_token
+                )
+
+                # 检测套利机会
+                self._scan_market_opportunities(
+                    match,
+                    opinion_yes_book,
+                    opinion_no_book,
+                    poly_yes_book,
+                    poly_no_book,
+                    THRESHOLD_PRICE,
+                    THRESHOLD_SIZE,
+                )
+
+        elapsed = time.time() - start_time
+        print(f"\n✅ 扫描完成，耗时 {elapsed:.2f}s\n")
+
+    def _scan_market_opportunities(
+        self,
+        match: MarketMatch,
+        opinion_yes_book: OrderBookSnapshot,
+        opinion_no_book: Optional[OrderBookSnapshot],
+        poly_yes_book: OrderBookSnapshot,
+        poly_no_book: Optional[OrderBookSnapshot],
+        threshold_price: float,
+        threshold_size: float,
+    ):
+        """扫描单个市场的套利机会"""
+        # 策略1: Opinion YES ask + Polymarket NO ask
+        if (
+            opinion_yes_book
+            and opinion_yes_book.asks
+            and poly_no_book
+            and poly_no_book.asks
+        ):
+            op_yes_ask = opinion_yes_book.asks[0]
+            pm_no_ask = poly_no_book.asks[0]
+
+            if op_yes_ask and pm_no_ask:
+                min_size = min(op_yes_ask.size or 0, pm_no_ask.size or 0)
+                metrics = self.compute_profitability_metrics(
+                    match,
+                    "opinion",
+                    op_yes_ask.price,
+                    "polymarket",
+                    pm_no_ask.price,
+                    min_size,
+                )
+
+                if metrics and metrics["cost"] < threshold_price and min_size > threshold_size:
+                    self._report_opportunity(
+                        "Opinion YES ask + Poly NO ask",
+                        metrics,
+                        min_size,
+                    )
+
+        # 策略2: Opinion NO ask + Polymarket YES ask
+        if (
+            opinion_no_book
+            and opinion_no_book.asks
+            and poly_yes_book
+            and poly_yes_book.asks
+        ):
+            op_no_ask = opinion_no_book.asks[0]
+            pm_yes_ask = poly_yes_book.asks[0]
+
+            if op_no_ask and pm_yes_ask:
+                min_size = min(op_no_ask.size or 0, pm_yes_ask.size or 0)
+                metrics = self.compute_profitability_metrics(
+                    match,
+                    "opinion",
+                    op_no_ask.price,
+                    "polymarket",
+                    pm_yes_ask.price,
+                    min_size,
+                )
+
+                if metrics and metrics["cost"] < threshold_price and min_size > threshold_size:
+                    self._report_opportunity(
+                        "Opinion NO ask + Poly YES ask",
+                        metrics,
+                        min_size,
+                    )
+
+    def _report_opportunity(
+        self, strategy: str, metrics: Dict[str, float], min_size: float
+    ):
+        """报告套利机会"""
+        ann_text = (
+            f", 年化={metrics['annualized_rate']:.2f}%"
+            if metrics["annualized_rate"]
+            else ""
+        )
+        print(
+            f"  ✓ 发现套利: {strategy}, "
+            f"成本=${metrics['cost']:.3f}, "
+            f"收益率={metrics['profit_rate']:.2f}%{ann_text}, "
+            f"数量={min_size:.2f}"
+        )
+
+    def run_pro_loop(self, interval_seconds: float):
+        """持续运行专业模式"""
+        min_interval = max(5.0, interval_seconds)
+        print(f"♻️ 启动专业套利循环，间隔 {min_interval:.1f}s")
+
+        try:
+            while not self._monitor_stop_event.is_set():
+                cycle_start = time.time()
+
+                try:
+                    self.execute_arbitrage_pro()
+                except Exception as exc:
+                    print(f"❌ 扫描异常: {exc}")
+                    traceback.print_exc()
+
+                elapsed = time.time() - cycle_start
+                sleep_time = max(0.0, min_interval - elapsed)
+
+                if sleep_time > 0:
+                    print(f"🕒 {sleep_time:.1f}s 后进行下一轮扫描")
+                    self._monitor_stop_event.wait(timeout=sleep_time)
+        finally:
+            self._monitor_stop_event.set()
+
+
+def main():
+    """主函数"""
+    parser = argparse.ArgumentParser(
+        description="模块化跨平台套利检测器 - Opinion vs Polymarket"
+    )
+
+    parser.add_argument(
+        "--matches-file",
+        type=str,
+        default="market_matches.json",
+        help="市场匹配结果文件路径",
+    )
+
+    parser.add_argument("--pro", action="store_true", help="运行专业套利执行模式")
+
+    parser.add_argument(
+        "--pro-once", action="store_true", help="仅运行一次扫描，不进入循环"
+    )
+
+    parser.add_argument(
+        "--loop-interval", type=float, default=None, help="循环间隔时间（秒）"
+    )
+
+    args = parser.parse_args()
+
+    try:
+        # 初始化日志
+        config = ArbitrageConfig()
+        setup_logger(config.log_dir, config.arbitrage_log_pointer)
+
+        # 显示配置摘要
+        config.display_summary()
+
+        # 创建套利检测器
+        arbitrage = ModularArbitrage(config)
+
+        # 加载市场匹配
+        if not arbitrage.load_market_matches(args.matches_file):
+            print("⚠️ 无法加载市场匹配")
+            return
+
+        # 运行套利扫描
+        if args.pro:
+            loop_interval = args.loop_interval or config.pro_loop_interval
+
+            if args.pro_once or loop_interval <= 0:
+                arbitrage.execute_arbitrage_pro()
+            else:
+                arbitrage.run_pro_loop(loop_interval)
+
+    except KeyboardInterrupt:
+        print("\n\n⚠️ 用户中断")
+    except Exception as e:
+        print(f"\n❌ 发生错误: {e}")
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
