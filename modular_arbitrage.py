@@ -75,6 +75,11 @@ class ModularArbitrage:
         self._opinion_rate_lock = threading.Lock()
         self._opinion_last_request = 0.0
 
+        # 即时执行配置
+        self.immediate_exec_enabled = self.config.immediate_exec_enabled
+        self.immediate_min_percent = self.config.immediate_min_percent
+        self.immediate_max_percent = self.config.immediate_max_percent
+
         print("✅ 模块化套利检测器初始化完成!\n")
 
     # ==================== 订单簿管理 ====================
@@ -491,6 +496,293 @@ class ModularArbitrage:
 
         return False, last_result
 
+    # ==================== 辅助方法 ====================
+
+    def _round_price(self, value: Optional[float]) -> Optional[float]:
+        """四舍五入价格到配置的小数位数"""
+        if value is None:
+            return None
+        try:
+            return round(float(value), self.config.price_decimals)
+        except (TypeError, ValueError):
+            return None
+
+    def calculate_opinion_fee_rate(self, price: float) -> float:
+        """
+        计算 Opinion 平台的手续费率
+
+        根据推导公式: fee_rate = 0.06 * price * (1 - price) + 0.0025
+
+        Args:
+            price: 订单价格
+
+        Returns:
+            手续费率 (小数形式)
+        """
+        return 0.06 * price * (1 - price) + 0.0025
+
+    def calculate_opinion_adjusted_amount(self, price: float, target_amount: float) -> float:
+        """
+        计算 Opinion 平台考虑手续费后应下单的数量
+
+        目标: 使得扣除手续费后,实际得到的数量等于 target_amount
+
+        逻辑流程:
+        1. 计算 fee_rate = 0.06 * price * (1 - price) + 0.0025
+        2. 预计算: A_provisional = target_amount / (1 - fee_rate)
+        3. 计算预估手续费: Fee_provisional = price * A_provisional * fee_rate
+        4. 判断适用场景:
+           - 如果 Fee_provisional > 0.5: 适用百分比手续费
+             A_order = target_amount / (1 - fee_rate)
+           - 如果 Fee_provisional <= 0.5: 适用最低手续费 $0.5
+             A_order = target_amount + 0.5 / price
+
+        Args:
+            price: 订单价格
+            target_amount: 期望最终得到的数量
+
+        Returns:
+            应下单的数量 (考虑手续费后)
+        """
+        # 步骤1: 计算手续费率
+        fee_rate = self.calculate_opinion_fee_rate(price)
+
+        # 步骤2: 预计算 (假设适用百分比手续费)
+        A_provisional = target_amount / (1 - fee_rate)
+
+        # 步骤3: 计算预估手续费
+        Fee_provisional = price * A_provisional * fee_rate
+
+        # 步骤4: 判断适用场景并返回最终数量
+        if Fee_provisional > 0.5:
+            # 适用百分比手续费
+            A_order = target_amount / (1 - fee_rate)
+        else:
+            # 适用最低手续费 $0.5
+            A_order = target_amount + 0.5 / price
+
+        return A_order
+
+    def get_order_size_for_platform(
+        self,
+        platform: str,
+        price: float,
+        target_amount: float,
+        is_hedge: bool = False
+    ) -> Tuple[float, float]:
+        """
+        获取指定平台的下单数量
+
+        对于 Opinion 平台,需要考虑手续费进行修正
+        对于 Polymarket 平台,直接使用目标数量
+
+        Args:
+            platform: 平台名称 ('opinion' 或 'polymarket')
+            price: 订单价格
+            target_amount: 目标数量（希望实际得到的数量）
+            is_hedge: 是否是对冲单（对冲单需要精确匹配首单的实际数量）
+
+        Returns:
+            (order_size, effective_size): 下单数量和实际得到的数量
+        """
+        if platform == 'opinion':
+            # Opinion 需要考虑手续费修正
+            order_size = self.calculate_opinion_adjusted_amount(price, target_amount)
+            effective_size = target_amount  # 修正后应该能得到目标数量
+            return order_size, effective_size
+        else:
+            # Polymarket 直接使用目标数量
+            return target_amount, target_amount
+
+    # ==================== 即时执行方法 ====================
+
+    def _maybe_auto_execute(self, opportunity: Dict[str, Any]) -> None:
+        """在满足配置阈值时尝试自动执行即时套利"""
+        if not self.immediate_exec_enabled:
+            return
+
+        profit_rate = opportunity.get('profit_rate')
+        if profit_rate is None:
+            return
+
+        lower = self.immediate_min_percent
+        upper = self.immediate_max_percent
+
+        if lower <= profit_rate <= upper:
+            print(f"  ⚡ 利润率 {profit_rate:.2f}% 在阈值 [{lower:.2f}%,{upper:.2f}%]，启动即时执行线程")
+            try:
+                self._spawn_execute_thread(opportunity)
+            except Exception as exc:
+                print(f"⚠️ 无法启动即时执行线程: {exc}")
+        else:
+            print(f"  🔶 利润率 {profit_rate:.2f}% 不在阈值范围 [{lower:.2f}%,{upper:.2f}%]，跳过自动执行")
+
+    def _spawn_execute_thread(self, opportunity: Dict[str, Any]) -> None:
+        """启动一个后台线程来执行给定的套利机会（非交互）"""
+        thread_name = f"instant-exec-{len(self._active_exec_threads)+1}"
+        t = threading.Thread(
+            target=self._execute_opportunity,
+            args=(opportunity,),
+            daemon=False,
+            name=thread_name
+        )
+        t.start()
+        self._active_exec_threads.append(t)
+        print(f"🧵 已启动即时执行线程 (线程数={len(self._active_exec_threads)})")
+
+    def wait_for_active_exec_threads(self) -> None:
+        """等待所有即时执行线程完成，防止主程序提前退出"""
+        # 移除已经结束的线程，仅保留仍然活跃的
+        self._active_exec_threads = [t for t in self._active_exec_threads if t.is_alive()]
+
+        if not self._active_exec_threads:
+            return
+
+        print(f"\n⏳ 等待 {len(self._active_exec_threads)} 个即时执行线程完成...")
+        try:
+            for t in list(self._active_exec_threads):
+                t.join()
+        except KeyboardInterrupt:
+            print("\n⚠️ 手动中断即时执行线程的等待，线程仍在后台运行")
+            # 保留仍然活跃的线程引用，方便后续再次等待
+            self._active_exec_threads = [t for t in self._active_exec_threads if t.is_alive()]
+            raise
+
+        self._active_exec_threads.clear()
+        print("✅ 所有即时执行线程已完成")
+
+    def _execute_opportunity(self, opp: Dict[str, Any]) -> None:
+        """在后台执行一个套利机会
+
+        注意: 此函数尽量复用已有下单逻辑，但为避免复杂交互，采取保守策略：
+        - immediate: 在两个平台分别下限价买单
+        """
+        try:
+            # 读取最小下单量配置
+            try:
+                default_size = float(os.getenv("IMMEDIATE_ORDER_SIZE", "200"))
+            except Exception:
+                default_size = 200.0
+
+            order_size = min(max(float(default_size), 0.9 * float(opp.get('min_size', 0.0))), 1000.0)
+            # 保证不为零
+            if not order_size or order_size <= 0:
+                order_size = default_size
+
+            print(f"🟢 即时执行机会: {opp.get('name')} | 利润率={opp.get('profit_rate'):.2f}% | 数量={order_size:.2f}")
+
+            # Immediate execution: place both orders
+            if opp.get('type') == 'immediate':
+                first_price = self._round_price(opp.get('first_price'))
+                second_price = self._round_price(opp.get('second_price'))
+
+                # 计算第一个平台的下单数量(考虑手续费)
+                first_order_size, first_effective_size = self.get_order_size_for_platform(
+                    opp['first_platform'],
+                    first_price if first_price is not None else opp.get('first_price', 0.0),
+                    order_size
+                )
+
+                # 计算第二个平台的下单数量(需要匹配第一个平台的实际数量)
+                second_order_size, second_effective_size = self.get_order_size_for_platform(
+                    opp['second_platform'],
+                    second_price if second_price is not None else opp.get('second_price', 0.0),
+                    first_effective_size,
+                    is_hedge=True
+                )
+
+                print(f"  第一平台下单: {first_order_size:.2f} -> 预期实际: {first_effective_size:.2f}")
+                print(f"  第二平台下单: {second_order_size:.2f} -> 预期实际: {second_effective_size:.2f}")
+
+                # Place first order
+                if opp.get('first_platform') == 'opinion':
+                    try:
+                        order1 = PlaceOrderDataInput(
+                            marketId=opp['match'].opinion_market_id,
+                            tokenId=str(opp['first_token']),
+                            side=opp['first_side'],
+                            orderType=LIMIT_ORDER,
+                            price=str(first_price if first_price is not None else opp['first_price']),
+                            makerAmountInBaseToken=str(first_order_size)
+                        )
+                        success, res1 = self.place_opinion_order_with_retries(
+                            order1,
+                            context="即时执行首单"
+                        )
+                        if success and res1:
+                            print("✅ Opinion 订单提交成功 (即时执行)")
+                        else:
+                            print(f"❌ Opinion 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        print(f"❌ Opinion 下单异常: {e}")
+                else:
+                    try:
+                        order1 = OrderArgs(
+                            token_id=opp['first_token'],
+                            price=first_price if first_price is not None else opp['first_price'],
+                            size=first_order_size,
+                            side=opp['first_side']
+                        )
+                        success, res1 = self.place_polymarket_order_with_retries(
+                            order1,
+                            OrderType.GTC,
+                            context="即时执行首单"
+                        )
+                        if success:
+                            print(f"✅ Polymarket 订单提交成功 (即时执行): {res1}")
+                        else:
+                            print(f"❌ Polymarket 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        print(f"❌ Polymarket 下单异常: {e}")
+
+                # Place second order
+                if opp.get('second_platform') == 'opinion':
+                    try:
+                        order2 = PlaceOrderDataInput(
+                            marketId=opp['match'].opinion_market_id,
+                            tokenId=str(opp['second_token']),
+                            side=opp['second_side'],
+                            orderType=LIMIT_ORDER,
+                            price=str(second_price if second_price is not None else opp['second_price']),
+                            makerAmountInBaseToken=str(second_order_size)
+                        )
+                        success, res2 = self.place_opinion_order_with_retries(
+                            order2,
+                            context="即时执行对冲"
+                        )
+                        if success and res2:
+                            print("✅ Opinion 对冲订单提交成功 (即时执行)")
+                        else:
+                            print(f"❌ Opinion 对冲下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        print(f"❌ Opinion 对冲下单异常: {e}")
+                else:
+                    try:
+                        order2 = OrderArgs(
+                            token_id=opp['second_token'],
+                            price=second_price if second_price is not None else opp['second_price'],
+                            size=second_order_size,
+                            side=opp['second_side']
+                        )
+                        success, res2 = self.place_polymarket_order_with_retries(
+                            order2,
+                            OrderType.GTC,
+                            context="即时执行对冲"
+                        )
+                        if success:
+                            print(f"✅ Polymarket 对冲订单提交成功 (即时执行): {res2}")
+                        else:
+                            print(f"❌ Polymarket 对冲下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        print(f"❌ Polymarket 对冲下单异常: {e}")
+
+                print("🟢 即时套利执行线程完成 (immediate)")
+                return
+
+        except Exception as e:
+            print(f"❌ 即时执行线程异常: {e}")
+            traceback.print_exc()
+
     # ==================== 套利执行 ====================
 
     def execute_arbitrage_pro(self):
@@ -553,7 +845,7 @@ class ModularArbitrage:
                 )
 
                 # 检测套利机会
-                self._scan_market_opportunities(
+                opportunities = self._scan_market_opportunities(
                     match,
                     opinion_yes_book,
                     opinion_no_book,
@@ -562,6 +854,10 @@ class ModularArbitrage:
                     THRESHOLD_PRICE,
                     THRESHOLD_SIZE,
                 )
+
+                # 尝试自动执行发现的机会
+                for opp in opportunities:
+                    self._maybe_auto_execute(opp)
 
         elapsed = time.time() - start_time
         print(f"\n✅ 扫描完成，耗时 {elapsed:.2f}s\n")
@@ -575,8 +871,10 @@ class ModularArbitrage:
         poly_no_book: Optional[OrderBookSnapshot],
         threshold_price: float,
         threshold_size: float,
-    ):
-        """扫描单个市场的套利机会"""
+    ) -> List[Dict[str, Any]]:
+        """扫描单个市场的套利机会，返回机会列表"""
+        opportunities = []
+
         # 策略1: Opinion YES ask + Polymarket NO ask
         if (
             opinion_yes_book
@@ -587,7 +885,7 @@ class ModularArbitrage:
             op_yes_ask = opinion_yes_book.asks[0]
             pm_no_ask = poly_no_book.asks[0]
 
-            if op_yes_ask and pm_no_ask:
+            if op_yes_ask and pm_no_ask and op_yes_ask.price is not None and pm_no_ask.price is not None:
                 min_size = min(op_yes_ask.size or 0, pm_no_ask.size or 0)
                 metrics = self.compute_profitability_metrics(
                     match,
@@ -599,6 +897,34 @@ class ModularArbitrage:
                 )
 
                 if metrics and metrics["cost"] < threshold_price and min_size > threshold_size:
+                    # 创建机会对象
+                    first_price = self._round_price(op_yes_ask.price)
+                    second_price = self._round_price(pm_no_ask.price)
+
+                    opportunity = {
+                        'match': match,
+                        'type': 'immediate',
+                        'strategy': 'opinion_yes_ask_poly_no_ask',
+                        'name': '立即套利: Opinion YES ask + Polymarket NO ask',
+                        'cost': metrics['cost'],
+                        'profit_rate': metrics['profit_rate'],
+                        'annualized_rate': metrics['annualized_rate'],
+                        'min_size': min_size,
+                        'first_platform': 'opinion',
+                        'first_token': match.opinion_yes_token,
+                        'first_price': first_price,
+                        'first_side': OrderSide.BUY,
+                        'second_platform': 'polymarket',
+                        'second_token': match.polymarket_no_token,
+                        'second_price': second_price,
+                        'second_side': BUY,
+                        'opinion_yes_book': opinion_yes_book,
+                        'opinion_no_book': opinion_no_book,
+                        'poly_yes_book': poly_yes_book,
+                        'poly_no_book': poly_no_book,
+                    }
+                    opportunities.append(opportunity)
+
                     self._report_opportunity(
                         "Opinion YES ask + Poly NO ask",
                         metrics,
@@ -615,7 +941,7 @@ class ModularArbitrage:
             op_no_ask = opinion_no_book.asks[0]
             pm_yes_ask = poly_yes_book.asks[0]
 
-            if op_no_ask and pm_yes_ask:
+            if op_no_ask and pm_yes_ask and op_no_ask.price is not None and pm_yes_ask.price is not None:
                 min_size = min(op_no_ask.size or 0, pm_yes_ask.size or 0)
                 metrics = self.compute_profitability_metrics(
                     match,
@@ -627,11 +953,41 @@ class ModularArbitrage:
                 )
 
                 if metrics and metrics["cost"] < threshold_price and min_size > threshold_size:
+                    # 创建机会对象
+                    first_price = self._round_price(op_no_ask.price)
+                    second_price = self._round_price(pm_yes_ask.price)
+
+                    opportunity = {
+                        'match': match,
+                        'type': 'immediate',
+                        'strategy': 'opinion_no_ask_poly_yes_ask',
+                        'name': '立即套利: Opinion NO ask + Polymarket YES ask',
+                        'cost': metrics['cost'],
+                        'profit_rate': metrics['profit_rate'],
+                        'annualized_rate': metrics['annualized_rate'],
+                        'min_size': min_size,
+                        'first_platform': 'opinion',
+                        'first_token': match.opinion_no_token,
+                        'first_price': first_price,
+                        'first_side': OrderSide.BUY,
+                        'second_platform': 'polymarket',
+                        'second_token': match.polymarket_yes_token,
+                        'second_price': second_price,
+                        'second_side': BUY,
+                        'opinion_yes_book': opinion_yes_book,
+                        'opinion_no_book': opinion_no_book,
+                        'poly_yes_book': poly_yes_book,
+                        'poly_no_book': poly_no_book,
+                    }
+                    opportunities.append(opportunity)
+
                     self._report_opportunity(
                         "Opinion NO ask + Poly YES ask",
                         metrics,
                         min_size,
                     )
+
+        return opportunities
 
     def _report_opportunity(
         self, strategy: str, metrics: Dict[str, float], min_size: float
@@ -660,9 +1016,17 @@ class ModularArbitrage:
 
                 try:
                     self.execute_arbitrage_pro()
+                except KeyboardInterrupt:
+                    raise
                 except Exception as exc:
                     print(f"❌ 扫描异常: {exc}")
                     traceback.print_exc()
+
+                # 等待所有即时执行线程完成
+                try:
+                    self.wait_for_active_exec_threads()
+                except KeyboardInterrupt:
+                    raise
 
                 elapsed = time.time() - cycle_start
                 sleep_time = max(0.0, min_interval - elapsed)
