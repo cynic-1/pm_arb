@@ -196,7 +196,7 @@ class ModularArbitrageMM(ModularArbitrage):
         skew = abs(opinion_book.timestamp - polymarket_book.timestamp)
         if skew <= max_skew:
             return opinion_book, polymarket_book
-        print(
+        logger.warning(
             f"⚠️ 订单簿时间差 {skew:.2f}s 超过阈值 {max_skew:.2f}s，跳过本次检测: {match.question[:60]}"
         )
         return None, None
@@ -310,13 +310,13 @@ class ModularArbitrageMM(ModularArbitrage):
 
     def _scan_liquidity_opportunities(self) -> List[Dict[str, Any]]:
         if not self.market_matches:
-            print("⚠️ 未加载市场匹配，无法扫描流动性机会")
+            logger.error("⚠️ 未加载市场匹配，无法扫描流动性机会")
             return []
 
         candidate_map: Dict[str, Dict[str, Any]] = {}
         total_matches = len(self.market_matches)
         batch_size = self.config.orderbook_batch_size
-        print(f"🔍 扫描 {total_matches} 个市场的流动性机会 (年化阈值 ≥ {self.liquidity_min_annualized:.2f}%)")
+        logger.info(f"🔍 扫描 {total_matches} 个市场的流动性机会 (年化阈值 ≥ {self.liquidity_min_annualized:.2f}%)")
 
         for batch_start in range(0, total_matches, batch_size):
             batch_matches = self.market_matches[batch_start : batch_start + batch_size]
@@ -347,7 +347,7 @@ class ModularArbitrageMM(ModularArbitrage):
                     if not prev or (candidate.get("annualized_rate") or 0.0) > (prev.get("annualized_rate") or 0.0):
                         candidate_map[candidate["key"]] = candidate
 
-        print(f"🔎 找到 {len(candidate_map)} 个满足年化收益阈值的机会")
+        logger.info(f"🔎 找到 {len(candidate_map)} 个满足年化收益阈值的机会")
         return list(candidate_map.values())
 
     def _register_liquidity_order_state(self, state: LiquidityOrderState) -> None:
@@ -356,13 +356,13 @@ class ModularArbitrageMM(ModularArbitrage):
             if old_state and old_state.order_id != state.order_id:
                 self.liquidity_orders_by_id.pop(old_state.order_id, None)
                 if self.liquidity_debug:
-                    print(f"🗑️ 移除旧订单 {old_state.order_id[:10]}... 引用 (被新订单替代)")
+                    logger.info(f"🗑️ 移除旧订单 {old_state.order_id[:10]}... 引用 (被新订单替代)")
 
             self.liquidity_orders[state.key] = state
             self.liquidity_orders_by_id[state.order_id] = state
 
         if self.liquidity_debug:
-            print(f"📥 追踪流动性挂单 {state.order_id} -> {state.key}")
+            logger.info(f"📥 追踪流动性挂单 {state.order_id} -> {state.key}")
         self._ensure_liquidity_status_thread()
 
     def _remove_liquidity_order_state(self, key: str) -> None:
@@ -371,18 +371,18 @@ class ModularArbitrageMM(ModularArbitrage):
             if state:
                 self.liquidity_orders_by_id.pop(state.order_id, None)
         if state and self.liquidity_debug:
-            print(f"📤 移除流动性挂单 {state.order_id} -> {key}")
+            logger.info(f"📤 移除流动性挂单 {state.order_id} -> {key}")
 
     def _fetch_opinion_order_status(self, order_id: str) -> Optional[Any]:
         try:
             self._throttle_opinion_request()
             response = self.clients.get_opinion_client().get_order_by_id(order_id)
         except Exception as exc:
-            print(f"⚠️ Opinion 订单状态查询失败 {order_id}: {exc}")
+            logger.warning(f"⚠️ Opinion 订单状态查询失败 {order_id}: {exc}")
             return None
 
         if getattr(response, "errno", 0) != 0:
-            print(f"⚠️ Opinion 返回错误码 {getattr(response, 'errno', 0)} 查询 {order_id}")
+            logger.warning(f"⚠️ Opinion 返回错误码 {getattr(response, 'errno', 0)} 查询 {order_id}")
             return None
 
         result = getattr(response, "result", None)
@@ -397,19 +397,19 @@ class ModularArbitrageMM(ModularArbitrage):
         try:
             self._throttle_opinion_request()
             response = self.clients.get_opinion_client().cancel_order(state.order_id)
-            print(f"🚫 已发送取消请求 Opinion 流动性挂单 {state.order_id[:10]}... ({reason})")
+            logger.info(f"🚫 已发送取消请求 Opinion 流动性挂单 {state.order_id[:10]}... ({reason})")
             if hasattr(response, "errno") and response.errno != 0:
-                print(f"⚠️ 取消请求返回错误码 {response.errno}: {getattr(response, 'errmsg', 'N/A')}")
+                logger.error(f"⚠️ 取消请求返回错误码 {response.errno}: {getattr(response, 'errmsg', 'N/A')}")
                 return False
         except Exception as exc:
-            print(f"⚠️ 发送取消请求失败 {state.order_id[:10]}...: {exc}")
+            logger.error(f"⚠️ 发送取消请求失败 {state.order_id[:10]}...: {exc}")
             return False
 
         time.sleep(0.5)
         try:
             verify_response = self.clients.get_opinion_client().get_order_by_id(state.order_id)
             if getattr(verify_response, "errno", 0) != 0:
-                print(
+                logger.warning(
                     f"⚠️ 验证取消状态失败，无法查询订单 {state.order_id[:10]}... errno={getattr(verify_response, 'errno', 'N/A')}"
                 )
                 return False
@@ -422,14 +422,14 @@ class ModularArbitrageMM(ModularArbitrage):
                 data = data.order_data
 
             if not data:
-                print(f"⚠️ 验证取消状态失败，未返回订单数据 {state.order_id[:10]}...")
+                logger.warning(f"⚠️ 验证取消状态失败，未返回订单数据 {state.order_id[:10]}...")
                 return False
 
             current_status = self._parse_opinion_status(data)
-            print(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
+            logger.info(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
 
             if self._status_is_cancelled(current_status):
-                print(f"✅ 确认订单已取消: {state.order_id[:10]}...")
+                logger.info(f"✅ 确认订单已取消: {state.order_id[:10]}...")
                 self._remove_liquidity_order_state(state.key)
                 return True
 
@@ -444,12 +444,12 @@ class ModularArbitrageMM(ModularArbitrage):
                 )
             )
 
-            print(
+            logger.warning(
                 f"❌ 取消失败！订单仍处于 {current_status} 状态，filled={filled_amount:.2f}/{total_amount}, order_id={state.order_id[:10]}..."
             )
 
             if self._status_is_filled(current_status, filled_amount, total_amount):
-                print(f"⚠️ 订单在取消过程中已成交！需要立即对冲: {state.order_id[:10]}...")
+                logger.warning(f"⚠️ 订单在取消过程中已成交！需要立即对冲: {state.order_id[:10]}...")
                 if filled_amount > state.filled_size + 1e-6:
                     delta = filled_amount - state.filled_size
                     state.filled_size = filled_amount
@@ -461,7 +461,7 @@ class ModularArbitrageMM(ModularArbitrage):
             return False
 
         except Exception as exc:
-            print(f"⚠️ 验证订单取消状态时异常 {state.order_id[:10]}...: {exc}")
+            logger.error(f"⚠️ 验证订单取消状态时异常 {state.order_id[:10]}...: {exc}")
             traceback.print_exc()
             return False
 
@@ -483,7 +483,7 @@ class ModularArbitrageMM(ModularArbitrage):
                 failed_count += 1
 
         if cancelled_count > 0 or failed_count > 0:
-            print(f"📊 订单取消结果: 成功={cancelled_count}, 失败={failed_count}")
+            logger.info(f"📊 订单取消结果: 成功={cancelled_count}, 失败={failed_count}")
 
     def _ensure_liquidity_status_thread(self) -> None:
         if self._liquidity_status_thread and self._liquidity_status_thread.is_alive():
@@ -497,7 +497,7 @@ class ModularArbitrageMM(ModularArbitrage):
         thread.start()
         self._liquidity_status_thread = thread
         if self.liquidity_debug:
-            print("🛰️ 已启动 Opinion 订单状态监控线程")
+            logger.info("🛰️ 已启动 Opinion 订单状态监控线程")
 
     def _stop_liquidity_status_thread(self) -> None:
         if not self._liquidity_status_thread:
@@ -524,7 +524,7 @@ class ModularArbitrageMM(ModularArbitrage):
             except KeyboardInterrupt:
                 raise
             except Exception as exc:
-                print(f"⚠️ 流动性订单状态监控异常: {exc}")
+                logger.error(f"⚠️ 流动性订单状态监控异常: {exc}")
                 traceback.print_exc()
 
             self._liquidity_status_stop.wait(timeout=self.liquidity_status_poll_interval)
@@ -540,7 +540,7 @@ class ModularArbitrageMM(ModularArbitrage):
             if not active:
                 break
             if timeout and (time.time() - start) >= timeout:
-                print("⚠️ 等待 Opinion 挂单完成超时，仍有挂单在执行")
+                logger.info("⚠️ 等待 Opinion 挂单完成超时，仍有挂单在执行")
                 break
             time.sleep(min(self.liquidity_status_poll_interval, 2.0))
 
@@ -610,7 +610,7 @@ class ModularArbitrageMM(ModularArbitrage):
                 log_needed = True
 
             if log_needed:
-                print(
+                logger.info(
                     f"🔍 Opinion 状态: {order_id[:10]} status={state.status or previous_status} "
                     f"filled={filled_amount:.2f}/{target_total:.2f}"
                 )
@@ -624,28 +624,28 @@ class ModularArbitrageMM(ModularArbitrage):
                 self._total_fills_count += 1
                 self._total_fills_volume += delta
 
-                print("=" * 80)
-                print("💰💰💰 【订单状态检测到成交】")
-                print(f"    订单ID: {order_id}")
-                print(f"    本次成交: {delta:.2f}")
-                print(f"    累计成交: {state.filled_size:.2f} / {target_total:.2f}")
-                print(f"    成交进度: {(state.filled_size / target_total * 100) if target_total > 0 else 0:.1f}%")
-                print(f"    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
-                print("=" * 80)
+                logger.info("=" * 80)
+                logger.info("💰💰💰 【订单状态检测到成交】")
+                logger.info(f"    订单ID: {order_id}")
+                logger.info(f"    本次成交: {delta:.2f}")
+                logger.info(f"    累计成交: {state.filled_size:.2f} / {target_total:.2f}")
+                logger.info(f"    成交进度: {(state.filled_size / target_total * 100) if target_total > 0 else 0:.1f}%")
+                logger.info(f"    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
+                logger.info("=" * 80)
 
                 if self.polymarket_trading_enabled:
-                    print("🚀 开始执行对冲操作...")
+                    logger.info("🚀 开始执行对冲操作...")
                     self._hedge_polymarket(state, delta)
                 else:
-                    print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
+                    logger.error("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
             if self._status_is_cancelled(state.status):
-                print(f"⚠️ Opinion 挂单 {order_id[:10]}... 状态 {state.status}，停止跟踪")
+                logger.info(f"⚠️ Opinion 挂单 {order_id[:10]}... 状态 {state.status}，停止跟踪")
                 self._remove_liquidity_order_state(state.key)
                 continue
 
             if self._status_is_filled(state.status, filled_amount, total_amount):
-                print(f"🏁 Opinion 挂单 {order_id[:10]}... 已完成")
+                logger.info(f"🏁 Opinion 挂单 {order_id[:10]}... 已完成")
                 self._remove_liquidity_order_state(state.key)
 
     def _poll_opinion_trades(self) -> None:
@@ -662,12 +662,12 @@ class ModularArbitrageMM(ModularArbitrage):
 
                 if getattr(response, "errno", 1) != 0:
                     if attempt < max_retries:
-                        print(
+                        logger.warning(
                             f"⚠️ Opinion trades API errno={getattr(response, 'errno', None)}, 重试 {attempt}/{max_retries}"
                         )
                         time.sleep(1.0)
                         continue
-                    print(f"❌ Opinion trades API 调用失败达到最大重试次数！errno={getattr(response, 'errno', None)}")
+                    logger.error(f"❌ Opinion trades API 调用失败达到最大重试次数！errno={getattr(response, 'errno', None)}")
                     return
 
                 trade_list = getattr(getattr(response, "result", None), "list", None)
@@ -677,10 +677,10 @@ class ModularArbitrageMM(ModularArbitrage):
 
             except Exception as exc:
                 if attempt < max_retries:
-                    print(f"⚠️ Opinion trades API 调用异常: {exc}, 重试 {attempt}/{max_retries}")
+                    logger.warning(f"⚠️ Opinion trades API 调用异常: {exc}, 重试 {attempt}/{max_retries}")
                     time.sleep(1.0)
                     continue
-                print(f"❌ Opinion trades API 调用失败达到最大重试次数！异常: {exc}")
+                logger.error(f"❌ Opinion trades API 调用失败达到最大重试次数！异常: {exc}")
                 traceback.print_exc()
                 return
 
@@ -753,24 +753,24 @@ class ModularArbitrageMM(ModularArbitrage):
                 tracked_trades_count += len(trade_list_for_order)
                 total_shares = sum(t["shares"] for t in trade_list_for_order)
 
-                print("=" * 80)
-                print("💰💰💰 【新成交】检测到流动性订单成交！")
-                print(f"    订单ID: {order_no[:10]}...")
-                print(f"    成交笔数: {len(trade_list_for_order)}")
-                print(f"    总成交量: {total_shares:.2f}")
-                print("    成交明细:")
+                logger.info("=" * 80)
+                logger.info("💰💰💰 【新成交】检测到流动性订单成交！")
+                logger.info(f"    订单ID: {order_no[:10]}...")
+                logger.info(f"    成交笔数: {len(trade_list_for_order)}")
+                logger.info(f"    总成交量: {total_shares:.2f}")
+                logger.info("    成交明细:")
                 for idx, t in enumerate(trade_list_for_order, 1):
-                    print(
+                    logger.info(
                         f"      {idx}. trade={t['trade_no'][:10]}..., shares={t['shares']:.2f}, price={t['price']}, time={t['created_at']}"
                     )
-                print("=" * 80)
+                logger.info("=" * 80)
 
                 self._handle_opinion_trades_aggregated(trade_list_for_order, state)
             else:
                 untracked_trades_count += len(trade_list_for_order)
 
         if new_trades_count > 0:
-            print(
+            logger.info(
                 f"📊 交易轮询摘要: 新交易={new_trades_count}, 跟踪订单={tracked_trades_count}, 未跟踪订单={untracked_trades_count}"
             )
 
@@ -787,22 +787,22 @@ class ModularArbitrageMM(ModularArbitrage):
         self._total_fills_count += 1
         self._total_fills_volume += delta
 
-        print("┌" + "─" * 78 + "┐")
-        print(f"│ ✅ 成交处理: 订单 {state.order_id[:10]}...")
-        print(f"│    本次成交: {delta:.2f} (聚合 {len(trade_list)} 笔交易)")
-        print(f"│    累计成交: {state.filled_size:.2f}")
-        print(f"│    平均价格: {avg_price:.4f}")
-        print(f"│    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
-        print("└" + "─" * 78 + "┘")
+        logger.info("┌" + "─" * 78 + "┐")
+        logger.info(f"│ ✅ 成交处理: 订单 {state.order_id[:10]}...")
+        logger.info(f"│    本次成交: {delta:.2f} (聚合 {len(trade_list)} 笔交易)")
+        logger.info(f"│    累计成交: {state.filled_size:.2f}")
+        logger.info(f"│    平均价格: {avg_price:.4f}")
+        logger.info(f"│    【统计】总成交次数: {self._total_fills_count}, 总成交量: {self._total_fills_volume:.2f}")
+        logger.info("└" + "─" * 78 + "┘")
 
         if self.polymarket_trading_enabled:
-            print("🚀 开始执行对冲操作...")
+            logger.info("🚀 开始执行对冲操作...")
             self._hedge_polymarket(state, delta)
         else:
-            print("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
+            logger.warning("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
         if state.filled_size >= state.effective_size - 1e-6:
-            print(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交")
+            logger.info(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交")
             self._remove_liquidity_order_state(state.key)
 
     def _hedge_polymarket(self, state: LiquidityOrderState, hedge_size: float) -> None:
@@ -812,12 +812,12 @@ class ModularArbitrageMM(ModularArbitrage):
         if not self.polymarket_trading_enabled:
             return
 
-        print("╔" + "═" * 78 + "╗")
-        print("║ 🛡️ 【对冲下单】开始执行 Polymarket 对冲")
-        print(f"║    需对冲数量: {hedge_size:.2f}")
-        print(f"║    对冲代币: {state.hedge_token}")
-        print(f"║    对冲方向: {state.hedge_side}")
-        print("╠" + "═" * 78 + "╣")
+        logger.info("╔" + "═" * 78 + "╗")
+        logger.info("║ 🛡️ 【对冲下单】开始执行 Polymarket 对冲")
+        logger.info(f"║    需对冲数量: {hedge_size:.2f}")
+        logger.info(f"║    对冲代币: {state.hedge_token}")
+        logger.info(f"║    对冲方向: {state.hedge_side}")
+        logger.info("╠" + "═" * 78 + "╣")
 
         hedge_attempts = 0
         total_hedged = 0.0
@@ -826,13 +826,13 @@ class ModularArbitrageMM(ModularArbitrage):
             hedge_attempts += 1
             book = self.get_polymarket_orderbook(state.hedge_token, depth=1)
             if not book or not book.asks:
-                print("║ ❌ 对冲失败：缺少 Polymarket 流动性")
+                logger.warning("║ ❌ 对冲失败：缺少 Polymarket 流动性")
                 break
 
             best_ask = book.asks[0]
             tradable = min(remaining, best_ask.size or 0.0)
             if tradable <= 1e-6:
-                print(f"║ ⚠️ 对冲数量 {remaining:.4f} 超出当前卖单数量，等待下一次机会")
+                logger.warning(f"║ ⚠️ 对冲数量 {remaining:.4f} 超出当前卖单数量，等待下一次机会")
                 break
 
             order = OrderArgs(
@@ -842,11 +842,11 @@ class ModularArbitrageMM(ModularArbitrage):
                 side=state.hedge_side,
             )
 
-            print(f"║ 📤 正在下单：数量 {tradable:.2f}, 价格 {best_ask.price}, 尝试 {hedge_attempts}")
+            logger.info(f"║ 📤 正在下单：数量 {tradable:.2f}, 价格 {best_ask.price}, 尝试 {hedge_attempts}")
 
             success, _ = self.place_polymarket_order_with_retries(order, OrderType.GTC, context="流动性对冲")
             if not success:
-                print(f"║ ❌ 对冲下单失败，剩余 {remaining:.2f}")
+                logger.warning(f"║ ❌ 对冲下单失败，剩余 {remaining:.2f}")
                 self._hedge_failures += 1
                 break
 
@@ -857,26 +857,25 @@ class ModularArbitrageMM(ModularArbitrage):
             self._total_hedge_count += 1
             self._total_hedge_volume += tradable
 
-            print(f"║ ✅ 对冲成功：本次 {tradable:.2f}, 累计已对冲 {state.hedged_size:.2f}")
+            logger.info(f"║ ✅ 对冲成功：本次 {tradable:.2f}, 累计已对冲 {state.hedged_size:.2f}")
 
             if remaining > 1e-6:
                 time.sleep(0.2)
 
-        print("╠" + "═" * 78 + "╣")
+        logger.info("╠" + "═" * 78 + "╣")
         if remaining <= 1e-6:
-            print(f"║ 🎉🎉🎉 对冲完成！总计对冲 {total_hedged:.2f}")
+            logger.info(f"║ 🎉🎉🎉 对冲完成！总计对冲 {total_hedged:.2f}")
         else:
-            print(f"║ ⚠️⚠️⚠️ 对冲未完成！已对冲 {total_hedged:.2f}, 剩余 {remaining:.2f}")
-
+            logger.warning(f"║ ⚠️⚠️⚠️ 对冲未完成！已对冲 {total_hedged:.2f}, 剩余 {remaining:.2f}")
         uptime = time.time() - self._stats_start_time
         hours = uptime / 3600
-        print(
+        logger.info(
             f"║ 【累计统计】成交: {self._total_fills_count}次/{self._total_fills_volume:.2f}量, "
             f"对冲: {self._total_hedge_count}次/{self._total_hedge_volume:.2f}量, "
             f"失败: {self._hedge_failures}次, "
             f"运行: {hours:.1f}小时"
         )
-        print("╚" + "═" * 78 + "╝")
+        logger.info("╚" + "═" * 78 + "╝")
 
     def _place_liquidity_order(self, opportunity: Dict[str, Any]) -> Optional[LiquidityOrderState]:
         target_size = min(
@@ -899,7 +898,7 @@ class ModularArbitrageMM(ModularArbitrage):
         nominal_amount = order_size * opinion_price
         if nominal_amount < 1.3:
             if self.liquidity_debug:
-                print(f"⚠️ Opinion 订单名义金额 {nominal_amount:.4f} USDT < 1.3 USDT，跳过下单")
+                logger.error(f"⚠️ Opinion 订单名义金额 {nominal_amount:.4f} USDT < 1.3 USDT，跳过下单")
             return None
 
         try:
@@ -912,7 +911,7 @@ class ModularArbitrageMM(ModularArbitrage):
                 makerAmountInBaseToken=str(order_size),
             )
         except Exception as exc:
-            print(f"⚠️ 构造 Opinion 流动性订单失败: {exc}")
+            logger.error(f"⚠️ 构造 Opinion 流动性订单失败: {exc}")
             return None
 
         success, result = self.place_opinion_order_with_retries(order, context="流动性挂单")
@@ -925,11 +924,11 @@ class ModularArbitrageMM(ModularArbitrage):
         )
         order_id = self._extract_from_entry(order_data, ["order_id", "orderId"])
         if not order_id:
-            print("⚠️ 未返回 Opinion 订单编号，无法跟踪流动性挂单")
+            logger.error("⚠️ 未返回 Opinion 订单编号，无法跟踪流动性挂单")
             return None
 
         order_id = str(order_id)
-        print(
+        logger.info(
             f"✅ 已在 Opinion 挂单 {order_id[:10]}... price={opinion_price:.3f}, size={order_size:.2f}, 目标净数量={effective_size:.2f}"
         )
 
@@ -963,20 +962,20 @@ class ModularArbitrageMM(ModularArbitrage):
 
             if new_price is not None:
                 if new_price > (existing.opinion_price + max(self.liquidity_requote_increment, 0.0) + 1e-6):
-                    print(
+                    logger.info(
                         f"⬆️ Opinion 买一价 {new_price:.3f} 超过当前挂单 {existing.opinion_price:.3f}，撤单重新挂: {key}"
                     )
                     need_requote = True
                 else:
                     price_diff = abs(existing.opinion_price - new_price)
                     if price_diff > self.liquidity_price_tolerance:
-                        print(f"🔁 流动性挂单价格偏移 {price_diff:.4f}，重新挂单: {key}")
+                        logger.info(f"🔁 流动性挂单价格偏移 {price_diff:.4f}，重新挂单: {key}")
                         need_requote = True
 
             if need_requote:
                 cancel_success = self._cancel_liquidity_order(existing, reason="repricing")
                 if not cancel_success:
-                    print(f"⚠️ 取消订单失败，保持旧订单 {existing.order_id[:10]}... 继续监控")
+                    logger.warning(f"⚠️ 取消订单失败，保持旧订单 {existing.order_id[:10]}... 继续监控")
                     existing.hedge_price = opportunity["polymarket_price"]
                     existing.updated_at = time.time()
                     return True
@@ -987,7 +986,7 @@ class ModularArbitrageMM(ModularArbitrage):
                 return True
 
         if active_count >= self.max_liquidity_orders:
-            print(f"⚠️ 已达到最大流动性挂单数量 {self.max_liquidity_orders}，跳过 {key}")
+            logger.warning(f"⚠️ 已达到最大流动性挂单数量 {self.max_liquidity_orders}，跳过 {key}")
             return False
 
         state = self._place_liquidity_order(opportunity)
@@ -1017,7 +1016,7 @@ class ModularArbitrageMM(ModularArbitrage):
 
     def run_liquidity_provider_loop(self, interval_seconds: Optional[float] = None) -> None:
         interval = max(5.0, interval_seconds or self.liquidity_loop_interval)
-        print(f"♻️ 启动流动性提供循环，间隔 {interval:.1f}s")
+        logger.info(f"♻️ 启动流动性提供循环，间隔 {interval:.1f}s")
         try:
             while not self._monitor_stop_event.is_set():
                 start = time.time()
@@ -1026,7 +1025,7 @@ class ModularArbitrageMM(ModularArbitrage):
                 except KeyboardInterrupt:
                     raise
                 except Exception as exc:
-                    print(f"❌ 流动性提供循环异常: {exc}")
+                    logger.error(f"❌ 流动性提供循环异常: {exc}")
                     traceback.print_exc()
                 elapsed = time.time() - start
                 sleep_time = max(0.0, interval - elapsed)
@@ -1040,12 +1039,11 @@ class ModularArbitrageMM(ModularArbitrage):
 
     def test(self) -> None:
         """兼容原脚本 --test：做最小自检，不触发下单。"""
-        print("🧪 self-test: config + clients + fee calculator")
+        logger.info("🧪 self-test: config + clients + fee calculator")
         self.config.display_summary()
         # 费率自检
         fee_rate = self.fee_calculator.calculate_opinion_fee_rate(0.55)
-        print(f"fee_rate(0.55)={fee_rate}")
-
+        logger.info(f"fee_rate(0.55)={fee_rate}")
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -1103,7 +1101,7 @@ def main() -> None:
 
         if args.pro:
             if not scanner.load_market_matches(args.matches_file):
-                print("⚠️ 无法加载市场匹配")
+                logger.error("⚠️ 无法加载市场匹配")
                 return
 
             if args.loop_interval is not None:
@@ -1122,11 +1120,11 @@ def main() -> None:
 
         if args.liquidity:
             if not scanner.polymarket_trading_enabled:
-                print("⚠️ 未配置 Polymarket 交易密钥，无法执行对冲。")
+                logger.error("⚠️ 未配置 Polymarket 交易密钥，无法执行对冲。")
                 return
 
             if not scanner.load_market_matches(args.matches_file):
-                print("⚠️ 无法加载市场匹配")
+                logger.error("⚠️ 无法加载市场匹配")
                 return
 
             liquidity_interval = (
@@ -1146,9 +1144,9 @@ def main() -> None:
         print("ℹ️ 未指定模式参数：请使用 --pro 或 --liquidity")
 
     except KeyboardInterrupt:
-        print("\n\n⚠️ 用户中断")
+        logger.warning("\n\n⚠️ 用户中断")
     except Exception as exc:
-        print(f"\n❌ 发生错误: {exc}")
+        logger.error(f"\n❌ 发生错误: {exc}")
         traceback.print_exc()
 
 
