@@ -833,7 +833,7 @@ class ModularArbitrage:
                 poly_yes_book = poly_books.get(match.polymarket_yes_token)
 
                 completed_count += 1
-                print(f"[{completed_count}/{total_matches}] 扫描: {match.question[:70]}...")
+                logger.debug(f"[{completed_count}/{total_matches}] 扫描: {match.question[:70]}...")
 
                 if not opinion_yes_book or not poly_yes_book:
                     continue
