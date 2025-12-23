@@ -850,7 +850,8 @@ class ModularArbitrage:
                     THRESHOLD_SIZE,
                 )
 
-                logger.info(f"🔍 在市场 '{match.question[:50]}...' 中发现 {len(opportunities)} 个套利机会")
+                if opportunities:
+                    logger.info(f"🔍 在市场 '{match.question[:50]}...' 中发现 {len(opportunities)} 个套利机会")
                 # 尝试自动执行发现的机会
                 for opp in opportunities:
                     self._maybe_auto_execute(opp)
