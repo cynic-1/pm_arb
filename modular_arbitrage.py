@@ -789,7 +789,7 @@ class ModularArbitrage:
             logger.error("❌ 没有可用的市场匹配")
             return
 
-        THRESHOLD_PRICE = 0.97
+        THRESHOLD_PRICE = 0.995
         THRESHOLD_SIZE = 200
 
         logger.info(f"\n{'='*100}")
