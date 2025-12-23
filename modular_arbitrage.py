@@ -599,6 +599,7 @@ class ModularArbitrage:
         annualized_rate = opportunity.get('annualized_rate')
         if annualized_rate is None:
             # 如果没有年化收益率，跳过自动执行
+            logger.warning("⚠️ 无法进行自动执行: 缺少年化收益率数据")
             return
 
         lower = self.config.immediate_min_percent
@@ -785,16 +786,13 @@ class ModularArbitrage:
     def execute_arbitrage_pro(self):
         """专业套利执行模式"""
         if not self.market_matches:
-            print("❌ 没有可用的市场匹配")
+            logger.error("❌ 没有可用的市场匹配")
             return
 
         THRESHOLD_PRICE = 0.97
         THRESHOLD_SIZE = 200
 
-        print(f"\n{'='*100}")
-        print(f"开始扫描所有市场的套利机会...")
-        print(f"条件: 成本 < ${THRESHOLD_PRICE:.2f}, 最小数量 > {THRESHOLD_SIZE}")
-        print(f"{'='*100}\n")
+        logger.info(f"\n{'='*100}")
 
         start_time = time.time()
         total_matches = len(self.market_matches)
@@ -852,12 +850,13 @@ class ModularArbitrage:
                     THRESHOLD_SIZE,
                 )
 
+                logger.info(f"🔍 在市场 '{match.question[:50]}...' 中发现 {len(opportunities)} 个套利机会")
                 # 尝试自动执行发现的机会
                 for opp in opportunities:
                     self._maybe_auto_execute(opp)
 
         elapsed = time.time() - start_time
-        print(f"\n✅ 扫描完成，耗时 {elapsed:.2f}s\n")
+        logger.info(f"\n✅ 扫描完成，耗时 {elapsed:.2f}s\n")
 
     def _scan_market_opportunities(
         self,
@@ -1029,7 +1028,7 @@ class ModularArbitrage:
                 sleep_time = max(0.0, min_interval - elapsed)
 
                 if sleep_time > 0:
-                    print(f"🕒 {sleep_time:.1f}s 后进行下一轮扫描")
+                    logger.debug(f"🕒 {sleep_time:.1f}s 后进行下一轮扫描")
                     self._monitor_stop_event.wait(timeout=sleep_time)
         finally:
             self._monitor_stop_event.set()
