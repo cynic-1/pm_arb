@@ -52,8 +52,8 @@ class ArbitrageConfig:
 
     # ==================== 即时执行配置 ====================
     immediate_exec_enabled: bool = field(default_factory=lambda: os.getenv("IMMEDIATE_EXEC_ENABLED", "1") not in {"0", "false", "False"})
-    immediate_min_percent: float = field(default_factory=lambda: float(os.getenv("IMMEDIATE_MIN_PERCENT", "2.0")))
-    immediate_max_percent: float = field(default_factory=lambda: float(os.getenv("IMMEDIATE_MAX_PERCENT", "50.0")))
+    immediate_min_percent: float = field(default_factory=lambda: float(os.getenv("IMMEDIATE_MIN_ANNUALIZED_PERCENT", "10.0")))
+    immediate_max_percent: float = field(default_factory=lambda: float(os.getenv("IMMEDIATE_MAX_ANNUALIZED_PERCENT", "100.0")))
     immediate_order_size: float = field(default_factory=lambda: float(os.getenv("IMMEDIATE_ORDER_SIZE", "200")))
 
     # ==================== 流动性提供配置 ====================
@@ -127,7 +127,7 @@ class ArbitrageConfig:
         print(f"  - 最小年化收益率: {self.min_annualized_percent}%")
 
         if self.immediate_exec_enabled:
-            print(f"  - 即时执行: 启用 (利润率 {self.immediate_min_percent}%-{self.immediate_max_percent}%)")
+            print(f"  - 即时执行: 启用 (年化收益率 {self.immediate_min_percent}%-{self.immediate_max_percent}%)")
         else:
             print(f"  - 即时执行: 禁用")
 

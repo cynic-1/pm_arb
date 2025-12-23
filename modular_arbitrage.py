@@ -75,11 +75,6 @@ class ModularArbitrage:
         self._opinion_rate_lock = threading.Lock()
         self._opinion_last_request = 0.0
 
-        # 即时执行配置
-        self.immediate_exec_enabled = self.config.immediate_exec_enabled
-        self.immediate_min_percent = self.config.immediate_min_percent
-        self.immediate_max_percent = self.config.immediate_max_percent
-
         print("✅ 模块化套利检测器初始化完成!\n")
 
     # ==================== 订单簿管理 ====================
@@ -597,7 +592,7 @@ class ModularArbitrage:
 
     def _maybe_auto_execute(self, opportunity: Dict[str, Any]) -> None:
         """在满足配置阈值时尝试自动执行即时套利（基于年化收益率）"""
-        if not self.immediate_exec_enabled:
+        if not self.config.immediate_exec_enabled:
             return
 
         # 使用年化收益率作为判断标准
@@ -606,8 +601,8 @@ class ModularArbitrage:
             # 如果没有年化收益率，跳过自动执行
             return
 
-        lower = self.immediate_min_percent
-        upper = self.immediate_max_percent
+        lower = self.config.immediate_min_percent
+        upper = self.config.immediate_max_percent
 
         if lower <= annualized_rate <= upper:
             profit_rate = opportunity.get('profit_rate', 0)
