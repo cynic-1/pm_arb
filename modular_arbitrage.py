@@ -107,7 +107,7 @@ class ModularArbitrage:
         try:
             self._throttle_opinion_request()
             response = self.clients.get_opinion_client().get_orderbook(token_id)
-            logger.info(f"Opinion order book for {token_id}")
+            logger.debug(f"Opinion order book for {token_id}")
 
             if response.errno != 0:
                 raise Exception(f"Opinion API 返回错误码 {response.errno}")
@@ -128,7 +128,7 @@ class ModularArbitrage:
                 timestamp=time.time(),
             )
         except Exception as exc:
-            print(f"⚠️ Opinion 订单簿获取失败 ({token_id[:20]}...): {exc}")
+            logger.error(f"⚠️ Opinion 订单簿获取失败 ({token_id[:20]}...): {exc}")
             return None
 
     def get_polymarket_orderbook(
@@ -137,7 +137,6 @@ class ModularArbitrage:
         """获取 Polymarket 订单簿"""
         try:
             book = self.clients.get_polymarket_client().get_order_book(token_id)
-            logger.info(f"Polymarket order book for {token_id}")
 
             if not book:
                 raise Exception("Polymarket 返回空订单簿")
@@ -157,7 +156,7 @@ class ModularArbitrage:
                 timestamp=time.time(),
             )
         except Exception as exc:
-            print(f"⚠️ Polymarket 订单簿获取失败 ({token_id[:20]}...): {exc}")
+            logger.error(f"⚠️ Polymarket 订单簿获取失败 ({token_id[:20]}...): {exc}")
             return None
 
     def get_polymarket_orderbooks_bulk(
@@ -202,7 +201,7 @@ class ModularArbitrage:
                         timestamp=now,
                     )
             except Exception as exc:
-                print(f"⚠️ 批量获取 Polymarket 订单簿失败: {exc}")
+                logger.debug(f"⚠️ 批量获取 Polymarket 订单簿失败: {exc}")
 
         return snapshots
 
@@ -228,7 +227,7 @@ class ModularArbitrage:
                 try:
                     snapshots[token] = future.result()
                 except Exception as exc:
-                    print(f"⚠️ Opinion 订单簿获取失败 (token={token[:12]}...): {exc}")
+                    logger.debug(f"⚠️ Opinion 订单簿获取失败 (token={token[:12]}...): {exc}")
                     snapshots[token] = None
 
         return snapshots
@@ -436,16 +435,16 @@ class ModularArbitrage:
                     return True, result
 
                 err_msg = getattr(result, "errmsg", "unknown error")
-                print(
+                logger.error(
                     f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {err_msg}"
                 )
 
                 if "insufficient balance" in err_msg.lower():
-                    print(f"\n❌ 检测到余额不足，退出程序")
+                    logger.error(f"\n❌ 检测到余额不足，退出程序")
                     sys.exit(1)
 
             except Exception as exc:
-                print(f"⚠️ {prefix}Opinion 下单异常: {exc}")
+                logger.error(f"⚠️ {prefix}Opinion 下单异常: {exc}")
                 if "insufficient balance" in str(exc).lower():
                     sys.exit(1)
 
@@ -481,13 +480,13 @@ class ModularArbitrage:
                 if not error_msg:
                     return True, result
 
-                print(f"⚠️ {prefix}Polymarket 下单失败: {error_msg}")
+                logger.error(f"⚠️ {prefix}Polymarket 下单失败: {error_msg}")
 
                 if error_msg and "not enough balance" in error_msg.lower():
                     sys.exit(1)
 
             except Exception as exc:
-                print(f"⚠️ {prefix}Polymarket 下单异常: {exc}")
+                logger.error(f"⚠️ {prefix}Polymarket 下单异常: {exc}")
                 if "not enough balance" in str(exc).lower():
                     sys.exit(1)
 
@@ -597,25 +596,28 @@ class ModularArbitrage:
     # ==================== 即时执行方法 ====================
 
     def _maybe_auto_execute(self, opportunity: Dict[str, Any]) -> None:
-        """在满足配置阈值时尝试自动执行即时套利"""
+        """在满足配置阈值时尝试自动执行即时套利（基于年化收益率）"""
         if not self.immediate_exec_enabled:
             return
 
-        profit_rate = opportunity.get('profit_rate')
-        if profit_rate is None:
+        # 使用年化收益率作为判断标准
+        annualized_rate = opportunity.get('annualized_rate')
+        if annualized_rate is None:
+            # 如果没有年化收益率，跳过自动执行
             return
 
         lower = self.immediate_min_percent
         upper = self.immediate_max_percent
 
-        if lower <= profit_rate <= upper:
-            print(f"  ⚡ 利润率 {profit_rate:.2f}% 在阈值 [{lower:.2f}%,{upper:.2f}%]，启动即时执行线程")
+        if lower <= annualized_rate <= upper:
+            profit_rate = opportunity.get('profit_rate', 0)
+            print(f"  ⚡ 年化收益率 {annualized_rate:.2f}% 在阈值 [{lower:.2f}%,{upper:.2f}%]，启动即时执行线程 (利润率={profit_rate:.2f}%)")
             try:
                 self._spawn_execute_thread(opportunity)
             except Exception as exc:
                 print(f"⚠️ 无法启动即时执行线程: {exc}")
         else:
-            print(f"  🔶 利润率 {profit_rate:.2f}% 不在阈值范围 [{lower:.2f}%,{upper:.2f}%]，跳过自动执行")
+            print(f"  🔶 年化收益率 {annualized_rate:.2f}% 不在阈值范围 [{lower:.2f}%,{upper:.2f}%]，跳过自动执行")
 
     def _spawn_execute_thread(self, opportunity: Dict[str, Any]) -> None:
         """启动一个后台线程来执行给定的套利机会（非交互）"""
