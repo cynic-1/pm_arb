@@ -429,18 +429,25 @@ class ModularArbitrage:
                 if getattr(result, "errno", 0) == 0:
                     return True, result
 
-                err_msg = getattr(result, "errmsg", "unknown error")
+                err_msg = str(getattr(result, "errmsg", "unknown error"))
                 logger.error(
                     f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {err_msg}"
                 )
 
-                if "insufficient balance" in err_msg.lower():
-                    logger.error(f"\n❌ 检测到余额不足，退出程序")
+                # 检查余额不足错误
+                if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
+                    logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
+                    logger.error(f"错误详情: {err_msg}")
                     sys.exit(1)
 
             except Exception as exc:
-                logger.error(f"⚠️ {prefix}Opinion 下单异常: {exc}")
-                if "insufficient balance" in str(exc).lower():
+                exc_msg = str(exc)
+                logger.error(f"⚠️ {prefix}Opinion 下单异常 (尝试 {attempt}/{self.config.order_max_retries}): {exc_msg}")
+
+                # 检查余额不足错误
+                if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
+                    logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
+                    logger.error(f"异常详情: {exc_msg}")
                     sys.exit(1)
 
             if attempt < self.config.order_max_retries:
@@ -468,21 +475,36 @@ class ModularArbitrage:
                 error_msg = None
                 if isinstance(result, dict):
                     if result.get("success") is False:
-                        error_msg = result.get("message") or result.get("error")
+                        error_msg = str(result.get("message") or result.get("error"))
                     elif result.get("error"):
-                        error_msg = result.get("error")
+                        error_msg = str(result.get("error"))
 
                 if not error_msg:
                     return True, result
 
-                logger.error(f"⚠️ {prefix}Polymarket 下单失败: {error_msg}")
+                logger.error(f"⚠️ {prefix}Polymarket 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {error_msg}")
 
-                if error_msg and "not enough balance" in error_msg.lower():
+                # 检查余额不足错误 - 支持多种错误格式
+                error_msg_lower = error_msg.lower()
+                if ("not enough balance" in error_msg_lower or
+                    "insufficient balance" in error_msg_lower or
+                    "balance / allowance" in error_msg_lower):
+                    logger.error(f"\n❌ 检测到 Polymarket 余额不足，立即退出程序")
+                    logger.error(f"错误详情: {error_msg}")
                     sys.exit(1)
 
             except Exception as exc:
-                logger.error(f"⚠️ {prefix}Polymarket 下单异常: {exc}")
-                if "not enough balance" in str(exc).lower():
+                exc_msg = str(exc)
+                logger.error(f"⚠️ {prefix}Polymarket 下单异常 (尝试 {attempt}/{self.config.order_max_retries}): {exc_msg}")
+
+                # 检查余额不足错误
+                exc_msg_lower = exc_msg.lower()
+                if ("not enough balance" in exc_msg_lower or
+                    "insufficient balance" in exc_msg_lower or
+                    "balance / allowance" in exc_msg_lower or
+                    "balance" in exc_msg_lower):
+                    logger.error(f"\n❌ 检测到 Polymarket 余额不足异常，立即退出程序")
+                    logger.error(f"异常详情: {exc_msg}")
                     sys.exit(1)
 
             if attempt < self.config.order_max_retries:
