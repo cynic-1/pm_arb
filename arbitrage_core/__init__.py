@@ -17,6 +17,12 @@ from .models import (
 from .config import ArbitrageConfig
 from .clients import PlatformClients
 from .fees import FeeCalculator
+from .websocket_manager import (
+    WebSocketManager,
+    PolymarketWebSocket,
+    OpinionWebSocket,
+    OrderBookUpdate,
+)
 
 # 待实现的模块（已注释）：
 # from .orderbook import OrderBookManager
@@ -34,6 +40,11 @@ __all__ = [
     "ArbitrageConfig",
     "PlatformClients",
     "FeeCalculator",
+    # WebSocket
+    "WebSocketManager",
+    "PolymarketWebSocket",
+    "OpinionWebSocket",
+    "OrderBookUpdate",
     # 待实现模块（已注释）：
     # "OrderBookManager",
     # "OrderExecutor",
