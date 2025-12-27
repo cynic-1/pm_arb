@@ -1,6 +1,7 @@
 .env
 .env.test
 .env.new
+.env.old
 
 /venv/
 /output/
