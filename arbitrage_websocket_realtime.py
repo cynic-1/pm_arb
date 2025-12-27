@@ -15,7 +15,7 @@ import argparse
 import time
 import threading
 import traceback
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict
 from dotenv import load_dotenv
 
@@ -230,6 +230,166 @@ class RealtimeArbitrage:
         except Exception as e:
             logger.error(f"❌ 检查套利机会时出错: {e}")
             traceback.print_exc()
+
+    # ==================== 订单执行辅助方法 ====================
+
+    def _get_order_size_for_platform(
+        self,
+        platform: str,
+        price: float,
+        target_amount: float,
+        is_hedge: bool = False
+    ) -> Tuple[float, float]:
+        """
+        获取指定平台的下单数量 (从 modular_arbitrage.py 复制)
+
+        对于 Opinion 平台,需要考虑手续费进行修正
+        对于 Polymarket 平台,直接使用目标数量
+
+        Args:
+            platform: 平台名称 ('opinion' 或 'polymarket')
+            price: 订单价格
+            target_amount: 目标数量（希望实际得到的数量）
+            is_hedge: 是否是对冲单（对冲单需要精确匹配首单的实际数量）
+
+        Returns:
+            (order_size, effective_size): 下单数量和实际得到的数量
+        """
+        if platform == 'opinion':
+            # Opinion 需要考虑手续费修正
+            order_size = self._calculate_opinion_adjusted_amount(price, target_amount)
+            effective_size = target_amount  # 修正后应该能得到目标数量
+            return order_size, effective_size
+        else:
+            # Polymarket 直接使用目标数量
+            return target_amount, target_amount
+
+    def _calculate_opinion_adjusted_amount(self, price: float, target_amount: float) -> float:
+        """
+        计算 Opinion 平台考虑手续费后应下单的数量 (从 modular_arbitrage.py 复制)
+
+        目标: 使得扣除手续费后,实际得到的数量等于 target_amount
+        """
+        # 步骤1: 计算手续费率
+        fee_rate = self._calculate_opinion_fee_rate(price)
+
+        # 步骤2: 预计算 (假设适用百分比手续费)
+        A_provisional = target_amount / (1 - fee_rate)
+
+        # 步骤3: 计算预估手续费
+        Fee_provisional = price * A_provisional * fee_rate
+
+        # 步骤4: 判断适用场景并返回最终数量
+        if Fee_provisional > 0.5:
+            # 适用百分比手续费
+            A_order = target_amount / (1 - fee_rate)
+        else:
+            # 适用最低手续费 $0.5
+            A_order = target_amount + 0.5 / price
+
+        return A_order
+
+    def _calculate_opinion_fee_rate(self, price: float) -> float:
+        """
+        计算 Opinion 平台的手续费率 (从 modular_arbitrage.py 复制)
+
+        根据推导公式: fee_rate = 0.06 * price * (1 - price) + 0.0025
+        """
+        return 0.06 * price * (1 - price) + 0.0025
+
+    def _place_opinion_order_with_retries(
+        self, order: Any, context: str = ""
+    ) -> Tuple[bool, Optional[Any]]:
+        """Opinion 下单带重试 (从 modular_arbitrage.py 复制)"""
+        prefix = f"[{context}] " if context else ""
+        last_result = None
+
+        for attempt in range(1, self.config.order_max_retries + 1):
+            try:
+                result = self.clients.opinion_client.place_order(order)
+                last_result = result
+
+                if getattr(result, "errno", 0) == 0:
+                    return True, result
+
+                err_msg = str(getattr(result, "errmsg", "unknown error"))
+                logger.error(
+                    f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {err_msg}"
+                )
+
+                # 检查余额不足错误
+                if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
+                    logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
+                    logger.error(f"错误详情: {err_msg}")
+                    sys.exit(1)
+
+            except Exception as exc:
+                exc_msg = str(exc)
+                logger.error(f"⚠️ {prefix}Opinion 下单异常 (尝试 {attempt}/{self.config.order_max_retries}): {exc_msg}")
+
+                # 检查余额不足错误
+                if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
+                    logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
+                    logger.error(f"异常详情: {exc_msg}")
+                    sys.exit(1)
+
+            if attempt < self.config.order_max_retries:
+                time.sleep(self.config.order_retry_delay)
+
+        return False, last_result
+
+    def _place_polymarket_order_with_retries(
+        self, order_args: Any, order_type: Any, context: str = ""
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """Polymarket 下单带重试 (从 modular_arbitrage.py 复制)"""
+        prefix = f"[{context}] " if context else ""
+        last_result = None
+
+        for attempt in range(1, self.config.order_max_retries + 1):
+            try:
+                signed_order = self.clients.polymarket_client.create_order(order_args)
+                result = self.clients.polymarket_client.post_order(signed_order, order_type)
+                last_result = result if isinstance(result, dict) else None
+
+                error_msg = None
+                if isinstance(result, dict):
+                    if result.get("success") is False:
+                        error_msg = str(result.get("message") or result.get("error"))
+                    elif result.get("error"):
+                        error_msg = str(result.get("error"))
+
+                if not error_msg:
+                    return True, result
+
+                logger.error(f"⚠️ {prefix}Polymarket 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {error_msg}")
+
+                # 检查余额不足错误
+                error_msg_lower = error_msg.lower()
+                if ("not enough balance" in error_msg_lower or
+                    "insufficient balance" in error_msg_lower or
+                    "balance / allowance" in error_msg_lower):
+                    logger.error(f"\n❌ 检测到 Polymarket 余额不足，立即退出程序")
+                    logger.error(f"错误详情: {error_msg}")
+                    sys.exit(1)
+
+            except Exception as exc:
+                exc_msg = str(exc)
+                logger.error(f"⚠️ {prefix}Polymarket 下单异常 (尝试 {attempt}/{self.config.order_max_retries}): {exc_msg}")
+
+                # 检查余额不足错误
+                exc_msg_lower = exc_msg.lower()
+                if ("not enough balance" in exc_msg_lower or
+                    "insufficient balance" in exc_msg_lower or
+                    "balance / allowance" in exc_msg_lower or
+                    "balance" in exc_msg_lower):
+                    logger.error(f"\n❌ 检测到 Polymarket 余额不足异常，立即退出程序")
+                    logger.error(f"异常详情: {exc_msg}")
+                    sys.exit(1)
+
+            if attempt < self.config.order_max_retries:
+                time.sleep(self.config.order_retry_delay)
+
+        return False, last_result
 
     # ==================== 订单簿推导 ====================
 
@@ -503,10 +663,9 @@ class RealtimeArbitrage:
                 self.stats["opportunities_executed"] += 1
 
     def _execute_opportunity(self, opp: Dict):
-        """在后台执行套利机会"""
-        # This method is copied from modular_arbitrage_websocket.py
-        # For brevity, I'll reference the original implementation
+        """在后台执行套利机会 (从 modular_arbitrage.py 复制)"""
         try:
+            # 读取最小下单量配置
             order_size = min(
                 max(float(self.config.immediate_order_size), 0.9 * float(opp.get("min_size", 0.0))),
                 1000.0,
@@ -519,11 +678,120 @@ class RealtimeArbitrage:
                 f"🟢 即时执行: {opp.get('name')} | 利润率={opp.get('profit_rate'):.2f}% | 数量={order_size:.2f}"
             )
 
-            # Place orders using existing methods from modular_arbitrage_websocket.py
-            # (Implementation details omitted for brevity - reuse from original file)
+            # Immediate execution: place both orders
+            if opp.get("type") == "immediate":
+                first_price = self.fee_calculator.round_price(opp.get("first_price"))
+                second_price = self.fee_calculator.round_price(opp.get("second_price"))
+
+                # 计算第一个平台的下单数量(考虑手续费)
+                first_order_size, first_effective_size = self._get_order_size_for_platform(
+                    opp["first_platform"],
+                    first_price if first_price is not None else opp.get("first_price", 0.0),
+                    order_size
+                )
+
+                # 计算第二个平台的下单数量(需要匹配第一个平台的实际数量)
+                second_order_size, second_effective_size = self._get_order_size_for_platform(
+                    opp["second_platform"],
+                    second_price if second_price is not None else opp.get("second_price", 0.0),
+                    first_effective_size,
+                    is_hedge=True
+                )
+
+                logger.info(f"  第一平台下单: {first_order_size:.2f} -> 预期实际: {first_effective_size:.2f}")
+                logger.info(f"  第二平台下单: {second_order_size:.2f} -> 预期实际: {second_effective_size:.2f}")
+
+                # Place first order
+                if opp.get("first_platform") == "opinion":
+                    try:
+                        order1 = PlaceOrderDataInput(
+                            marketId=opp["match"].opinion_market_id,
+                            tokenId=str(opp["first_token"]),
+                            side=opp["first_side"],
+                            orderType=LIMIT_ORDER,
+                            price=str(first_price if first_price is not None else opp["first_price"]),
+                            makerAmountInBaseToken=str(first_order_size)
+                        )
+                        success, res1 = self._place_opinion_order_with_retries(
+                            order1,
+                            context="即时执行首单"
+                        )
+                        if success and res1:
+                            logger.info("✅ Opinion 订单提交成功 (即时执行)")
+                        else:
+                            logger.error(f"❌ Opinion 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        logger.error(f"❌ Opinion 下单异常: {e}")
+                        traceback.print_exc()
+                else:
+                    try:
+                        order1 = OrderArgs(
+                            token_id=opp["first_token"],
+                            price=first_price if first_price is not None else opp["first_price"],
+                            size=first_order_size,
+                            side=opp["first_side"]
+                        )
+                        success, res1 = self._place_polymarket_order_with_retries(
+                            order1,
+                            OrderType.GTC,
+                            context="即时执行首单"
+                        )
+                        if success:
+                            logger.info(f"✅ Polymarket 订单提交成功 (即时执行): {res1}")
+                        else:
+                            logger.error(f"❌ Polymarket 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        logger.error(f"❌ Polymarket 下单异常: {e}")
+                        traceback.print_exc()
+
+                # Place second order
+                if opp.get("second_platform") == "opinion":
+                    try:
+                        order2 = PlaceOrderDataInput(
+                            marketId=opp["match"].opinion_market_id,
+                            tokenId=str(opp["second_token"]),
+                            side=opp["second_side"],
+                            orderType=LIMIT_ORDER,
+                            price=str(second_price if second_price is not None else opp["second_price"]),
+                            makerAmountInBaseToken=str(second_order_size)
+                        )
+                        success, res2 = self._place_opinion_order_with_retries(
+                            order2,
+                            context="即时执行对冲"
+                        )
+                        if success and res2:
+                            logger.info("✅ Opinion 对冲订单提交成功 (即时执行)")
+                        else:
+                            logger.error(f"❌ Opinion 对冲下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        logger.error(f"❌ Opinion 对冲下单异常: {e}")
+                        traceback.print_exc()
+                else:
+                    try:
+                        order2 = OrderArgs(
+                            token_id=opp["second_token"],
+                            price=second_price if second_price is not None else opp["second_price"],
+                            size=second_order_size,
+                            side=opp["second_side"]
+                        )
+                        success, res2 = self._place_polymarket_order_with_retries(
+                            order2,
+                            OrderType.GTC,
+                            context="即时执行对冲"
+                        )
+                        if success:
+                            logger.info(f"✅ Polymarket 对冲订单提交成功 (即时执行): {res2}")
+                        else:
+                            logger.error(f"❌ Polymarket 对冲下单失败（已尝试 {self.config.order_max_retries} 次）")
+                    except Exception as e:
+                        logger.error(f"❌ Polymarket 对冲下单异常: {e}")
+                        traceback.print_exc()
+
+                logger.info("🟢 即时套利执行线程完成")
+                return
 
         except Exception as e:
-            logger.error(f"❌ 执行套利时出错: {e}")
+            logger.error(f"❌ 即时执行线程异常: {e}")
             traceback.print_exc()
 
     # ==================== WebSocket连接管理 ====================
