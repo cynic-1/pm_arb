@@ -131,6 +131,18 @@ class CrossPlatformArbitrage:
             print(f"  获取{len(markets)} 个市场")
             father_count += len(markets)
 
+            # 打印第一个市场的数据结构以供调试
+            if page == 1 and len(markets) > 0:
+                print("\n=== Opinion Market 数据结构示例 ===")
+                first_market = markets[0]
+                print(f"Market ID: {first_market.market_id}")
+                print(f"Title: {first_market.market_title}")
+                print(f"Available attributes: {dir(first_market)}")
+                # 尝试获取 rules 字段
+                rules = getattr(first_market, 'rules', None)
+                print(f"Rules field: {rules}")
+                print("=" * 50 + "\n")
+
             # 转换为字典格式
             for market in markets:
                 # 检查是否为 CATEGORICAL 类型且有子市场
@@ -141,12 +153,15 @@ class CrossPlatformArbitrage:
                 if child_markets and len(child_markets) > 0:
                     # CATEGORICAL 类型: 展平子市场
                     parent_title = market.market_title
+                    parent_rules = getattr(market, 'rules', None) or ""
                     for child in child_markets:
                         if child.status_enum != 'Activated':
                             continue
                         # 拼接标题: "父标题 - 子标题"
                         combined_title = f"{parent_title} - {child.market_title}"
-                        
+                        # 子市场可能有自己的 rules，如果没有则使用父市场的
+                        child_rules = getattr(child, 'rules', None) or parent_rules
+
                         all_markets.append({
                             'market_id': child.market_id,
                             'title': combined_title,
@@ -157,10 +172,12 @@ class CrossPlatformArbitrage:
                             'parent_market_id': market.market_id,
                             'parent_title': parent_title,
                             'child_title': child.market_title,
-                            'cutoff_at': cutoff_ts
+                            'cutoff_at': cutoff_ts,
+                            'rules': child_rules
                         })
                 else:
                     # BINARY 类型或无子市场: 直接添加
+                    market_rules = getattr(market, 'rules', None) or ""
                     all_markets.append({
                         'market_id': market.market_id,
                         'title': market.market_title,
@@ -168,7 +185,8 @@ class CrossPlatformArbitrage:
                         'no_token_id': getattr(market, 'no_token_id', None),
                         'volume': float(getattr(market, 'volume', 0)),
                         'status': market.status,
-                        'cutoff_at': cutoff_ts
+                        'cutoff_at': cutoff_ts,
+                        'rules': market_rules
                     })
 
             page += 1
@@ -250,7 +268,7 @@ class CrossPlatformArbitrage:
 
     # ==================== 搜索辅助 ====================
 
-    def search_polymarket_market(self, query: str) -> Optional[Dict]:
+    def search_polymarket_market(self, query: str, debug: bool = False) -> Optional[Dict]:
         """根据问题标题在 Polymarket 搜索匹配市场"""
         try:
             response = requests.get(
@@ -265,12 +283,25 @@ class CrossPlatformArbitrage:
             if not events:
                 return None
 
-            markets = events[0].get("markets", [])
+            # 获取第一个事件的描述信息
+            first_event = events[0]
+            event_description = first_event.get("description", "")
+
+            # 调试: 打印事件数据结构
+            if debug:
+                print("\n=== Polymarket Event 数据结构示例 ===")
+                print(f"Event ID: {first_event.get('id')}")
+                print(f"Event Title: {first_event.get('title')}")
+                print(f"Description: {event_description[:200] if event_description else 'None'}...")
+                print(f"Available fields: {list(first_event.keys())}")
+                print("=" * 50 + "\n")
+
+            markets = first_event.get("markets", [])
             if not markets:
                 return None
 
             if len(markets) == 1:
-                return self._extract_market_entry(markets[0])
+                return self._extract_market_entry(markets[0], event_description)
 
             best_match = None
             best_similarity = 0.0
@@ -281,21 +312,21 @@ class CrossPlatformArbitrage:
                 similarity = self._calculate_similarity(query_lower, market_question)
 
                 if similarity >= 0.95 or query_lower == market_question:
-                    return self._extract_market_entry(market)
+                    return self._extract_market_entry(market, event_description)
 
                 if similarity > best_similarity:
                     best_similarity = similarity
                     best_match = market
 
             if best_match and best_similarity >= 0.6:
-                return self._extract_market_entry(best_match)
+                return self._extract_market_entry(best_match, event_description)
 
             return None
         except Exception as exc:  # pragma: no cover - 仅记录日志
             print(f"  搜索失败: {exc}")
             return None
 
-    def _extract_market_entry(self, market: Dict) -> Optional[Dict]:
+    def _extract_market_entry(self, market: Dict, description: str = "") -> Optional[Dict]:
         token_ids_raw = market.get("clobTokenIds", "[]")
         token_ids = json.loads(token_ids_raw) if isinstance(token_ids_raw, str) else token_ids_raw
         if len(token_ids) < 2:
@@ -308,6 +339,7 @@ class CrossPlatformArbitrage:
             "no_token_id": token_ids[1],
             "volume": float(market.get("volume", 0)),
             "active": market.get("active", True),
+            "description": description,  # 添加事件描述
         }
 
     # ==================== 市场匹配 ====================
@@ -353,7 +385,8 @@ class CrossPlatformArbitrage:
                 op_title = op_market["title"]
                 print(f"[{i}/{len(binary_markets)}] 搜索: {op_title[:60]}...")
 
-                pm_market = self.search_polymarket_market(query=op_title)
+                # 只在第一次调用时启用调试
+                pm_market = self.search_polymarket_market(query=op_title, debug=(i == 1))
 
                 if pm_market:
                     matches.append(
@@ -369,7 +402,7 @@ class CrossPlatformArbitrage:
                             polymarket_slug=pm_market["slug"],
                             similarity_score=1.0,
                             op_rules=op_market.get("rules", ""),
-                            poly_rules=pm_market.get("events", [])[0].get("description", "") if pm_market.get("events") else "",
+                            poly_rules=pm_market.get("description", ""),
                         )
                     )
                     print("  ✓ 匹配成功")
@@ -465,13 +498,15 @@ class CrossPlatformArbitrage:
             if not events:
                 return []
 
-            markets = events[0].get("markets", [])
+            first_event = events[0]
+            event_description = first_event.get("description", "")
+            markets = first_event.get("markets", [])
             if not markets:
                 return []
 
             pm_children = []
             for market in markets:
-                entry = self._extract_market_entry(market)
+                entry = self._extract_market_entry(market, event_description)
                 if entry:
                     pm_children.append(entry)
 
@@ -517,7 +552,7 @@ class CrossPlatformArbitrage:
                         polymarket_slug=found_match["slug"],
                         similarity_score=1.0,
                         op_rules=op_child.get("rules", ""),
-                        poly_rules=found_match.get("events", [])[0].get("description", "") if found_match.get("events") else "",
+                        poly_rules=found_match.get("description", ""),
                     )
                 )
                 unmatched_pm.remove(found_match)
