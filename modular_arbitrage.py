@@ -7,7 +7,6 @@
 """
 
 import os
-import sys
 import argparse
 import time
 import threading
@@ -70,6 +69,7 @@ class ModularArbitrage:
         # 线程控制
         self._monitor_stop_event = threading.Event()
         self._active_exec_threads: List[threading.Thread] = []
+        self._insufficient_balance_flag = threading.Event()  # 余额不足标志
 
         # 速率限制
         self._opinion_rate_lock = threading.Lock()
@@ -438,7 +438,8 @@ class ModularArbitrage:
                 if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
                     logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
                     logger.error(f"错误详情: {err_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             except Exception as exc:
                 exc_msg = str(exc)
@@ -448,7 +449,8 @@ class ModularArbitrage:
                 if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
                     logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
                     logger.error(f"异常详情: {exc_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             if attempt < self.config.order_max_retries:
                 time.sleep(self.config.order_retry_delay)
@@ -491,7 +493,8 @@ class ModularArbitrage:
                     "balance / allowance" in error_msg_lower):
                     logger.error(f"\n❌ 检测到 Polymarket 余额不足，立即退出程序")
                     logger.error(f"错误详情: {error_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             except Exception as exc:
                 exc_msg = str(exc)
@@ -505,7 +508,8 @@ class ModularArbitrage:
                     "balance" in exc_msg_lower):
                     logger.error(f"\n❌ 检测到 Polymarket 余额不足异常，立即退出程序")
                     logger.error(f"异常详情: {exc_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             if attempt < self.config.order_max_retries:
                 time.sleep(self.config.order_retry_delay)
@@ -1031,6 +1035,11 @@ class ModularArbitrage:
 
         try:
             while not self._monitor_stop_event.is_set():
+                # 检查余额不足标志
+                if self._insufficient_balance_flag.is_set():
+                    logger.error("❌ 检测到余额不足标志，立即退出主循环")
+                    os._exit(1)
+
                 cycle_start = time.time()
 
                 try:
@@ -1046,6 +1055,11 @@ class ModularArbitrage:
                     self.wait_for_active_exec_threads()
                 except KeyboardInterrupt:
                     raise
+
+                # 再次检查余额不足标志
+                if self._insufficient_balance_flag.is_set():
+                    logger.error("❌ 检测到余额不足标志，立即退出主循环")
+                    os._exit(1)
 
                 elapsed = time.time() - cycle_start
                 sleep_time = max(0.0, min_interval - elapsed)
