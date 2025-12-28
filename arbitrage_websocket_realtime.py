@@ -10,7 +10,6 @@
 """
 
 import os
-import sys
 import argparse
 import time
 import threading
@@ -80,6 +79,7 @@ class RealtimeArbitrage:
         # 套利执行线程
         self._active_exec_threads: List[threading.Thread] = []
         self._exec_lock = threading.Lock()
+        self._insufficient_balance_flag = threading.Event()  # 余额不足标志
 
         # 统计信息
         self.stats = {
@@ -211,7 +211,7 @@ class RealtimeArbitrage:
                 opinion_no_book,
                 poly_yes_book,
                 poly_no_book,
-                threshold_price=0.995,
+                threshold_price=0.99,
                 threshold_size=200,
             )
 
@@ -321,7 +321,8 @@ class RealtimeArbitrage:
                 if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
                     logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
                     logger.error(f"错误详情: {err_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             except Exception as exc:
                 exc_msg = str(exc)
@@ -331,7 +332,8 @@ class RealtimeArbitrage:
                 if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
                     logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
                     logger.error(f"异常详情: {exc_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             if attempt < self.config.order_max_retries:
                 time.sleep(self.config.order_retry_delay)
@@ -363,14 +365,15 @@ class RealtimeArbitrage:
 
                 logger.error(f"⚠️ {prefix}Polymarket 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {error_msg}")
 
-                # 检查余额不足错误
+                # 检查余额不足错误 - 支持多种错误格式
                 error_msg_lower = error_msg.lower()
                 if ("not enough balance" in error_msg_lower or
                     "insufficient balance" in error_msg_lower or
                     "balance / allowance" in error_msg_lower):
                     logger.error(f"\n❌ 检测到 Polymarket 余额不足，立即退出程序")
                     logger.error(f"错误详情: {error_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             except Exception as exc:
                 exc_msg = str(exc)
@@ -384,7 +387,8 @@ class RealtimeArbitrage:
                     "balance" in exc_msg_lower):
                     logger.error(f"\n❌ 检测到 Polymarket 余额不足异常，立即退出程序")
                     logger.error(f"异常详情: {exc_msg}")
-                    sys.exit(1)
+                    self._insufficient_balance_flag.set()
+                    os._exit(1)  # 强制退出整个进程
 
             if attempt < self.config.order_max_retries:
                 time.sleep(self.config.order_retry_delay)
@@ -838,6 +842,12 @@ class RealtimeArbitrage:
         try:
             # Print stats periodically
             while True:
+                # 检查余额不足标志
+                if self._insufficient_balance_flag.is_set():
+                    logger.error("❌ 检测到余额不足标志，立即退出监控循环")
+                    self.ws_manager.close_all()
+                    os._exit(1)
+
                 time.sleep(30)
 
                 stats = self.ws_manager.get_stats()
