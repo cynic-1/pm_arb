@@ -46,6 +46,9 @@ class MarketMatch:
     # 截止时间（秒级时间戳）
     cutoff_at: Optional[int] = None
 
+    op_rules: Optional[str] = None  # Opinion 市场规则
+    poly_rules: Optional[str] = None  # Polymarket 市场规则
+
 
 class CrossPlatformArbitrage:
     """负责市场匹配和结果保存的精简类"""
@@ -365,6 +368,8 @@ class CrossPlatformArbitrage:
                             polymarket_no_token=pm_market["no_token_id"],
                             polymarket_slug=pm_market["slug"],
                             similarity_score=1.0,
+                            op_rules=op_market.get("rules", ""),
+                            poly_rules=pm_market.get("events", [])[0].get("description", "") if pm_market.get("events") else "",
                         )
                     )
                     print("  ✓ 匹配成功")
@@ -511,6 +516,8 @@ class CrossPlatformArbitrage:
                         polymarket_no_token=found_match["no_token_id"],
                         polymarket_slug=found_match["slug"],
                         similarity_score=1.0,
+                        op_rules=op_child.get("rules", ""),
+                        poly_rules=found_match.get("events", [])[0].get("description", "") if found_match.get("events") else "",
                     )
                 )
                 unmatched_pm.remove(found_match)
