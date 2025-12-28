@@ -81,11 +81,16 @@ class RealtimeArbitrage:
         self._exec_lock = threading.Lock()
         self._insufficient_balance_flag = threading.Event()  # 余额不足标志
 
+        # 去重机制：记录最近执行的套利机会
+        self._recent_executions: Dict[str, float] = {}  # market_id_strategy -> timestamp
+        self._execution_cooldown = 5.0  # 秒，同一个套利机会的冷却时间
+
         # 统计信息
         self.stats = {
             "orderbook_updates": 0,
             "opportunities_found": 0,
             "opportunities_executed": 0,
+            "opportunities_deduplicated": 0,  # 去重的机会数
         }
         self.stats_lock = threading.Lock()
 
@@ -637,7 +642,7 @@ class RealtimeArbitrage:
     # ==================== 即时执行 ====================
 
     def _maybe_auto_execute(self, opportunity: Dict):
-        """根据配置自动执行即时套利"""
+        """根据配置自动执行即时套利（带去重）"""
         if not self.config.immediate_exec_enabled:
             return
 
@@ -649,6 +654,27 @@ class RealtimeArbitrage:
         upper = self.config.immediate_max_percent
 
         if lower <= annualized_rate <= upper:
+            # 生成唯一标识：market_id + strategy
+            match = opportunity.get("match")
+            strategy = opportunity.get("strategy")
+            exec_key = f"{match.opinion_market_id}_{strategy}"
+
+            # 检查是否在冷却期内
+            current_time = time.time()
+            with self._exec_lock:
+                last_exec_time = self._recent_executions.get(exec_key, 0)
+                if current_time - last_exec_time < self._execution_cooldown:
+                    # 在冷却期内，跳过执行
+                    logger.debug(
+                        f"  ⏭️ 跳过重复执行: {exec_key} (距上次执行 {current_time - last_exec_time:.1f}s)"
+                    )
+                    with self.stats_lock:
+                        self.stats["opportunities_deduplicated"] += 1
+                    return
+
+                # 记录执行时间
+                self._recent_executions[exec_key] = current_time
+
             logger.info(
                 f"  ⚡ 年化收益率 {annualized_rate:.2f}% 在阈值范围，启动即时执行"
             )
@@ -850,6 +876,16 @@ class RealtimeArbitrage:
 
                 time.sleep(30)
 
+                # 清理过期的执行记录（超过1分钟）
+                current_time = time.time()
+                with self._exec_lock:
+                    expired_keys = [
+                        k for k, t in self._recent_executions.items()
+                        if current_time - t > 60
+                    ]
+                    for k in expired_keys:
+                        del self._recent_executions[k]
+
                 stats = self.ws_manager.get_stats()
                 with self.stats_lock:
                     app_stats = dict(self.stats)
@@ -863,7 +899,8 @@ class RealtimeArbitrage:
                 )
                 logger.info(f"  订单簿更新: {app_stats['orderbook_updates']}")
                 logger.info(f"  发现机会: {app_stats['opportunities_found']}")
-                logger.info(f"  已执行: {app_stats['opportunities_executed']}\n")
+                logger.info(f"  已执行: {app_stats['opportunities_executed']}")
+                logger.info(f"  去重拦截: {app_stats['opportunities_deduplicated']}\n")
 
         except KeyboardInterrupt:
             logger.info("\n⚠️ 用户中断，正在关闭...")
