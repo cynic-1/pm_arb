@@ -32,9 +32,9 @@ def setup_logger(log_dir: str = "logs", log_pointer_env: Optional[str] = None) -
     for h in list(logging.root.handlers):
         logging.root.removeHandler(h)
 
-    # 创建格式化器
+    # 创建格式化器 - 使用毫秒级时间戳
     fmt = logging.Formatter(
-        '%(asctime)s %(filename)s:%(lineno)d %(levelname)s %(message)s',
+        '%(asctime)s.%(msecs)03d %(filename)s:%(lineno)d %(levelname)s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 

@@ -151,42 +151,62 @@ class RealtimeArbitrage:
         Args:
             update: 订单簿更新事件
         """
+        callback_start = time.time()
+        logger.debug(f"[回调] 收到订单簿更新: source={update.source}, token={update.token_id[:20]}...")
+
         # Update statistics
         with self.stats_lock:
             self.stats["orderbook_updates"] += 1
 
         # Update cache
+        cache_start = time.time()
         with self.cache_lock:
             self.orderbook_cache[update.token_id] = update.snapshot
+        cache_time = (time.time() - cache_start) * 1000
+        logger.debug(f"[回调] 缓存更新耗时: {cache_time:.2f}ms")
 
         # Find which market this token belongs to
+        match_start = time.time()
         match = self.token_to_match.get(update.token_id)
+        match_time = (time.time() - match_start) * 1000
+        logger.debug(f"[回调] 查找市场匹配耗时: {match_time:.2f}ms")
+
         if not match:
             return
 
         # 如果这是Polymarket YES token更新，自动推导NO token
         if update.source == "polymarket" and update.token_id == match.polymarket_yes_token:
+            derive_start = time.time()
             no_book = self.derive_no_orderbook(update.snapshot, match.polymarket_no_token)
             if no_book:
                 with self.cache_lock:
                     self.orderbook_cache[match.polymarket_no_token] = no_book
-                logger.debug(f"📊 自动推导Polymarket NO token订单簿: {match.polymarket_no_token[:20]}...")
+                derive_time = (time.time() - derive_start) * 1000
+                logger.debug(f"[回调] 推导Polymarket NO token耗时: {derive_time:.2f}ms")
 
         # 如果这是Opinion YES token更新，自动推导NO token
         if update.source == "opinion" and update.token_id == match.opinion_yes_token:
+            derive_start = time.time()
             no_book = self.derive_no_orderbook(update.snapshot, match.opinion_no_token)
             if no_book:
                 with self.cache_lock:
                     self.orderbook_cache[match.opinion_no_token] = no_book
-                logger.debug(f"📊 自动推导Opinion NO token订单簿: {match.opinion_no_token[:20]}...")
+                derive_time = (time.time() - derive_start) * 1000
+                logger.debug(f"[回调] 推导Opinion NO token耗时: {derive_time:.2f}ms")
 
         # Check for arbitrage opportunities
         # 在后台线程中执行以避免阻塞WebSocket
+        thread_start = time.time()
         threading.Thread(
             target=self._check_arbitrage_for_market,
             args=(match,),
             daemon=True
         ).start()
+        thread_time = (time.time() - thread_start) * 1000
+
+        callback_total = (time.time() - callback_start) * 1000
+        logger.debug(f"[回调] 启动检测线程耗时: {thread_time:.2f}ms")
+        logger.debug(f"[回调] 总回调耗时: {callback_total:.2f}ms")
 
     def _check_arbitrage_for_market(self, match: MarketMatch):
         """
@@ -195,21 +215,29 @@ class RealtimeArbitrage:
         Args:
             match: 市场匹配对象
         """
+        check_start = time.time()
+        logger.debug(f"[套利检测] 开始检测市场: {match.question[:30]}...")
+
         try:
             # Get all 4 orderbooks for this market
             # NO books已经在on_orderbook_update中自动推导了
+            fetch_start = time.time()
             with self.cache_lock:
                 opinion_yes_book = self.orderbook_cache.get(match.opinion_yes_token)
                 opinion_no_book = self.orderbook_cache.get(match.opinion_no_token)
                 poly_yes_book = self.orderbook_cache.get(match.polymarket_yes_token)
                 poly_no_book = self.orderbook_cache.get(match.polymarket_no_token)
+            fetch_time = (time.time() - fetch_start) * 1000
+            logger.debug(f"[套利检测] 获取订单簿耗时: {fetch_time:.2f}ms")
 
             # Need at least the YES books to proceed
             # (NO books会在有YES books时自动推导)
             if not (opinion_yes_book and poly_yes_book):
+                logger.debug(f"[套利检测] 订单簿不完整，跳过")
                 return
 
             # Scan for opportunities
+            scan_start = time.time()
             opportunities = self._scan_market_opportunities(
                 match,
                 opinion_yes_book,
@@ -219,6 +247,8 @@ class RealtimeArbitrage:
                 threshold_price=0.99,
                 threshold_size=200,
             )
+            scan_time = (time.time() - scan_start) * 1000
+            logger.debug(f"[套利检测] 扫描机会耗时: {scan_time:.2f}ms, 发现: {len(opportunities)}个")
 
             if opportunities:
                 with self.stats_lock:
@@ -229,8 +259,14 @@ class RealtimeArbitrage:
                 )
 
                 # Try to auto-execute
+                exec_start = time.time()
                 for opp in opportunities:
                     self._maybe_auto_execute(opp)
+                exec_time = (time.time() - exec_start) * 1000
+                logger.debug(f"[套利检测] 执行检查耗时: {exec_time:.2f}ms")
+
+            check_total = (time.time() - check_start) * 1000
+            logger.debug(f"[套利检测] 总检测耗时: {check_total:.2f}ms")
 
         except Exception as e:
             logger.error(f"❌ 检查套利机会时出错: {e}")

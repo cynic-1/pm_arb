@@ -42,53 +42,75 @@ class PolymarketWebSocket:
 
     def on_message(self, ws, message):
         """处理接收到的消息"""
+        recv_time = time.time()
         self.message_count += 1
 
+        logger.debug(f"[Polymarket WS] 收到消息 #{self.message_count}, 长度={len(message)}")
+
         try:
+            parse_start = time.time()
             data = json.loads(message)
+            parse_time = (time.time() - parse_start) * 1000
+            logger.debug(f"[Polymarket WS] JSON解析耗时: {parse_time:.2f}ms")
 
             # Handle initial book snapshot
             if isinstance(data, list):
+                logger.debug(f"[Polymarket WS] 收到列表数据，包含 {len(data)} 项")
                 for item in data:
-                    self._process_book_data(item)
+                    self._process_book_data(item, recv_time)
             # Handle single book update
             elif isinstance(data, dict):
                 event_type = data.get("event_type")
+                asset_id = data.get("asset_id", "unknown")[:20]
+                logger.debug(f"[Polymarket WS] 收到字典数据，event_type={event_type}, asset_id={asset_id}...")
+
                 if event_type == "book":
-                    self._process_book_data(data)
+                    self._process_book_data(data, recv_time)
                 # Handle price changes or other events
                 elif "asset_id" in data:
-                    self._process_book_data(data)
+                    self._process_book_data(data, recv_time)
 
         except json.JSONDecodeError:
             logger.debug(f"Non-JSON message: {message[:100]}")
         except Exception as e:
             logger.error(f"Error processing Polymarket message: {e}")
 
-    def _process_book_data(self, data: dict):
+    def _process_book_data(self, data: dict, recv_time: float):
         """处理订单簿数据"""
+        process_start = time.time()
+
         asset_id = data.get("asset_id")
         if not asset_id:
             return
 
+        logger.debug(f"[Polymarket] 处理订单簿: asset_id={asset_id[:20]}...")
+
         # Parse bids and asks
+        parse_levels_start = time.time()
         bids_raw = data.get("bids", [])
         asks_raw = data.get("asks", [])
 
         bids = self._parse_levels(bids_raw, reverse=True)
         asks = self._parse_levels(asks_raw, reverse=False)
+        parse_levels_time = (time.time() - parse_levels_start) * 1000
+
+        logger.debug(f"[Polymarket] 解析档位耗时: {parse_levels_time:.2f}ms (bids={len(bids)}, asks={len(asks)})")
 
         snapshot = OrderBookSnapshot(
             bids=bids,
             asks=asks,
             source="polymarket",
             token_id=asset_id,
-            timestamp=time.time()
+            timestamp=recv_time
         )
 
         # Cache the snapshot
+        cache_start = time.time()
         with self.lock:
             self.orderbook_cache[asset_id] = snapshot
+        cache_time = (time.time() - cache_start) * 1000
+
+        logger.debug(f"[Polymarket] 缓存更新耗时: {cache_time:.2f}ms")
 
         # Notify callbacks
         update = OrderBookUpdate(
@@ -101,9 +123,15 @@ class PolymarketWebSocket:
 
         for callback in self.callbacks:
             try:
+                callback_exec_start = time.time()
                 callback(update)
+                callback_exec_time = (time.time() - callback_exec_start) * 1000
+                logger.debug(f"[Polymarket] 回调执行耗时: {callback_exec_time:.2f}ms")
             except Exception as e:
                 logger.error(f"Callback error: {e}")
+
+        total_time = (time.time() - process_start) * 1000
+        logger.debug(f"[Polymarket] 总处理耗时: {total_time:.2f}ms (从开始处理到完成)")
 
     def _parse_levels(self, levels: List, reverse: bool) -> List[OrderBookLevel]:
         """解析订单簿档位"""
@@ -231,14 +259,22 @@ class OpinionWebSocket:
 
     def on_message(self, ws, message):
         """处理接收到的消息"""
+        recv_time = time.time()
         self.message_count += 1
 
+        logger.debug(f"[Opinion WS] 收到消息 #{self.message_count}, 长度={len(message)}")
+
         try:
+            parse_start = time.time()
             data = json.loads(message)
+            parse_time = (time.time() - parse_start) * 1000
+            logger.debug(f"[Opinion WS] JSON解析耗时: {parse_time:.2f}ms")
+
             msg_type = data.get("msgType")
+            logger.debug(f"[Opinion WS] 消息类型: {msg_type}")
 
             if msg_type == "market.depth.diff":
-                self._process_book_update(data)
+                self._process_book_update(data, recv_time)
             elif data.get("code") == 200:
                 # Subscription confirmation
                 logger.debug(f"Opinion: {data.get('message')}")
@@ -248,13 +284,17 @@ class OpinionWebSocket:
         except Exception as e:
             logger.error(f"Error processing Opinion message: {e}")
 
-    def _process_book_update(self, data: dict):
+    def _process_book_update(self, data: dict, recv_time: float):
         """处理订单簿更新"""
+        process_start = time.time()
+
         market_id = data.get("marketId")
         token_id = data.get("tokenId")
         side = data.get("side")  # 'bids' or 'asks'
         price = float(data.get("price", 0))
         size = float(data.get("size", 0))
+
+        logger.debug(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., side={side}, price={price}, size={size}")
 
         if not (market_id and token_id and side and price > 0):
             return
@@ -264,16 +304,18 @@ class OpinionWebSocket:
             snapshot = self.orderbook_cache.get(token_id)
 
             if not snapshot:
+                logger.debug(f"[Opinion] 创建新订单簿快照: token={token_id[:20]}...")
                 # Create new snapshot
                 snapshot = OrderBookSnapshot(
                     bids=[],
                     asks=[],
                     source="opinion",
                     token_id=token_id,
-                    timestamp=time.time()
+                    timestamp=recv_time
                 )
 
             # Update the appropriate side
+            update_start = time.time()
             level = OrderBookLevel(price=price, size=size)
 
             if side == "bids":
@@ -287,7 +329,7 @@ class OpinionWebSocket:
                     asks=snapshot.asks,
                     source="opinion",
                     token_id=token_id,
-                    timestamp=time.time()
+                    timestamp=recv_time
                 )
             else:  # asks
                 asks = [l for l in snapshot.asks if abs(l.price - price) > 0.001]
@@ -299,8 +341,11 @@ class OpinionWebSocket:
                     asks=asks[:5],
                     source="opinion",
                     token_id=token_id,
-                    timestamp=time.time()
+                    timestamp=recv_time
                 )
+
+            update_time = (time.time() - update_start) * 1000
+            logger.debug(f"[Opinion] 订单簿更新耗时: {update_time:.2f}ms")
 
             # Cache updated snapshot
             self.orderbook_cache[token_id] = snapshot
@@ -317,9 +362,15 @@ class OpinionWebSocket:
 
         for callback in self.callbacks:
             try:
+                callback_exec_start = time.time()
                 callback(update)
+                callback_exec_time = (time.time() - callback_exec_start) * 1000
+                logger.debug(f"[Opinion] 回调执行耗时: {callback_exec_time:.2f}ms")
             except Exception as e:
                 logger.error(f"Callback error: {e}")
+
+        total_time = (time.time() - process_start) * 1000
+        logger.debug(f"[Opinion] 总处理耗时: {total_time:.2f}ms (从开始处理到完成)")
 
     def on_error(self, ws, error):
         """处理错误"""
