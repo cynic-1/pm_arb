@@ -92,3 +92,31 @@ def dedupe_tokens(token_ids: List[str]) -> List[str]:
         deduped.append(token_str)
 
     return deduped
+
+
+def infer_tick_size_from_price(price: float) -> str:
+    """
+    根据价格推断 tick_size
+
+    Polymarket 规则:
+    - 如果价格有两位小数（例如 0.45, 0.99），tick_size 为 "0.01"
+    - 如果价格有三位小数（例如 0.455, 0.991），tick_size 为 "0.001"
+
+    Args:
+        price: 订单价格
+
+    Returns:
+        推断的 tick_size 字符串 ("0.01" 或 "0.001")
+    """
+    # 将价格转换为字符串以检查小数位数
+    price_str = f"{price:.6f}".rstrip('0').rstrip('.')
+
+    # 计算小数位数
+    if '.' in price_str:
+        decimal_places = len(price_str.split('.')[1])
+        # 如果有3位或更多小数，使用 "0.001"
+        if decimal_places >= 3:
+            return "0.001"
+
+    # 默认使用 "0.01"
+    return "0.01"

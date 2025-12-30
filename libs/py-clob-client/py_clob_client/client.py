@@ -464,10 +464,14 @@ class ClobClient:
         self.assert_level_1_auth()
 
         # add resolve_order_options, or similar
-        tick_size = self.__resolve_tick_size(
-            order_args.token_id,
-            options.tick_size if options else None,
-        )
+        # 如果 options 提供了 tick_size，则直接使用，避免网络请求
+        if options and options.tick_size is not None:
+            tick_size = options.tick_size
+        else:
+            tick_size = self.__resolve_tick_size(
+                order_args.token_id,
+                None,
+            )
 
         if not price_valid(order_args.price, tick_size):
             raise Exception(
@@ -479,17 +483,20 @@ class ClobClient:
                 + str(1 - float(tick_size))
             )
 
-        neg_risk = (
-            options.neg_risk
-            if options and options.neg_risk
-            else self.get_neg_risk(order_args.token_id)
-        )
+        # 如果 options 提供了 neg_risk，则直接使用，避免网络请求
+        if options and options.neg_risk is not None:
+            neg_risk = options.neg_risk
+        else:
+            neg_risk = self.get_neg_risk(order_args.token_id)
 
-        # fee rate
-        fee_rate_bps = self.__resolve_fee_rate(
-            order_args.token_id, order_args.fee_rate_bps
-        )
-        order_args.fee_rate_bps = fee_rate_bps
+        # fee rate - 如果已在 order_args 中提供，则跳过网络请求
+        if order_args.fee_rate_bps is not None:
+            fee_rate_bps = order_args.fee_rate_bps
+        else:
+            fee_rate_bps = self.__resolve_fee_rate(
+                order_args.token_id, order_args.fee_rate_bps
+            )
+            order_args.fee_rate_bps = fee_rate_bps
 
         return self.builder.create_order(
             order_args,
@@ -511,10 +518,14 @@ class ClobClient:
         self.assert_level_1_auth()
 
         # add resolve_order_options, or similar
-        tick_size = self.__resolve_tick_size(
-            order_args.token_id,
-            options.tick_size if options else None,
-        )
+        # 如果 options 提供了 tick_size，则直接使用，避免网络请求
+        if options and options.tick_size is not None:
+            tick_size = options.tick_size
+        else:
+            tick_size = self.__resolve_tick_size(
+                order_args.token_id,
+                None,
+            )
 
         if order_args.price is None or order_args.price <= 0:
             order_args.price = self.calculate_market_price(
@@ -534,17 +545,20 @@ class ClobClient:
                 + str(1 - float(tick_size))
             )
 
-        neg_risk = (
-            options.neg_risk
-            if options and options.neg_risk
-            else self.get_neg_risk(order_args.token_id)
-        )
+        # 如果 options 提供了 neg_risk，则直接使用，避免网络请求
+        if options and options.neg_risk is not None:
+            neg_risk = options.neg_risk
+        else:
+            neg_risk = self.get_neg_risk(order_args.token_id)
 
-        # fee rate
-        fee_rate_bps = self.__resolve_fee_rate(
-            order_args.token_id, order_args.fee_rate_bps
-        )
-        order_args.fee_rate_bps = fee_rate_bps
+        # fee rate - 如果已在 order_args 中提供，则跳过网络请求
+        if order_args.fee_rate_bps is not None:
+            fee_rate_bps = order_args.fee_rate_bps
+        else:
+            fee_rate_bps = self.__resolve_fee_rate(
+                order_args.token_id, order_args.fee_rate_bps
+            )
+            order_args.fee_rate_bps = fee_rate_bps
 
         return self.builder.create_market_order(
             order_args,

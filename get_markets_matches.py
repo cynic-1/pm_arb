@@ -49,6 +49,8 @@ class MarketMatch:
     op_rules: Optional[str] = None  # Opinion 市场规则
     poly_rules: Optional[str] = None  # Polymarket 市场规则
 
+    polymarket_neg_risk: Optional[bool] = False  # Polymarket neg_risk 标志
+
 
 class CrossPlatformArbitrage:
     """负责市场匹配和结果保存的精简类"""
@@ -340,6 +342,7 @@ class CrossPlatformArbitrage:
             "volume": float(market.get("volume", 0)),
             "active": market.get("active", True),
             "description": description,  # 添加事件描述
+            "neg_risk": market.get("negRisk", False),  # 添加 neg_risk 标志
         }
 
     # ==================== 市场匹配 ====================
@@ -403,6 +406,7 @@ class CrossPlatformArbitrage:
                             similarity_score=1.0,
                             op_rules=op_market.get("rules", ""),
                             poly_rules=pm_market.get("description", ""),
+                            polymarket_neg_risk=pm_market.get("neg_risk", False),  # 添加 neg_risk
                         )
                     )
                     print("  ✓ 匹配成功")
@@ -553,6 +557,7 @@ class CrossPlatformArbitrage:
                         similarity_score=1.0,
                         op_rules=op_child.get("rules", ""),
                         poly_rules=found_match.get("description", ""),
+                        polymarket_neg_risk=found_match.get("neg_risk", False),  # 添加 neg_risk
                     )
                 )
                 unmatched_pm.remove(found_match)

@@ -32,7 +32,7 @@ from arbitrage_core import (
     OrderBookUpdate,
 )
 from arbitrage_core.utils import setup_logger
-from arbitrage_core.utils.helpers import to_int
+from arbitrage_core.utils.helpers import to_int, infer_tick_size_from_price
 
 # Opinion SDK
 from opinion_clob_sdk.chain.py_order_utils.model.order import PlaceOrderDataInput
@@ -40,7 +40,7 @@ from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
 from opinion_clob_sdk.chain.py_order_utils.model.order_type import LIMIT_ORDER
 
 # Polymarket SDK
-from py_clob_client.clob_types import OrderArgs, OrderType
+from py_clob_client.clob_types import OrderArgs, OrderType, PartialCreateOrderOptions
 from py_clob_client.order_builder.constants import BUY
 
 import logging
@@ -382,7 +382,7 @@ class RealtimeArbitrage:
         return False, last_result
 
     def _place_polymarket_order_with_retries(
-        self, order_args: Any, order_type: Any, context: str = ""
+        self, order_args: Any, order_type: Any, context: str = "", options: Any = None
     ) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """Polymarket 下单带重试 (从 modular_arbitrage.py 复制)"""
         prefix = f"[{context}] " if context else ""
@@ -390,7 +390,7 @@ class RealtimeArbitrage:
 
         for attempt in range(1, self.config.order_max_retries + 1):
             try:
-                signed_order = self.clients.polymarket_client.create_order(order_args)
+                signed_order = self.clients.polymarket_client.create_order(order_args, options=options)
                 result = self.clients.polymarket_client.post_order(signed_order, order_type)
                 last_result = result if isinstance(result, dict) else None
 
@@ -791,16 +791,25 @@ class RealtimeArbitrage:
                         traceback.print_exc()
                 else:
                     try:
+                        # 创建 Polymarket 订单参数
+                        price_to_use = first_price if first_price is not None else opp["first_price"]
                         order1 = OrderArgs(
                             token_id=opp["first_token"],
-                            price=first_price if first_price is not None else opp["first_price"],
+                            price=price_to_use,
                             size=first_order_size,
-                            side=opp["first_side"]
+                            side=opp["first_side"],
+                            fee_rate_bps=0  # Polymarket fee rate 统一为 0
+                        )
+                        # 创建选项以避免额外的网络请求
+                        options1 = PartialCreateOrderOptions(
+                            tick_size=infer_tick_size_from_price(price_to_use),
+                            neg_risk=opp["match"].polymarket_neg_risk
                         )
                         success, res1 = self._place_polymarket_order_with_retries(
                             order1,
                             OrderType.GTC,
-                            context="即时执行首单"
+                            context="即时执行首单",
+                            options=options1
                         )
                         if success:
                             logger.info(f"✅ Polymarket 订单提交成功 (即时执行): {res1}")
@@ -834,16 +843,25 @@ class RealtimeArbitrage:
                         traceback.print_exc()
                 else:
                     try:
+                        # 创建 Polymarket 对冲订单参数
+                        price_to_use2 = second_price if second_price is not None else opp["second_price"]
                         order2 = OrderArgs(
                             token_id=opp["second_token"],
-                            price=second_price if second_price is not None else opp["second_price"],
+                            price=price_to_use2,
                             size=second_order_size,
-                            side=opp["second_side"]
+                            side=opp["second_side"],
+                            fee_rate_bps=0  # Polymarket fee rate 统一为 0
+                        )
+                        # 创建选项以避免额外的网络请求
+                        options2 = PartialCreateOrderOptions(
+                            tick_size=infer_tick_size_from_price(price_to_use2),
+                            neg_risk=opp["match"].polymarket_neg_risk
                         )
                         success, res2 = self._place_polymarket_order_with_retries(
                             order2,
                             OrderType.GTC,
-                            context="即时执行对冲"
+                            context="即时执行对冲",
+                            options=options2
                         )
                         if success:
                             logger.info(f"✅ Polymarket 对冲订单提交成功 (即时执行): {res2}")

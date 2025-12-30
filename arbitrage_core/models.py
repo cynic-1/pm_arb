@@ -53,6 +53,9 @@ class MarketMatch:
     similarity_score: float = 1.0
     cutoff_at: Optional[int] = None
 
+    # Polymarket 市场属性（用于避免不必要的API请求）
+    polymarket_neg_risk: bool = False  # 是否为 neg-risk 市场
+
 
 @dataclass
 class ArbitrageOpportunity:
