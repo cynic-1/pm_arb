@@ -1,5 +1,135 @@
 [
   {
+    "question": "Bitcoin Up or Down on December 30?(12:00 ET)",
+    "opinion_market_id": 3370,
+    "opinion_yes_token": "17622556981313711494383759185891173394643995571945314987721137646644540560424",
+    "opinion_no_token": "9659423107563074795380172780640558689465691890039311658846240904737918506693",
+    "polymarket_condition_id": "0x44c96da2abdc1bffd0f7f8fb404baa2f48e59e7b59a35244a211bf6764d72e57",
+    "polymarket_yes_token": "115193106500252441347057856539225168339065498062654799670373647667592722696153",
+    "polymarket_no_token": "96721129208555015655925071172981183153294316077748837136764608376761420027366",
+    "polymarket_slug": "bitcoin-up-or-down-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will CZ return to Binance in 1Q2026?",
+    "opinion_market_id": 3369,
+    "opinion_yes_token": "93908468685815930855385008790416086718145354504719747485658730921525718511731",
+    "opinion_no_token": "47839672948575895335108862259425371781612182333121867900361249801434678762899",
+    "polymarket_condition_id": "0x2e20604bdeb3d5915d8b4d64153501514c15a5f032f9ca6b3fcfa35de1c6bf13",
+    "polymarket_yes_token": "92122624471291268676053025452909182622905926273156611970677367498131446139536",
+    "polymarket_no_token": "47819752079757179430672463277630243807719570171749566272540368659922661844735",
+    "polymarket_slug": "will-cz-return-to-binance-by-december-31",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "BNB all time high in 1Q2026?",
+    "opinion_market_id": 3368,
+    "opinion_yes_token": "2246945477658854389535680326898753844040844562110044572702720969652572479682",
+    "opinion_no_token": "57999695644651839948802963018016886169732553874450166488363636059839891915246",
+    "polymarket_condition_id": "0xf0facaa00e7dc1670f70db0ba28ff9bdac5ec2db1d1640fe6d6e104275a9de17",
+    "polymarket_yes_token": "99259820416418264485856295470570330416541853029136452359263016671520536216807",
+    "polymarket_no_token": "85115024216433553134808281393314667850581983686440216340018154843843827506779",
+    "polymarket_slug": "bnb-all-time-high-by-december-31",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Satoshi move any Bitcoin in 2026?",
+    "opinion_market_id": 3365,
+    "opinion_yes_token": "6528451599222294258529060492334603954945893674271652700346912563459237960556",
+    "opinion_no_token": "60544780983669285887915055730758344285159294647848045135310063068347219792200",
+    "polymarket_condition_id": "0x293fb49f43b12631ec4ad0617d9c0efc0eacce33416ef16f68521427daca1678",
+    "polymarket_yes_token": "57338714801830110409291906331043415122319095430948035858069240523339447935973",
+    "polymarket_no_token": "20490903838795271872508839925457310042688796049257211138642443340719901864083",
+    "polymarket_slug": "will-satoshi-move-any-bitcoin-in-2025",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Ethereum all time high in 1Q2026?",
+    "opinion_market_id": 3364,
+    "opinion_yes_token": "47818507746837806932996430526815714780431430046196958773280983418191609635581",
+    "opinion_no_token": "68846142027341088610251576627743795507947769330011581584107608231858784037849",
+    "polymarket_condition_id": "0x5401278f7f9c9df79552148e2b280dea9ea91431a77c2c46686b8bec598970e7",
+    "polymarket_yes_token": "104384626333890484417631221426453974917579250857486058586575825503557175219318",
+    "polymarket_no_token": "21141504331828146088416065151083242350756843661701373107647465798821590056635",
+    "polymarket_slug": "ethereum-all-time-high-in-2024",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Hyperliquid all time high by March 31, 2026?",
+    "opinion_market_id": 3361,
+    "opinion_yes_token": "74927433619742977720148068047389192958139335662229407680640347933325055884771",
+    "opinion_no_token": "101406845553813396392920861719200566577080260477799469864387660102148057948528",
+    "polymarket_condition_id": "0xaa368b9b8a22b8fd9338f3e46b4ce5f856233ac5ff45e30557384846279acee7",
+    "polymarket_yes_token": "58632274686893291325594287335665580988877544297633624258440626598727067465883",
+    "polymarket_no_token": "115688300307045973754601780790974616827021240595730130020655236540593010503637",
+    "polymarket_slug": "hyperliquid-all-time-high-by-december-31-637",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "A crypto hack over $100m in 1Q2026?",
+    "opinion_market_id": 3360,
+    "opinion_yes_token": "56479334116881424172841237649542725111862110044069699293248946926842650011638",
+    "opinion_no_token": "67019296347054400310918014712070062083052926940229239646635020375034221049118",
+    "polymarket_condition_id": "0x5c5067758d91b3426ece5dd5fe71859c0b1dd3e3066adc4adc8bfb61a59e5a05",
+    "polymarket_yes_token": "22052104255237964656095654019778785305027176265880081950877848219072592916901",
+    "polymarket_no_token": "40743042024323237687512205136566453090840058214909922692096940892645596331372",
+    "polymarket_slug": "will-trump-media-launch-a-crypto-exchange-in-2024",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "USDT depeg in 1Q2026?",
+    "opinion_market_id": 3359,
+    "opinion_yes_token": "33231539553852059177126395192278830962445423435416923748047791612518840020552",
+    "opinion_no_token": "36666733652235806787966074337526162668529401802349919126858374679021398063438",
+    "polymarket_condition_id": "0x416316490efec1038ce09ec0184f82f1f7921876ee0594a30c783635ea6983d0",
+    "polymarket_yes_token": "27041836805134371913740407263212214733159750380813540071930429439405154056312",
+    "polymarket_no_token": "23920013258819752881197525832650639378445397094039587501841819155943480602942",
+    "polymarket_slug": "usdt-depeg-in-2025",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Megaquake by March 31st, 2026?",
+    "opinion_market_id": 3356,
+    "opinion_yes_token": "100491264135454826874240747640718935982603193727282983855516298160858940039692",
+    "opinion_no_token": "48528401124259616502010632488554688365519152314029975641324976057805338867386",
+    "polymarket_condition_id": "0xf355655fbd08319839ed3aceda8119e10969be2b64bfa5b814aa80a3d1166f4f",
+    "polymarket_yes_token": "33387855196356233009916843768079651193695668356368222794800448638089363613899",
+    "polymarket_no_token": "35400853572447687925862326096696670514322590224572684747726757296976337371144",
+    "polymarket_slug": "megaquake-by-march-31",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "US strike on Syria by March 31st, 2026?",
+    "opinion_market_id": 3355,
+    "opinion_yes_token": "97816074762516582419883373987054950900356558355122649364177862713778695373547",
+    "opinion_no_token": "11041359557403033873812890542707311463536807344702379467087662732108951575351",
+    "polymarket_condition_id": "0x79da75e538e66b59918d33b6433627fc11ce2d99b90a4ffad2b36e0c5114d685",
+    "polymarket_yes_token": "21819654920243066948643943356093139052434542830567552076297394835168433182548",
+    "polymarket_no_token": "9759501607783956960107892663189491979366304101725358725095748363296449914880",
+    "polymarket_slug": "us-strike-on-syria-by-march-31",
+    "similarity_score": 1.0,
+    "cutoff_at": 1775001600,
+    "polymarket_neg_risk": false
+  },
+  {
     "question": "US recession by end of 2026?",
     "opinion_market_id": 3265,
     "opinion_yes_token": "87272488386586005163280713087482388384186425206889546103321432158141213262099",
@@ -9,7 +139,8 @@
     "polymarket_no_token": "113732820231608904682346496304917888352004831436510840986547065248348999143469",
     "polymarket_slug": "us-recession-by-end-of-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Microstrategy delisted from MSCI index by March 31?",
@@ -21,7 +152,8 @@
     "polymarket_no_token": "25876458715926452819291149008905329179065285293994316839060861417834340116896",
     "polymarket_slug": "will-microstrategy-be-delisted-from-the-msci-index-by-march-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Bitcoin replace SHA-256 before 2027?",
@@ -33,19 +165,21 @@
     "polymarket_no_token": "72670647689798126155379195982210375898946791091506940659786818210179047618201",
     "polymarket_slug": "will-bitcoin-replace-sha-256-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Will the AAVE token alignment proposal Phase 1 - Ownership pass?",
-    "opinion_market_id": 3128,
-    "opinion_yes_token": "101761686229654556337196429587471521760988633675233560865937673092357584952314",
-    "opinion_no_token": "74736031591625915368733913170807195731928141516406039613265189162405194341809",
-    "polymarket_condition_id": "0x40b13041117243cb1c1e3bc3d0c3eb7bfcafa5e339972fe29f05a11bb9f2b79d",
-    "polymarket_yes_token": "11434641738609785274800828225795198899894106761699143467031483461680321708673",
-    "polymarket_no_token": "106710278763938262550157491244319805114524050893574824337296651682331211900116",
-    "polymarket_slug": "will-the-aave-token-alignment-proposal-pass",
+    "question": "Will Japan conduct a yen-buying FX intervention by Jan 31?",
+    "opinion_market_id": 3132,
+    "opinion_yes_token": "83055766231462249420145556985977260397219069037169124901375627379234930463333",
+    "opinion_no_token": "46721205603746610339105866478662778913260120090980412475325944118799216807627",
+    "polymarket_condition_id": "0x9908c8b23e64f512ca24a323d8d720101e0d76e87147d085b09f5c01b6dc91b6",
+    "polymarket_yes_token": "76005080882855555246854325942635126168841076374499816777534443517019754089753",
+    "polymarket_no_token": "21543759742200604836405651343532977095329590576542320054370792116764410298856",
+    "polymarket_slug": "will-kim-jong-un-meet-with-sanae-takaichi-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1766707200
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will there be another US government shutdown by January 31?",
@@ -57,7 +191,8 @@
     "polymarket_no_token": "108988271800978168213949343685406694292284061166193819357568013088568150075789",
     "polymarket_slug": "will-there-be-another-us-government-shutdown-by-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600
+    "cutoff_at": 1769817600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Alex Honnold free solo Taipei 101?",
@@ -69,7 +204,8 @@
     "polymarket_no_token": "110181156192693711846310872068146183338589103136220803391073384883714916360200",
     "polymarket_slug": "will-alex-honnold-free-solo-taipei-101",
     "similarity_score": 1.0,
-    "cutoff_at": 1769126400
+    "cutoff_at": 1769126400,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will the 1st pick in the 2026 NFL draft be a QB?",
@@ -81,7 +217,8 @@
     "polymarket_no_token": "28582281208958142374221800160689041762704718293439482938078632468269513646280",
     "polymarket_slug": "will-the-1st-pick-in-the-2026-nfl-draft-be-a-qb",
     "similarity_score": 1.0,
-    "cutoff_at": 1776902400
+    "cutoff_at": 1776902400,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Trump out as President before 2027?",
@@ -93,7 +230,8 @@
     "polymarket_no_token": "2849827372590072151380088930233312280478318575453624773762283369907909283027",
     "polymarket_slug": "trump-out-as-president-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "US strike on Syria by December 31?",
@@ -105,7 +243,8 @@
     "polymarket_no_token": "34953747759820074767944144207463633812731260508015975722532997237328981546335",
     "polymarket_slug": "us-strike-on-syria-by-december-31-426",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Trump endorse JD Vance for president before 2027?",
@@ -117,7 +256,8 @@
     "polymarket_no_token": "50100538913445815307703112616258975070399904586460690699614749314148623601110",
     "polymarket_slug": "will-trump-endorse-jd-vance-for-president-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Israel strikes Iran by March 31, 2026?",
@@ -129,7 +269,8 @@
     "polymarket_no_token": "55201180171382344648128505031675400629485078801250545752063029078975592767599",
     "polymarket_slug": "israel-strikes-iran-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Jesus Christ return before 2027?",
@@ -141,7 +282,8 @@
     "polymarket_no_token": "51797157743046504218541616681751597845468055908324407922581755135522797852101",
     "polymarket_slug": "will-jesus-christ-return-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Megaquake by December 31?",
@@ -153,7 +295,8 @@
     "polymarket_no_token": "43577760886052680570334039145361508464602899119356427453668205933543171672461",
     "polymarket_slug": "megaquake-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "9.0 or above earthquake before 2027?",
@@ -165,7 +308,8 @@
     "polymarket_no_token": "48034741162414911677683690294521484296674889000564444056948845787306275984919",
     "polymarket_slug": "9pt0-or-above-earthquake-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Netflix close Warner Bros. acquisition by end of 2026?",
@@ -177,7 +321,8 @@
     "polymarket_no_token": "31726388799273455369178296991968276054967232130173960087816302328712827405227",
     "polymarket_slug": "will-netflix-close-warner-brothers-acquisition-by-end-of-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Tim Cook out as Apple CEO by March 31?",
@@ -189,7 +334,8 @@
     "polymarket_no_token": "14710336630003205104081256031700355717491874383055196564648477473982782876232",
     "polymarket_slug": "tim-cook-out-as-apple-ceo-by-march-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Another critical Cloudflare incident by December 31?",
@@ -201,7 +347,8 @@
     "polymarket_no_token": "63123533539443821826138813626876795665366429597767183646720878138278659902455",
     "polymarket_slug": "another-cloudflare-outage-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Blackpink release an album by February 28?",
@@ -213,7 +360,8 @@
     "polymarket_no_token": "88331695841142629890410674552464390373668957866850839714537648163813711098335",
     "polymarket_slug": "will-blkpik-release-an-album-by-february-28",
     "similarity_score": 1.0,
-    "cutoff_at": 1772236800
+    "cutoff_at": 1772236800,
+    "polymarket_neg_risk": false
   },
   {
     "question": "US recession in 2025?",
@@ -225,7 +373,8 @@
     "polymarket_no_token": "44528029102356085806317866371026691780796471200782980570839327755136990994869",
     "polymarket_slug": "us-recession-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1772236800
+    "cutoff_at": 1772236800,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Supreme Court rules in favor of Trump's tariffs?",
@@ -237,7 +386,8 @@
     "polymarket_no_token": "51171279104285400909666677762285621845926753560865042481170667672124752488918",
     "polymarket_slug": "will-the-supreme-court-rule-in-favor-of-trumps-tariffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "USDT depeg in 2025?",
@@ -249,7 +399,8 @@
     "polymarket_no_token": "23920013258819752881197525832650639378445397094039587501841819155943480602942",
     "polymarket_slug": "usdt-depeg-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Another crypto hack over $100m in 2025 (After Nov 4)?",
@@ -261,7 +412,8 @@
     "polymarket_no_token": "105692628251314922747297579764822962349710352029804625737868386237311541730173",
     "polymarket_slug": "another-crypto-hack-over-100m-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Hyperliquid all time high by Dec 31?",
@@ -273,7 +425,8 @@
     "polymarket_no_token": "115688300307045973754601780790974616827021240595730130020655236540593010503637",
     "polymarket_slug": "hyperliquid-all-time-high-by-december-31-637",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Kraken IPO in 2025?",
@@ -285,7 +438,8 @@
     "polymarket_no_token": "33007765079325382103458898680383691503895532108499178620460955049586020382226",
     "polymarket_slug": "kraken-ipo-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Russia x Ukraine ceasefire in 2025?",
@@ -297,7 +451,8 @@
     "polymarket_no_token": "42351579455604873042957090441032286075880144797259231030267680078160718556927",
     "polymarket_slug": "russia-x-ukraine-ceasefire-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Ethereum all time high by Dec 31?",
@@ -309,7 +464,8 @@
     "polymarket_no_token": "41830812634996454928272498676800743156992428314340734137550105066501156143267",
     "polymarket_slug": "ethereum-all-time-high-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Satoshi move any Bitcoin in 2025?",
@@ -321,7 +477,8 @@
     "polymarket_no_token": "20490903838795271872508839925457310042688796049257211138642443340719901864083",
     "polymarket_slug": "will-satoshi-move-any-bitcoin-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Base launch a token in 2025?",
@@ -333,7 +490,8 @@
     "polymarket_no_token": "91704486839398022652930625279905848372527977307744447009017770224967808697336",
     "polymarket_slug": "will-base-launch-a-token-in-2025-341",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "First to 5k: Gold or ETH?",
@@ -345,7 +503,8 @@
     "polymarket_no_token": "109393977968431223916658147422584374037783147556547837142618929515488700202429",
     "polymarket_slug": "first-to-5k-gold-or-eth",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will BNB hit $1500 by December 31?",
@@ -357,7 +516,8 @@
     "polymarket_no_token": "30046418852950366713616397543259456710795886177171519627351763245580604211225",
     "polymarket_slug": "will-bnb-hit-1500-by-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "BNB all time high by December 31?",
@@ -369,7 +529,8 @@
     "polymarket_no_token": "85115024216433553134808281393314667850581983686440216340018154843843827506779",
     "polymarket_slug": "bnb-all-time-high-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will MetaMask launch a token in 2025?",
@@ -381,7 +542,8 @@
     "polymarket_no_token": "102949690272049881918816161009598998660276278148863115139226223419430092123884",
     "polymarket_slug": "will-metamask-launch-a-token-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will CZ return to Binance by December 31?",
@@ -393,67 +555,463 @@
     "polymarket_no_token": "47819752079757179430672463277630243807719570171749566272540368659922661844735",
     "polymarket_slug": "will-cz-return-to-binance-by-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Bitcoin above ... on December 28?(12:00 ET) - 84,000",
-    "opinion_market_id": 3251,
-    "opinion_yes_token": "99236250345095045986576882495568602690185074867317139756982906769198354138958",
-    "opinion_no_token": "56810050834665643862143704035981644155227271071040632740509672833487541619498",
-    "polymarket_condition_id": "0x75bd6b8e45d8622eb193bf661ac1894c7464667850eae64c52ee15ba8f2a0e50",
-    "polymarket_yes_token": "103097543467568667108288616715872626537767998219408446496258318746320068884483",
-    "polymarket_no_token": "22000560803692015048061113804493543440398766297083491872746209240352791261130",
-    "polymarket_slug": "bitcoin-above-84k-on-december-27",
+    "question": "Will Nansen launch a token by ...? - March 31, 2026",
+    "opinion_market_id": 3410,
+    "opinion_yes_token": "72379689033837772624561528952286089261926066666758511403261054712855099789783",
+    "opinion_no_token": "101746785351718498645275463482533469807556338402388999984090081872192421917734",
+    "polymarket_condition_id": "0xa99779a2fb7016837c806ae4214c9eae9dc9b3b8276f9a81d1f980de2e24d3cb",
+    "polymarket_yes_token": "47685154456184441597096032697305504303419290329477952196129130368267803065561",
+    "polymarket_no_token": "13960437483967796563967123319552304130868408674208000351639758068650255668897",
+    "polymarket_slug": "will-nansen-launch-a-token-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1766880000
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Bitcoin above ... on December 28?(12:00 ET) - 86,000",
-    "opinion_market_id": 3252,
-    "opinion_yes_token": "20042571868111868951161665806029526550612162332694765462608601213513687833699",
-    "opinion_no_token": "72525695624372762111870013822305600212118663093677661543488055152186767865931",
-    "polymarket_condition_id": "0x274ed065f8d95f5b8b1d4660ab928b875f9cdf63a514d499faf80d6c401d9a13",
-    "polymarket_yes_token": "66419816780907415094037902427779460591774735662311976738001235372915293788625",
-    "polymarket_no_token": "24172406411917527167226578942758473713750876200217937215190957766217924855576",
-    "polymarket_slug": "bitcoin-above-86k-on-december-27",
+    "question": "Will Nansen launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 3411,
+    "opinion_yes_token": "95021116774030237012252900809537722656013308667603305368893512092366639239281",
+    "opinion_no_token": "109068237909965667181747501994977816936601600543463819246746856888120206453707",
+    "polymarket_condition_id": "0x57ccd0af178f695ae7ddba9b691a0f48ac25e4c32bf68e1026d50490cd8c696d",
+    "polymarket_yes_token": "48080345058894299067949482689603833714280259396650965675457553712149771112881",
+    "polymarket_no_token": "33381042829221798837858789935145414777928280915715952880078921946930185608763",
+    "polymarket_slug": "will-nansen-launch-a-token-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1766880000
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Bitcoin above ... on December 28?(12:00 ET) - 88,000",
-    "opinion_market_id": 3253,
-    "opinion_yes_token": "17068624605831683218625681662931434972510450618248532370083321753139549472628",
-    "opinion_no_token": "42943347703572481391039684876320692586554472033628650289970367051806147415371",
-    "polymarket_condition_id": "0xfd0e4cd3cb6930677de55084bf43b01143064a21206ad59dfdceec6ca633e1d1",
-    "polymarket_yes_token": "10547133081328286792291060195260923414097992773969696406007890376625873459352",
-    "polymarket_no_token": "52033502896701629340496640102523193683438923330243162724135552439372143132813",
-    "polymarket_slug": "bitcoin-above-88k-on-december-27",
+    "question": "Will Nansen launch a token by ...? - September 30, 2026",
+    "opinion_market_id": 3412,
+    "opinion_yes_token": "37839456739749152056356543952440166398444718137580229321057970363041611236404",
+    "opinion_no_token": "91789352775646519349748572527595010101334863095042962272432865576453183045296",
+    "polymarket_condition_id": "0x144a0a6d2b65893c2c961952049075f40c349752376de16c11048b351cb939c3",
+    "polymarket_yes_token": "61737839233729807825598001809356429511156590046582032790390502786534390681919",
+    "polymarket_no_token": "9973730562648967513147080510099447671724718623939973945804553605267958516191",
+    "polymarket_slug": "will-nansen-launch-a-token-by-september-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1766880000
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Bitcoin above ... on December 28?(12:00 ET) - 90,000",
-    "opinion_market_id": 3254,
-    "opinion_yes_token": "103903586535436253909053507340504912484005265456554112828434336073981470684144",
-    "opinion_no_token": "110239428874605766040979166062499211558245267222191267623317941528460454534552",
-    "polymarket_condition_id": "0xa243636c3ad0b3adea1f763883294c6f7161bf7950143cd7df63da9038526e68",
-    "polymarket_yes_token": "88281292093148506176602599712699979286323760340418898673557397542567553834240",
-    "polymarket_no_token": "112486731753642907372612599221427502176563725758358342618795979773120358401293",
-    "polymarket_slug": "bitcoin-above-90k-on-december-27",
+    "question": "Will Nansen launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 3413,
+    "opinion_yes_token": "10795130167423016164245161636418892082419682296699262137652567836664580809370",
+    "opinion_no_token": "41696127868205439758689684843863061303680612555818834714571543120257861093838",
+    "polymarket_condition_id": "0xe0565e0f941ebd327dc7f169d988cbce06dfd58f157c19a53c05eeaabe22e72f",
+    "polymarket_yes_token": "111763931456235876228207454692228615096214532972309928175889885732220821291531",
+    "polymarket_no_token": "17258450035761158088686254896147408374208343283006010331518928876556724399478",
+    "polymarket_slug": "will-nansen-launch-a-token-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1766880000
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
-    "question": "Bitcoin above ... on December 28?(12:00 ET) - 92,000",
-    "opinion_market_id": 3255,
-    "opinion_yes_token": "99447496837523015834746894728901466005423703981580706643077449471599429328186",
-    "opinion_no_token": "27134065925317424302254769118162112103754424182686369475138919608589312103136",
-    "polymarket_condition_id": "0xfe3ad75f795aca285a4ea9155bf9542cda8e67863f2cd6b1847048d7f8d18c5e",
-    "polymarket_yes_token": "68649426142861438931478665015570893934756725365955049212096163944412719477526",
-    "polymarket_no_token": "93818014862482518214636352796502892078289399044025867415843658739417095744382",
-    "polymarket_slug": "bitcoin-above-92k-on-december-27",
+    "question": "Will Loopscale launch a token by ...? - March 31, 2026",
+    "opinion_market_id": 3406,
+    "opinion_yes_token": "80336183150254028240342189814661707446964820297850067926359130498911384294300",
+    "opinion_no_token": "9024174701895937369350239229856062750576724219528602115130543489670585709495",
+    "polymarket_condition_id": "0x6221a1fd47646f8db0790c3972776944dab04dae186eef88e72f98fa6456d504",
+    "polymarket_yes_token": "24279179869046031030833611101045100115649877997390902511049828736192471741380",
+    "polymarket_no_token": "42414445111832564763417991570609743383041594770432810415382589916557867475358",
+    "polymarket_slug": "will-loopscale-launch-a-token-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1766880000
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Loopscale launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 3407,
+    "opinion_yes_token": "100637977411816043113949437748390929937686066815219906887540702710677241730519",
+    "opinion_no_token": "106903807671281868048278669404674812267258512369965014594633979202774035318281",
+    "polymarket_condition_id": "0x9e1299d6ec9fe9e805598ee9cc4794ee3e4996beba20f1f62c4e885daeef2456",
+    "polymarket_yes_token": "30750735170552134301350158689145501446289077352284949773747037316818843848788",
+    "polymarket_no_token": "6199267795505026084911867353574528841565554976316370292566058066768979797300",
+    "polymarket_slug": "will-loopscale-launch-a-token-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Loopscale launch a token by ...? - September 30, 2026",
+    "opinion_market_id": 3408,
+    "opinion_yes_token": "53494338951302771713048237934649784113091840868477449605063185079570662199919",
+    "opinion_no_token": "3568635167660328677725873843353731781203107423240431010793717364752491886141",
+    "polymarket_condition_id": "0xf442cbbf11ecc6230372c64ee0c33a59d810bd955a57b9cf54fa1517cebdde24",
+    "polymarket_yes_token": "71488396268637900061238655308679333670787348729165679240336047247677232218211",
+    "polymarket_no_token": "28591718963471305300787327364322744054301096514466184486879548706135826966140",
+    "polymarket_slug": "will-loopscale-launch-a-token-by-september-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Loopscale launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 3409,
+    "opinion_yes_token": "12573996177000118938520311806062645788340247899747384369411279678217875295018",
+    "opinion_no_token": "17412779732187498983240521290686761298024312920204666753469581204345021098754",
+    "polymarket_condition_id": "0x2c7f9b2304dc04b86afce858b51b01b34a742c43994a162d4c6fa551d7a3e8ea",
+    "polymarket_yes_token": "66504090502993925842729369691798769198266727860116747104431264214832408034731",
+    "polymarket_no_token": "35599189330093977824612035381070653225254173835491980357862370626138813957347",
+    "polymarket_slug": "will-loopscale-launch-a-token-by-december-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Perena launch a token by ...? - March 31, 2026",
+    "opinion_market_id": 3402,
+    "opinion_yes_token": "102341396616975183960138827700082404215375920296986674518243750424750714013201",
+    "opinion_no_token": "41284881932805785960054700744541840506562299614814100225032272513413135565713",
+    "polymarket_condition_id": "0x6f589d595ab085823c4f182f267dd2c1136972f4ef2102d3ad202bd543613ee5",
+    "polymarket_yes_token": "40317141335229721330880133390275587192935257362363390222509614098473276366689",
+    "polymarket_no_token": "48749790677983418533225828865901378266326715427338460164462558246148282283655",
+    "polymarket_slug": "will-perena-launch-a-token-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Perena launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 3403,
+    "opinion_yes_token": "16896346954520677410762499309528635166489540047711889053488109309294157900515",
+    "opinion_no_token": "35364817953320639438942656142564109729266731837146161343549784342752062102119",
+    "polymarket_condition_id": "0x015f8be66093755e6799d09bae89e92dc02fbb90329f2a470c405291176b7fcc",
+    "polymarket_yes_token": "40706249016285587716527526688541862366343832164507929668575659095544639713560",
+    "polymarket_no_token": "95075365551275909670654175471918731016993799284905170025106257613883510717882",
+    "polymarket_slug": "will-perena-launch-a-token-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Perena launch a token by ...? - September 30, 2026",
+    "opinion_market_id": 3404,
+    "opinion_yes_token": "3487780023856739534401123363382864190741150234467842889057844770075393000724",
+    "opinion_no_token": "25746402204909199088511805779173277669901730989284816683152769313478648173256",
+    "polymarket_condition_id": "0x69a30a6c658daa22a8505595b0766c84b7d957138ca11268651e84e2f3c87c28",
+    "polymarket_yes_token": "18666864282131891510982181164077795283329595901263764510124639012228512762496",
+    "polymarket_no_token": "58361504070853712779494879102054834523962425512098220318288420156404339273092",
+    "polymarket_slug": "will-perena-launch-a-token-by-september-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Perena launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 3405,
+    "opinion_yes_token": "109300971089528206112417565419216034289378114953355426339725975652940366596799",
+    "opinion_no_token": "76243752292297420774619265337710669750211496356151229167532414157844015918183",
+    "polymarket_condition_id": "0x963efbaed601700ccf414d4239849339f6f8e9fc300294491e15aad55757f896",
+    "polymarket_yes_token": "61025503398157063529703815359397827976717773780743373188273811059722963389136",
+    "polymarket_no_token": "57782861157676975381592807981568323334694726063737322202528151633005096943886",
+    "polymarket_slug": "will-perena-launch-a-token-by-december-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin above ... on December 30?(12:00 ET) - 84,000",
+    "opinion_market_id": 3371,
+    "opinion_yes_token": "69502701285319641389300088950190848580976066735524169747491699591921617328099",
+    "opinion_no_token": "76143411526061173093496251993636289777339009538945538237194643171555897953707",
+    "polymarket_condition_id": "0x37eef0fc1b02730086c60c607c18650496a72a14699ab0d4946882b42deaed16",
+    "polymarket_yes_token": "66831546048989950513411229394158701665615729629602976287128639732331060942384",
+    "polymarket_no_token": "419055056030454917504068372721776397239317615274119438363866109053563827154",
+    "polymarket_slug": "bitcoin-above-84k-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin above ... on December 30?(12:00 ET) - 86,000",
+    "opinion_market_id": 3372,
+    "opinion_yes_token": "11103668785406553115767707417995440895914965163298242163912256133467342544744",
+    "opinion_no_token": "15611167102451863590828071223393840349875265028118200540669460299742850652395",
+    "polymarket_condition_id": "0x5f1d570237b80e060cc28ac615527c6c9dd90fcffe79d9e0f02ba5deef495e6c",
+    "polymarket_yes_token": "78351095727390476707144528098468189715818569350754151123256309116262256180859",
+    "polymarket_no_token": "94844424392486578913944439611389309211595502817902154613720576264009931984613",
+    "polymarket_slug": "bitcoin-above-86k-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin above ... on December 30?(12:00 ET) - 88,000",
+    "opinion_market_id": 3373,
+    "opinion_yes_token": "1490100539419690017844646807090410303854193004965898548607905174238111466369",
+    "opinion_no_token": "29787244481677624673838980695363464405175509147391192867566990711195313859083",
+    "polymarket_condition_id": "0x0c0069318194f0f0607faec3bd96af40581824a1cb934260d892439f4b4ac746",
+    "polymarket_yes_token": "816940936735647088003413722265149345000701868237668520828915390219058322686",
+    "polymarket_no_token": "14623101378150249761611569877380137612571879410017101703591443212139178167426",
+    "polymarket_slug": "bitcoin-above-88k-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin above ... on December 30?(12:00 ET) - 90,000",
+    "opinion_market_id": 3374,
+    "opinion_yes_token": "42769402517932282604971682341607751112555374524819778102215857535622075061034",
+    "opinion_no_token": "334116650622814496589625756372214527832364191971663600707312193297305310262",
+    "polymarket_condition_id": "0xf65c22e38c1739fef540fee133f5ed39255de967f9ba706c9e6fc4bfa0f79fb6",
+    "polymarket_yes_token": "70453986794933325725548815058095662352493627896305992057733115279775028513623",
+    "polymarket_no_token": "68482812799459135485625210538994769649958073741579037361470381753372462146539",
+    "polymarket_slug": "bitcoin-above-90k-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin above ... on December 30?(12:00 ET) - 92,000",
+    "opinion_market_id": 3375,
+    "opinion_yes_token": "224748535826886907698615808716597380068488394785477619062851633288637383577",
+    "opinion_no_token": "104564745417253576579264119951020470553564359761286164528494446921305099499511",
+    "polymarket_condition_id": "0x2bc67943dc13e4e904a27c93050d8c147874bd124b6a0a3226364d1bff740417",
+    "polymarket_yes_token": "83377681191627166672757346787034990605858557716696038315460064328040363796379",
+    "polymarket_no_token": "57456069730010251149730168191724235859345670794477733581116848527070830174682",
+    "polymarket_slug": "bitcoin-above-92k-on-december-29",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bank of Japan Decision in March? - Decrease",
+    "opinion_market_id": 3349,
+    "opinion_yes_token": "2827846251613766004406684609881214698035387143529868376251861912769240338851",
+    "opinion_no_token": "34737336250599813085421949148691317784605135744276247571182747061237445273356",
+    "polymarket_condition_id": "0xdf2555af7814ff247f002c87c3ca6b9e51f38f108d23cbb3458f28b8c3e6b087",
+    "polymarket_yes_token": "40570843528554093496889405556275113813818253258884504871254147950407588845748",
+    "polymarket_no_token": "51685674615734256996540032602359242249489862599772168500701998612981169393828",
+    "polymarket_slug": "bank-of-japan-decreases-interest-rates-after-march-2026-meeting",
+    "similarity_score": 1.0,
+    "cutoff_at": 1773891000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "Bank of Japan Decision in March? - No change",
+    "opinion_market_id": 3350,
+    "opinion_yes_token": "49806328595737114552465562164287212527706095705458679080347395398812836583794",
+    "opinion_no_token": "72016222535839390082968944895838163314147684005398185837532281695024662503788",
+    "polymarket_condition_id": "0x80e12c906546d7a9b1c6d503042a50496e23d9dfd02835e1d7defa94257c316a",
+    "polymarket_yes_token": "101876916913164506983365144128098140643807562862758878248439242512392824283132",
+    "polymarket_no_token": "54380544769136124820587390673919849512266400090640063254603040816062671153167",
+    "polymarket_slug": "no-change-in-bank-of-japans-interest-rates-after-march-2026-meeting",
+    "similarity_score": 1.0,
+    "cutoff_at": 1773891000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "Will Exponent launch a token by ...? - March 31, 2026",
+    "opinion_market_id": 3341,
+    "opinion_yes_token": "3460375970891495126122752527934713410119654188774210039937802416282732845337",
+    "opinion_no_token": "82705578281233708439036408253263604094090177413725054219931573996346155352722",
+    "polymarket_condition_id": "0xb04db31a362b79a7e001c1a299c3243ab8e30e5de47399560177d48e8272ee63",
+    "polymarket_yes_token": "15899508958304292040107210008476885660991122546583114153309676587553040918381",
+    "polymarket_no_token": "3164314407956733289001914699638253895053124815620881401160435076248014786506",
+    "polymarket_slug": "will-exponent-launch-a-token-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Exponent launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 3342,
+    "opinion_yes_token": "35312435012894555674539783058151251874657539918824654041349035822265306231125",
+    "opinion_no_token": "16083431755229291179841959276332498817162248905139740671871370917581347447162",
+    "polymarket_condition_id": "0x0569085637b507bc48d2b1f78b07156ce07fad4ed9495dd3ed15964ffce2bab0",
+    "polymarket_yes_token": "32692092647151234114706126675396021690895618461596434807461367315136813200839",
+    "polymarket_no_token": "42568606137828144366436950563811840513034697214316741779099823135726078265105",
+    "polymarket_slug": "will-exponent-launch-a-token-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Exponent launch a token by ...? - September 30, 2026",
+    "opinion_market_id": 3343,
+    "opinion_yes_token": "103300121988931305550773797226374607775874914161796825818422630026393258646855",
+    "opinion_no_token": "97379018936779878987658408978870026065324362936631550470114447309672345382068",
+    "polymarket_condition_id": "0x8f556c1a64b593796ea422693ff29a3ff768cede5e5991f7a46bb0ec59a2e7c0",
+    "polymarket_yes_token": "7800402680270593380926829443314565490316076217237982552423562583216301083819",
+    "polymarket_no_token": "274547691454701369310357935163763564334695186194934833301629654130407282759",
+    "polymarket_slug": "will-exponent-launch-a-token-by-september-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Exponent launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 3344,
+    "opinion_yes_token": "115702856232653468399424977587683133912717133410511075608407480423528045892108",
+    "opinion_no_token": "47258376111758653751833936573974637458624001086058989436969424841600379938255",
+    "polymarket_condition_id": "0x411d2f1251d86d9a4f30186c660745c597d18a19737fd8f7b4ee1483ece9ffde",
+    "polymarket_yes_token": "107051386265764130527807198143169937768144465125910287278604972579738649528275",
+    "polymarket_no_token": "53366514446420530757895815725493239569007486273395288276692276440912456858890",
+    "polymarket_slug": "will-exponent-launch-a-token-by-december-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will ETHGAS launch a token by ...? - March 31, 2026",
+    "opinion_market_id": 3337,
+    "opinion_yes_token": "83708309985502190442718796844420809991444795539454268174079211599810931735941",
+    "opinion_no_token": "14995690888457732065721092176265023939654069238080177233306738671219843009116",
+    "polymarket_condition_id": "0x6542863f105519646cc6aeaaff65d8348727d70323242b93870e2c515a5e5290",
+    "polymarket_yes_token": "93647021253984757974796941546682966941819794460263984102091645161245038760025",
+    "polymarket_no_token": "109948056794940333003800146626854633904648106172204377728850713514322118042009",
+    "polymarket_slug": "will-ethgas-launch-a-token-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will ETHGAS launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 3338,
+    "opinion_yes_token": "46158188879087246978237367302504828909412041118653023298659706615318935150357",
+    "opinion_no_token": "9922803516909109949631611680349663522426719068342258933429093539119484600078",
+    "polymarket_condition_id": "0x65905f4371a81235b31dc73a09eb5dcd57d20aa7c35573ac94e12ac51e1a8a62",
+    "polymarket_yes_token": "83102784942965719957935742414196482969300168850548137749389250774851042212976",
+    "polymarket_no_token": "10013224371110104244866859259598122014835107386467254275317651604801733981983",
+    "polymarket_slug": "will-ethgas-launch-a-token-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will ETHGAS launch a token by ...? - September 30, 2026",
+    "opinion_market_id": 3339,
+    "opinion_yes_token": "48061710130991999411776110831316146645003671522900228064077346625829664267104",
+    "opinion_no_token": "87469633800184936735045693288220590195615944862341037861191241492348714777710",
+    "polymarket_condition_id": "0x9af8f2741caec30df3baaa476c104c2d0d1cff1dc1e9df97ad60703e180443f1",
+    "polymarket_yes_token": "108108356824626448152456585399320082954858634858288906553297146462805091761662",
+    "polymarket_no_token": "34597163031672991338925827920855363643902783702648613325885754611570902843185",
+    "polymarket_slug": "will-ethgas-launch-a-token-by-september-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will ETHGAS launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 3340,
+    "opinion_yes_token": "97938306684537714590946039493421332820069719530028454812154955524045839354128",
+    "opinion_no_token": "67018655303137337004771861501806001477107593055097946657800292503404123436815",
+    "polymarket_condition_id": "0xb6cb8463376952fd97a9ead76f8cdc898b68a4df3e8a777d18dd51f558ccf384",
+    "polymarket_yes_token": "5681402389497574516977010078563360661337208127826189558609995608373395241799",
+    "polymarket_no_token": "7931431601186976615131971489367011692649141497602228205326005207817334771678",
+    "polymarket_slug": "will-ethgas-launch-a-token-by-december-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Israel x Iran ceasefire broken by...? - March 31, 2026",
+    "opinion_market_id": 3323,
+    "opinion_yes_token": "109943271323046684123437575201797824636632422252265147418369757262218064450923",
+    "opinion_no_token": "63654989360731200233512315436530053116979948145944727183141991131037865708294",
+    "polymarket_condition_id": "0xf8b730810252255fa217a2828b46b7a3c0ed63b702c817461270ce9e65b5ec25",
+    "polymarket_yes_token": "80805096467313419823865916963281184354953922115882059142494794327887573673497",
+    "polymarket_no_token": "37114768995166166425289237419695601463774549668889181983290296242123704967930",
+    "polymarket_slug": "israel-x-iran-ceasefire-broken-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Israel x Iran ceasefire broken by...? - June 30, 2026",
+    "opinion_market_id": 3324,
+    "opinion_yes_token": "1219112381288056901027283762463790890119213354827936704262477508628698772427",
+    "opinion_no_token": "89347424375919392434870031749975988065377094517049095113552531083838105618029",
+    "polymarket_condition_id": "0xf0d4ee47d3abe6161f1e8f93bfe46d06d1ffd63f48e71c49aa81b2250e152e8b",
+    "polymarket_yes_token": "95047150569659541033619545405932195400420600647215268227254139787751371904990",
+    "polymarket_no_token": "99363227663150015910720298918864614179828924262517246451439486713924455030696",
+    "polymarket_slug": "israel-x-iran-ceasefire-broken-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Jannik Sinner",
+    "opinion_market_id": 3279,
+    "opinion_yes_token": "10990025055030864033644049099969609211995219283299762856830315040027923312418",
+    "opinion_no_token": "9367871925738449846078853826569477761807876828205924594558468092754591369630",
+    "polymarket_condition_id": "0x62727c536b08c4a73edb786408542ccecc4a0cf9b0e14ce571b5d00d84e72e04",
+    "polymarket_yes_token": "43092221169747600925117989725240013905300027888285702970147540026822827093030",
+    "polymarket_no_token": "9864698026313177400498059772266907514203991721229050423229580166552139464404",
+    "polymarket_slug": "will-jannik-sinner-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Carlos Alcaraz",
+    "opinion_market_id": 3280,
+    "opinion_yes_token": "5841777524912799911686489680621025231260681953989292512757327612553713369228",
+    "opinion_no_token": "64344099329391618910350584391575213797350489347270647407750665766451908245116",
+    "polymarket_condition_id": "0x5cdbb0026e902705c680c170f43489536cef50af77e1d4713b80e907b13a2a7c",
+    "polymarket_yes_token": "34920975483894100505289251719361405492318754048634628580987663174795993478609",
+    "polymarket_no_token": "88861805124118517286489968483383984054085541324582584351184542617659900183952",
+    "polymarket_slug": "will-carlos-alcaraz-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Novak Djokovic",
+    "opinion_market_id": 3281,
+    "opinion_yes_token": "23646221477390387795126578723913806756902942126650124014757240718947705505120",
+    "opinion_no_token": "96391605491330066176973561786039441743608974332726930433034784561032580738233",
+    "polymarket_condition_id": "0xd8f7008eee565f248e35fd9bd92a9bbe1bb7f39bdea0ac2ed567790e6a0c3dba",
+    "polymarket_yes_token": "27342241640436643866418288781609275624111431824500621505320709375705941634077",
+    "polymarket_no_token": "39240464319959997192334542902515275409104373417950380888440834225950435786672",
+    "polymarket_slug": "will-novak-djokovic-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Alexander Zverev",
+    "opinion_market_id": 3282,
+    "opinion_yes_token": "102944805128937061565106041749150538528526332505331418730313552171138925371294",
+    "opinion_no_token": "10758724656172236720247750193227389076596673874562063124279063295961252874901",
+    "polymarket_condition_id": "0x50dc3231849098f1e7494acb5883edbe311997ccc5f518adb1703ffacf63b7ed",
+    "polymarket_yes_token": "73196998552166815605334378560017295628991362454464985323816626953045817941879",
+    "polymarket_no_token": "12311598263785547503667723207457195407373602126330761179392014616591561522950",
+    "polymarket_slug": "will-alexander-zverev-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Daniil Medvedev",
+    "opinion_market_id": 3283,
+    "opinion_yes_token": "68087172610554274638226732235885933041593128691934221197568495110385465635635",
+    "opinion_no_token": "64577943242976889766632440991206514906722876271028100915910622389812397307553",
+    "polymarket_condition_id": "0x8c5b274989a59e16059eb1598f437cc18f2c9c580857fecc7b206b51b37c2870",
+    "polymarket_yes_token": "39244747600006455517512280059142863420615080686169087134678844217846911698188",
+    "polymarket_no_token": "79106230049848497563729410623698295139650071358103601645089088395116612398422",
+    "polymarket_slug": "will-daniil-medvedev-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "2026 Men's Australian Open Winner - Taylor Fritz",
+    "opinion_market_id": 3284,
+    "opinion_yes_token": "79794759853759991111197957504358946094000142489182558476200833177929494073128",
+    "opinion_no_token": "3298240858201198940176111916310036195292828712910777880061261707214680080668",
+    "polymarket_condition_id": "0xe30fd2f2a646223668e2c118f728bf2e7c4ea6326824ade6ef7d9a532410d144",
+    "polymarket_yes_token": "6938764371304497198951907156286624522420008896432499186514320531529068545221",
+    "polymarket_no_token": "73887979198787363282849828781231939320155691401321871759517389521039884542347",
+    "polymarket_slug": "will-taylor-fritz-win-the-2026-australian-open",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Eleven",
@@ -465,7 +1023,8 @@
     "polymarket_no_token": "8010285051162883778750284192345707717637236188180482207065972792464743283426",
     "polymarket_slug": "will-eleven-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Steve Harrington",
@@ -477,7 +1036,8 @@
     "polymarket_no_token": "106378052095974789682705658891923537172834245381182061270307209570817966104823",
     "polymarket_slug": "will-steve-harrington-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Will Byers",
@@ -489,7 +1049,8 @@
     "polymarket_no_token": "88618503739123288371874876822133017931029539866200640979141957309878456759818",
     "polymarket_slug": "will-will-byers-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Jim Hopper",
@@ -501,7 +1062,8 @@
     "polymarket_no_token": "82153955756614680444880977180038252483695932296296117471022259552600701163172",
     "polymarket_slug": "will-jim-hopper-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Robin Buckley",
@@ -513,7 +1075,8 @@
     "polymarket_no_token": "94141712011512014057713144984220211539292080114639704406686915222320943868772",
     "polymarket_slug": "will-robin-buckley-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Derek Turnbow",
@@ -525,7 +1088,8 @@
     "polymarket_no_token": "55599640523897452226678913172872736512862358893405299791184755901773406401965",
     "polymarket_slug": "will-derek-turnbow-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Max Mayfield",
@@ -537,7 +1101,8 @@
     "polymarket_no_token": "78261375950650114661810372243357217760907203215361022604728957339512307507864",
     "polymarket_slug": "will-max-mayfield-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Jonathan Byers",
@@ -549,7 +1114,8 @@
     "polymarket_no_token": "21126453402766779298317989002421286583259267379009451628042660091097424890785",
     "polymarket_slug": "will-jonathan-byers-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Joyce Byers",
@@ -561,7 +1127,8 @@
     "polymarket_no_token": "90505203114070527845178658677113964689381481495564429307261650846572896528962",
     "polymarket_slug": "will-joyce-byers-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Nancy Wheeler",
@@ -573,7 +1140,8 @@
     "polymarket_no_token": "98999819426472847141314683268939346649763306351162188900933128601682003842443",
     "polymarket_slug": "will-nancy-wheeler-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Dustin Henderson",
@@ -585,7 +1153,8 @@
     "polymarket_no_token": "51494221528073682961148676109819661378816327008364539542393920165101307858678",
     "polymarket_slug": "will-dustin-henderson-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Lucas Sinclair",
@@ -597,7 +1166,8 @@
     "polymarket_no_token": "7429809813671662155109999393646307111148487681631170374768291675625125372435",
     "polymarket_slug": "will-lucas-sinclair-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Holly Wheeler",
@@ -609,7 +1179,8 @@
     "polymarket_no_token": "88627114672884622564769167486358484109649112025163944442389614084019495251169",
     "polymarket_slug": "will-holly-wheeler-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will die in Stranger Things: Season 5? - Mike Wheeler",
@@ -621,7 +1192,8 @@
     "polymarket_no_token": "58178736620938494820829510670482434617563656663609484401552518813741788942092",
     "polymarket_slug": "will-mike-wheeler-die-in-stranger-things-season-5",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "What will be the top US Netflix show this week? - Stranger Things: Season 5",
@@ -633,7 +1205,8 @@
     "polymarket_no_token": "21885258640557248182817530453237865173038120256065794412102748643975535935812",
     "polymarket_slug": "will-stranger-things-season-5-be-the-top-us-netflix-show-this-week-december-30-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767052800
+    "cutoff_at": 1767052800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will be the top US Netflix show this week? - Christmas Gameday: Lions vs. Vikings",
@@ -645,7 +1218,8 @@
     "polymarket_no_token": "75981987325384985339700946203751620261829262035726031978524841224015689111377",
     "polymarket_slug": "will-christmas-gameday-lions-vs-vikings-be-the-top-us-netflix-show-this-week-december-30-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767052800
+    "cutoff_at": 1767052800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will be the top US Netflix show this week? - Christmas Gameday: Cowboys vs. Commanders",
@@ -657,7 +1231,8 @@
     "polymarket_no_token": "40307296994861529845869744905417071108856969892578911529970295742305582664872",
     "polymarket_slug": "will-christmas-gameday-cowboys-vs-commanders-be-the-top-us-netflix-show-this-week-december-30-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767052800
+    "cutoff_at": 1767052800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will be the top US Netflix show this week? - Emily in Paris: Season 5",
@@ -669,7 +1244,8 @@
     "polymarket_no_token": "22756595210475180716564962106874736068042345108666317844095142517551014347054",
     "polymarket_slug": "will-emily-in-paris-season-5-be-the-top-us-netflix-show-this-week-december-30-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767052800
+    "cutoff_at": 1767052800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will be the top US Netflix show this week? - Man Vs. Baby",
@@ -681,7 +1257,8 @@
     "polymarket_no_token": "58110801963926795051248823022082784452010726028248262109592493773310485527620",
     "polymarket_slug": "will-man-vs-baby-be-the-top-us-netflix-show-this-week-december-30-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767052800
+    "cutoff_at": 1767052800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - Gen.G Esports",
@@ -693,7 +1270,8 @@
     "polymarket_no_token": "112869514147229604897190637464060728137332603974749640328841852887989036157746",
     "polymarket_slug": "will-geng-esports-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - Hanwha Life Esports",
@@ -705,7 +1283,8 @@
     "polymarket_no_token": "26246804293986394405052137116096923903634235142415360150914751642868532647060",
     "polymarket_slug": "will-hanwha-life-esports-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - T1",
@@ -717,7 +1296,8 @@
     "polymarket_no_token": "99995753378214978573399726749250166031250093502305645362157728412670077297538",
     "polymarket_slug": "will-t1-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - KT Rolster",
@@ -729,7 +1309,8 @@
     "polymarket_no_token": "31702117293218121830751749326617290120222944654445457262534712961698498582503",
     "polymarket_slug": "will-kt-rolster-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - Dplus",
@@ -741,7 +1322,8 @@
     "polymarket_no_token": "108137322766727121196448933803836107533746714826249261757303209814170207038883",
     "polymarket_slug": "will-dplus-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - Nongshim RedForce",
@@ -753,7 +1335,8 @@
     "polymarket_no_token": "8047752031702960719885374410765675717087642798171147147534487206060507422017",
     "polymarket_slug": "will-nongshim-redforce-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - DRX",
@@ -765,7 +1348,8 @@
     "polymarket_no_token": "37966706250901492953258714339226058391942547847232643951247315006067704345920",
     "polymarket_slug": "will-drx-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - FEARX",
@@ -777,7 +1361,8 @@
     "polymarket_no_token": "82511015244836461150736485321094345256627442072867834050165177825169901838690",
     "polymarket_slug": "will-fearx-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - Freecs",
@@ -789,7 +1374,8 @@
     "polymarket_no_token": "42364823895479873010002504349333029947535762145449716936086617797922665733208",
     "polymarket_slug": "will-freecs-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LCK 2026 Season Winner - BRION",
@@ -801,7 +1387,8 @@
     "polymarket_no_token": "66305452085630827009659983838309765854586903475639935429479390935733483013965",
     "polymarket_slug": "will-brion-win-the-lck-2026-season-playoffs",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Bilibili Gaming",
@@ -813,7 +1400,8 @@
     "polymarket_no_token": "90208006612282347485835525407533032029149677399303348510905254368163739794124",
     "polymarket_slug": "will-bilibili-gaming-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Anyone's Legend",
@@ -825,7 +1413,8 @@
     "polymarket_no_token": "61015962619068823274362691617110289598101995769203140364035080529899779936226",
     "polymarket_slug": "will-anyones-legend-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - JD Gaming",
@@ -837,7 +1426,8 @@
     "polymarket_no_token": "33546665699889890533677814505963965719290380011805587054193534397393754656195",
     "polymarket_slug": "will-jd-gaming-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Weibo Gaming",
@@ -849,7 +1439,8 @@
     "polymarket_no_token": "72281774665600887724149506750067659240475662351895732520959184919553089927878",
     "polymarket_slug": "will-weibo-gaming-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Top Esports",
@@ -861,7 +1452,8 @@
     "polymarket_no_token": "51159480964562028937554871238124286080715860265944381470634823916114998383794",
     "polymarket_slug": "will-top-esports-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - LNG Esports",
@@ -873,7 +1465,8 @@
     "polymarket_no_token": "91180331254818235311176170192300090818770465293799385678216465491511642025246",
     "polymarket_slug": "will-lng-esports-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - EDward Gaming",
@@ -885,7 +1478,8 @@
     "polymarket_no_token": "49853266136372278448027159868423003216142020227178112307053891600979147206632",
     "polymarket_slug": "will-edward-gaming-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Oh My God",
@@ -897,7 +1491,8 @@
     "polymarket_no_token": "57471546145802664163923607730992588830113444496564006987794208509156270026974",
     "polymarket_slug": "will-oh-my-god-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - LGD Gaming",
@@ -909,7 +1504,8 @@
     "polymarket_no_token": "71654020704570013074642659558381513535000191928209079901026613868882134239086",
     "polymarket_slug": "will-lgd-gaming-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "LoL: LPL 2026 Season Winner - Team WE",
@@ -921,7 +1517,8 @@
     "polymarket_no_token": "46474561513749823347652327688337088414439294901454466072666164966917585784894",
     "polymarket_slug": "will-team-we-win-the-lpl-2026-season",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - One Battle After Another",
@@ -933,7 +1530,8 @@
     "polymarket_no_token": "80917452128508419774668207685445879448193314156448770016569227650794272624376",
     "polymarket_slug": "will-one-battle-after-another-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - Marty Supreme",
@@ -945,7 +1543,8 @@
     "polymarket_no_token": "62266144638466231262593756842616002041620957446195226267751453351249668796053",
     "polymarket_slug": "will-marty-supreme-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - Sinners",
@@ -957,7 +1556,8 @@
     "polymarket_no_token": "61521239802767536714300619467113884174956897443064371625090064498238633706721",
     "polymarket_slug": "will-sinners-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - Avatar: Fire and Ash",
@@ -969,7 +1569,8 @@
     "polymarket_no_token": "88521898415060488652597811277294929273246798479189920389563143063549622182596",
     "polymarket_slug": "will-avatar-fire-and-ash-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - It Was Just an Accident",
@@ -981,7 +1582,8 @@
     "polymarket_no_token": "76514194087773128003147502720946314639735957496353420958591788074282420747915",
     "polymarket_slug": "will-it-was-just-an-accident-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - F1: The Movie",
@@ -993,7 +1595,8 @@
     "polymarket_no_token": "57134981315954841263367773118289039135123287718726431643172512358228036936920",
     "polymarket_slug": "will-f1-the-movie-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - Frankenstein",
@@ -1005,7 +1608,8 @@
     "polymarket_no_token": "52592420546447847912284033291536361679115684201468438379871238976606805204291",
     "polymarket_slug": "will-frankenstein-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Film Editing Winner - Bugonia",
@@ -1017,7 +1621,8 @@
     "polymarket_no_token": "108696430960937486258692239704624754645409288826036965807677812265444740852164",
     "polymarket_slug": "will-bugonia-win-best-film-editing-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - One Battle After Another",
@@ -1029,7 +1634,8 @@
     "polymarket_no_token": "102748301085702383063938000129249534393435822349644450614406257483208522177828",
     "polymarket_slug": "will-one-battle-after-another-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Sinners",
@@ -1041,7 +1647,8 @@
     "polymarket_no_token": "32732152210155458783728849737725192406153254815011218887256354427287062398458",
     "polymarket_slug": "will-sinners-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Train Dreams",
@@ -1053,7 +1660,8 @@
     "polymarket_no_token": "56857647151865489560600369520899952261458202747351451242401645173779830565677",
     "polymarket_slug": "will-train-dreams-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Frankenstein",
@@ -1065,7 +1673,8 @@
     "polymarket_no_token": "8591505279412405058261096598415000869045136117426058744619574511274092039420",
     "polymarket_slug": "will-frankenstein-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Marty Supreme",
@@ -1077,7 +1686,8 @@
     "polymarket_no_token": "100252951645439451581776687768578604268501429361189956661485053692889049796493",
     "polymarket_slug": "will-marty-supreme-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Hamnet",
@@ -1089,7 +1699,8 @@
     "polymarket_no_token": "53190383423868543699383951097046561306916624081222406202971211130942892057428",
     "polymarket_slug": "will-hamnet-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - F1: The Movie",
@@ -1101,7 +1712,8 @@
     "polymarket_no_token": "22886932588639068119008138721332581905958471215198363416251851849672930476139",
     "polymarket_slug": "will-f1-the-movie-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Cinematography Winner - Wicked: For Good",
@@ -1113,7 +1725,8 @@
     "polymarket_no_token": "45134562818190977815380207718544498540587917686499337747262235358764776413179",
     "polymarket_slug": "will-wicked-for-good-win-best-cinematography-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Consensys IPO closing market cap above ... ? - $1B",
@@ -1125,7 +1738,8 @@
     "polymarket_no_token": "114760713444055057303554435749670476342177770574758040650412550881180715256788",
     "polymarket_slug": "consensys-ipo-closing-market-cap-above-1b",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Consensys IPO closing market cap above ... ? - $2B",
@@ -1137,7 +1751,8 @@
     "polymarket_no_token": "67587425565212585559032035041984871945011306673188846299284057895889914007633",
     "polymarket_slug": "consensys-ipo-closing-market-cap-above-2b",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Consensys IPO closing market cap above ... ? - $3B",
@@ -1149,7 +1764,8 @@
     "polymarket_no_token": "40308656945818341015329039385898568425391171213117447221333526962309569275509",
     "polymarket_slug": "consensys-ipo-closing-market-cap-above-3b",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Okbet Arena AI trading competition winner? - Grok",
@@ -1161,7 +1777,8 @@
     "polymarket_no_token": "2433757683875464332617159379328532785111665012978456317105258035709420301799",
     "polymarket_slug": "will-grok-win-the-okbet-trading-competition",
     "similarity_score": 1.0,
-    "cutoff_at": 1769904000
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Okbet Arena AI trading competition winner? - Claude",
@@ -1173,7 +1790,8 @@
     "polymarket_no_token": "18189179419912691098989480774120727091805163278376696177328933368622707752338",
     "polymarket_slug": "will-claude-win-the-okbet-trading-competition",
     "similarity_score": 1.0,
-    "cutoff_at": 1769904000
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Okbet Arena AI trading competition winner? - GPT",
@@ -1185,7 +1803,8 @@
     "polymarket_no_token": "106521029698189362881471827232071224201652443424314409032725750947466172858304",
     "polymarket_slug": "will-gpt-win-the-okbet-trading-competition",
     "similarity_score": 1.0,
-    "cutoff_at": 1769904000
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Okbet Arena AI trading competition winner? - DeepSeek",
@@ -1197,7 +1816,8 @@
     "polymarket_no_token": "86802100967066683046323015462763409462493598805960228237377171641488880355633",
     "polymarket_slug": "will-deepseek-win-the-okbet-trading-competition",
     "similarity_score": 1.0,
-    "cutoff_at": 1769904000
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Okbet Arena AI trading competition winner? - Gemini",
@@ -1209,7 +1829,8 @@
     "polymarket_no_token": "86024077639468456829451800008658794387007286073123077471959615828554922959385",
     "polymarket_slug": "will-gemini-win-the-okbet-trading-competition",
     "similarity_score": 1.0,
-    "cutoff_at": 1769904000
+    "cutoff_at": 1769904000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - Vertiv Holdings (VRT)",
@@ -1221,7 +1842,8 @@
     "polymarket_no_token": "52155582318582976321806051880404850618968351917251525864311346265916160807707",
     "polymarket_slug": "will-vertiv-holdings-vrt-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - SoFi Technologies (SOFI)",
@@ -1233,7 +1855,8 @@
     "polymarket_no_token": "1282019257648662228112361990160125564655412114186008663012259411986358271320",
     "polymarket_slug": "will-sofi-technologies-sofi-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - Ciena (CIEN)",
@@ -1245,7 +1868,8 @@
     "polymarket_no_token": "49013501075812014696055150818827795638715424448975567446330333508294136211943",
     "polymarket_slug": "will-ciena-cien-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - Pure Storage (PSTG)",
@@ -1257,7 +1881,8 @@
     "polymarket_no_token": "41786299702680659763815608448345844544955058644606729384896281297992084742730",
     "polymarket_slug": "will-pure-storage-pstg-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - Alnylam Pharmaceuticals (ALNY)",
@@ -1269,7 +1894,8 @@
     "polymarket_no_token": "48907056644677904416170114089722647901230560603646758316900376411494596677684",
     "polymarket_slug": "will-alnylam-pharmaceuticals-alny-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Which companies added to S&P 500 in Q1 2026? - Affirm Holdings (AFRM)",
@@ -1281,7 +1907,8 @@
     "polymarket_no_token": "45311882152559794247185350678383024736057757331075999123323282423098375294184",
     "polymarket_slug": "will-affirm-holdings-afrm-be-added-to-the-sp-500-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1774915200
+    "cutoff_at": 1774915200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "NFC South Winner - Tampa Bay",
@@ -1293,7 +1920,8 @@
     "polymarket_no_token": "98304349282081807214950357612657118400929229242770571028152081113087488306137",
     "polymarket_slug": "will-the-tampa-bay-buccaneers-win-the-nfc-south-11",
     "similarity_score": 1.0,
-    "cutoff_at": 1767657600
+    "cutoff_at": 1767657600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "NFC South Winner - Carolina",
@@ -1305,7 +1933,8 @@
     "polymarket_no_token": "5935254050025083406238308687799513830664619539093494600636149876402557791147",
     "polymarket_slug": "will-the-carolina-panthers-win-the-nfc-south-11",
     "similarity_score": 1.0,
-    "cutoff_at": 1767657600
+    "cutoff_at": 1767657600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "NFC West Winner - Seattle",
@@ -1317,19 +1946,8 @@
     "polymarket_no_token": "112731600250099208380084785013868223902286688368371562996597468350854577616874",
     "polymarket_slug": "will-the-seattle-seahawks-win-the-nfc-west-1",
     "similarity_score": 1.0,
-    "cutoff_at": 1767657600
-  },
-  {
-    "question": "NFC West Winner - Los Angeles R",
-    "opinion_market_id": 2659,
-    "opinion_yes_token": "110568740990330847636447979821830474473605088748741869946962780428461816405816",
-    "opinion_no_token": "65659302698394894166453622604834065681396144390078740385954495404154970543591",
-    "polymarket_condition_id": "0x81be71c406085cede3485dbd3801cc083d077568f63fcf1136aa1e7beadf214c",
-    "polymarket_yes_token": "72582755734509717859849307142403874864024256012414005429812112143275702844107",
-    "polymarket_no_token": "106233691032937334963508649262462387610806949672348129366412366689883456740599",
-    "polymarket_slug": "will-the-los-angeles-rams-win-the-nfc-west-1",
-    "similarity_score": 1.0,
-    "cutoff_at": 1767657600
+    "cutoff_at": 1767657600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "NFC West Winner - San Francisco",
@@ -1341,7 +1959,8 @@
     "polymarket_no_token": "8235124967030276795050798060068745407967789953992350652295525450387973365852",
     "polymarket_slug": "will-the-san-francisco-49ers-win-the-nfc-west-1",
     "similarity_score": 1.0,
-    "cutoff_at": 1767657600
+    "cutoff_at": 1767657600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Will Paradex launch a token by ...? - February 28, 2026",
@@ -1353,7 +1972,8 @@
     "polymarket_no_token": "52369665428389652855291507646129098858582584303241781581141255098525409318893",
     "polymarket_slug": "will-paradex-launch-a-token-by-december-31-2025-64ac",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "What will SpaceX's public ticker be? - X",
@@ -1437,7 +2057,8 @@
     "polymarket_no_token": "98646985707839121837958202212263078387820716702786874164268337295747851893706",
     "polymarket_slug": "will-abstract-launch-a-token-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Pacifica launch a token by ...? - December 31 2025",
@@ -1449,7 +2070,8 @@
     "polymarket_no_token": "99024659174425696860860606060300273810493053027728720596073751702513591353264",
     "polymarket_slug": "will-pacifica-launch-a-token-by-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Pacifica launch a token by ...? - March 31 2026",
@@ -1461,7 +2083,8 @@
     "polymarket_no_token": "1522612996005435866232598319178742689621988260462408730148216551323732527510",
     "polymarket_slug": "will-pacifica-launch-a-token-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Pacifica launch a token by ...? - June 30 2026",
@@ -1473,7 +2096,8 @@
     "polymarket_no_token": "51113611028431322476184498807542426866330964241065131183412961987766611456778",
     "polymarket_slug": "will-pacifica-launch-a-token-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Pacifica launch a token by ...? - September 30 2026",
@@ -1485,7 +2109,8 @@
     "polymarket_no_token": "111404043034866160102833603298364407295788321749934522810173461565013981542706",
     "polymarket_slug": "will-pacifica-launch-a-token-by-september-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Pacifica launch a token by ...? - December 31 2026",
@@ -1497,7 +2122,8 @@
     "polymarket_no_token": "98123455581367166483055069811830792105652809440632486143800605837569833413907",
     "polymarket_slug": "will-pacifica-launch-a-token-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "IPOs before 2027? - SpaceX",
@@ -1509,7 +2135,8 @@
     "polymarket_no_token": "83201356904852755468238099143349835359028248079788652710244965283576437316776",
     "polymarket_slug": "spacex-space-exploration-technologies-corp-ipo-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "IPOs before 2027? - Anthropic",
@@ -1521,7 +2148,8 @@
     "polymarket_no_token": "79659126453744117609155577783430286183745820479892256192797614957132714720158",
     "polymarket_slug": "anthropic-ipo-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "IPOs before 2027? - Fannie Mae",
@@ -1533,7 +2161,8 @@
     "polymarket_no_token": "48875651453490745058785748256671386270005628755617346208305094003203933839072",
     "polymarket_slug": "fannie-mae-ipo-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "IPOs before 2027? - OpenAI",
@@ -1545,7 +2174,8 @@
     "polymarket_no_token": "44069265739522064332214860829659371087110860870698295438128050660626185746105",
     "polymarket_slug": "openai-ipo-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "IPOs before 2027? - Discord",
@@ -1557,7 +2187,8 @@
     "polymarket_no_token": "115728410453387520083284177722671397699318473480081453693047045807356716332906",
     "polymarket_slug": "discord-ipo-before-2027",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - Amazon",
@@ -1569,7 +2200,8 @@
     "polymarket_no_token": "27266534425208621674560748804901975559160597427271003216814617287224576352365",
     "polymarket_slug": "will-amazon-acquire-tiktok-277-366-936",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - Microsoft",
@@ -1581,7 +2213,8 @@
     "polymarket_no_token": "3816920439443152999038151802548750254022787252065763910567693944150047807781",
     "polymarket_slug": "will-microsoft-acquire-tiktok-637-223-119",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - Elon Musk / X (Twitter)",
@@ -1593,7 +2226,8 @@
     "polymarket_no_token": "43297146009413641000635282007847717929114283352069526424919661374107795573180",
     "polymarket_slug": "will-elon-musk-x-twitter-acquire-tiktok-257-246-564",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - Meta",
@@ -1605,7 +2239,8 @@
     "polymarket_no_token": "115112016414957807615740052624151211105903902736601472251026497013257765536814",
     "polymarket_slug": "will-meta-acquire-tiktok-745-612-641",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - AppLovin",
@@ -1617,7 +2252,8 @@
     "polymarket_no_token": "88039326737621434466419227880356024310820548227349933412032970126779995009088",
     "polymarket_slug": "will-applovin-acquire-tiktok-682-567",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will acquire TikTok? - Walmart",
@@ -1629,7 +2265,8 @@
     "polymarket_no_token": "73329614394265649550276185757981162947640023826077009836915733789257470328911",
     "polymarket_slug": "will-walmart-acquire-tiktok-688-757-314",
     "similarity_score": 1.0,
-    "cutoff_at": 1782777600
+    "cutoff_at": 1782777600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Steam Awards: Game of the Year - Clair Obscur: Expedition 33",
@@ -1641,7 +2278,8 @@
     "polymarket_no_token": "13666722014157471247015777305883526353004316668016163174576861333756036885559",
     "polymarket_slug": "will-clair-obscur-expedition-33-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Arc Raiders",
@@ -1653,7 +2291,8 @@
     "polymarket_no_token": "65783014534201387227176445509689028968550512291788554033568783853774785850540",
     "polymarket_slug": "will-arc-raiders-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Hollow Knight: Silksong",
@@ -1665,7 +2304,8 @@
     "polymarket_no_token": "114714490320881584911986949177947269801756536868101268427414953220005877089510",
     "polymarket_slug": "will-hollow-knight-silksong-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Hades II",
@@ -1677,7 +2317,8 @@
     "polymarket_no_token": "107563090820531478071037357171173855170956626806381254170758259312693048992260",
     "polymarket_slug": "will-hades-ii-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Death Stranding 2: On the Beach",
@@ -1689,7 +2330,8 @@
     "polymarket_no_token": "69390989666835831472716550760748076671190526003882085401025875462095441711787",
     "polymarket_slug": "will-death-stranding-2-on-the-beach-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Blue Prince",
@@ -1701,7 +2343,8 @@
     "polymarket_no_token": "52129074364608464783102229686808906102785396529187157827950725364401064017283",
     "polymarket_slug": "will-blue-prince-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Steam Awards: Game of the Year - Kingdom Come: Deliverance II",
@@ -1713,7 +2356,8 @@
     "polymarket_no_token": "39678217586498663607337439155259369694893172152596422488167282542700475786309",
     "polymarket_slug": "will-kingdom-come-deliverance-ii-win-game-of-the-year-in-the-2025-steam-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Starmer out by...? - June 30, 2026",
@@ -1725,7 +2369,8 @@
     "polymarket_no_token": "64622848174080349355505680625481066249195809702245025265549356236367119746958",
     "polymarket_slug": "starmer-out-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Starmer out by...? - December 31, 2026",
@@ -1737,7 +2382,8 @@
     "polymarket_no_token": "88902058027062214140177978007942040532071439710160833384602336149457247354303",
     "polymarket_slug": "starmer-out-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1798761600
+    "cutoff_at": 1798761600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "US x Venezuela military engagement by...? - March 31, 2026",
@@ -1749,7 +2395,8 @@
     "polymarket_no_token": "108743709732442130739073851488597967747030701044009651663118921104082786836017",
     "polymarket_slug": "us-x-venezuela-military-engagement-by-march-31-2026-264-352-211-137-861-788-622-336-869-453",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Kraken IPO by ...? - March 31, 2026",
@@ -1761,7 +2408,8 @@
     "polymarket_no_token": "103693433518125527001416636574099415821922498558487623412396163292963814003978",
     "polymarket_slug": "kraken-ipo-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Kraken IPO by ...? - December 31, 2026",
@@ -1773,7 +2421,8 @@
     "polymarket_no_token": "28557614648090529004584076028720900603196666949274543515794672175624115225556",
     "polymarket_slug": "kraken-ipo-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Teyana Taylor",
@@ -1785,7 +2434,8 @@
     "polymarket_no_token": "9232143369822623937122068411511576870512074760872495809847730930922190170031",
     "polymarket_slug": "will-teyana-taylor-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Ariana Grande",
@@ -1797,7 +2447,8 @@
     "polymarket_no_token": "62653645127266914073846206437861066581515013765875902544649170897445791969262",
     "polymarket_slug": "will-ariana-grande-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Amy Madigan",
@@ -1809,7 +2460,8 @@
     "polymarket_no_token": "2645771604074701099510943662783190326025338994989545507867333200599656051857",
     "polymarket_slug": "will-amy-madigan-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Inga Ibsdotter Lilleaas",
@@ -1821,7 +2473,8 @@
     "polymarket_no_token": "99454146710083556025709354798247135246662045685348759250707040456835411574546",
     "polymarket_slug": "will-inga-ibsdotter-lilleaas-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Elle Fanning",
@@ -1833,7 +2486,8 @@
     "polymarket_no_token": "40747275188918857347613319884133694719544689285377407546615750718264834150338",
     "polymarket_slug": "will-elle-fanning-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Wunmi Mosaku",
@@ -1845,7 +2499,8 @@
     "polymarket_no_token": "83419028881374330798608341407558261493422927461201819394939021898367123505883",
     "polymarket_slug": "will-wunmi-mosaku-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actress Winner - Gwyneth Paltrow",
@@ -1857,7 +2512,8 @@
     "polymarket_no_token": "11765769617373306937399630793408344650718717054669932885317700254993655323937",
     "polymarket_slug": "will-gwyneth-paltrow-win-best-supporting-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actor Winner - Sean Penn",
@@ -1869,7 +2525,8 @@
     "polymarket_no_token": "57280055515157002497847996398372581077095661831629922834612019741255629878625",
     "polymarket_slug": "will-sean-penn-win-best-supporting-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actor Winner - Stellan Skarsgård",
@@ -1881,7 +2538,8 @@
     "polymarket_no_token": "106820146733184719100966062623986655992997037363317463528901190592661638187355",
     "polymarket_slug": "will-stellan-skarsgrd-win-best-supporting-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actor Winner - Paul Mescal",
@@ -1893,7 +2551,8 @@
     "polymarket_no_token": "73486115923706733324210137315810647036004461156304525613583346457616751280554",
     "polymarket_slug": "will-paul-mescal-win-best-supporting-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actor Winner - Jacob Elordi",
@@ -1905,7 +2564,8 @@
     "polymarket_no_token": "55723215967704727452199840811929823276351711374899127881856674926400394790108",
     "polymarket_slug": "will-jacob-elordi-win-best-supporting-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Supporting Actor Winner - Benicio Del Toro",
@@ -1917,7 +2577,8 @@
     "polymarket_no_token": "105159270423598199664249261738928535905668234939484323704322364820483620754428",
     "polymarket_slug": "will-movie-a-win-best-supporting-actor-at-the-98th-academy-awards-551",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Jessie Buckley",
@@ -1929,7 +2590,8 @@
     "polymarket_no_token": "67714226585907550550529999142476885833681032855804321679984650058027221030343",
     "polymarket_slug": "will-jessie-buckley-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Renate Reinsve",
@@ -1941,7 +2603,8 @@
     "polymarket_no_token": "46973654836712071030433547330576157036568933987018650972249809381019689960189",
     "polymarket_slug": "will-renate-reinsve-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Rose Byrne",
@@ -1953,7 +2616,8 @@
     "polymarket_no_token": "93896789766672786265583247370943709050703385033921037820143770242065777911852",
     "polymarket_slug": "will-rose-byrne-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Cynthia Erivo",
@@ -1965,7 +2629,8 @@
     "polymarket_no_token": "73055019772599069343377038103746909385795402604204266490131353531276278022203",
     "polymarket_slug": "will-cynthia-erivo-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Emma Stone",
@@ -1977,7 +2642,8 @@
     "polymarket_no_token": "47368049144297538267587003412048832706450306565691819355355237308563778509435",
     "polymarket_slug": "will-emma-stone-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Kate Hudson",
@@ -1989,7 +2655,8 @@
     "polymarket_no_token": "13277548687816759795335055390042884171948592862728642811834664529364416682526",
     "polymarket_slug": "will-kate-hudson-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actress Winner - Tessa Thompson",
@@ -2001,7 +2668,8 @@
     "polymarket_no_token": "50749659132171577576261499918297401659423712373725945774362985226209910477127",
     "polymarket_slug": "will-tessa-thompson-win-best-actress-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Paul Thomas Anderson",
@@ -2013,7 +2681,8 @@
     "polymarket_no_token": "92716430918741840655736084378502979343886827547627744219804082069555888742202",
     "polymarket_slug": "will-paul-thomas-anderson-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Chloé Zhao",
@@ -2025,7 +2694,8 @@
     "polymarket_no_token": "32231359673171841425833467372633014480668779042894493393647349858363103893329",
     "polymarket_slug": "will-chlo-zhao-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Josh Safdie",
@@ -2037,7 +2707,8 @@
     "polymarket_no_token": "96034442295193306734398224254296669772681716356178194014225838729384095243517",
     "polymarket_slug": "will-josh-safdie-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Guillermo del Toro",
@@ -2049,7 +2720,8 @@
     "polymarket_no_token": "12204052210130698567500052268845120150733941389458723436304401610881229099757",
     "polymarket_slug": "will-guillermo-del-toro-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Jafar Panahi",
@@ -2061,7 +2733,8 @@
     "polymarket_no_token": "63216593971154731250616027141047187594892117537620681928030695026442445310100",
     "polymarket_slug": "will-jafar-panahi-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Director Winner - Ryan Coogler",
@@ -2073,7 +2746,8 @@
     "polymarket_no_token": "61277975933886774626129886616090438665595481660606675605195264436731698222646",
     "polymarket_slug": "will-ryan-coogler-win-best-director-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Timothée Chalamet",
@@ -2085,7 +2759,8 @@
     "polymarket_no_token": "99816109404712157590087136348402913231668662708612936491417855953287910104738",
     "polymarket_slug": "will-timothe-chalamet-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Leonardo DiCaprio",
@@ -2097,7 +2772,8 @@
     "polymarket_no_token": "80220087096412300979031228017736830811830254178021577450197694232897885103349",
     "polymarket_slug": "will-leonardo-dicaprio-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Ethan Hawke",
@@ -2109,7 +2785,8 @@
     "polymarket_no_token": "105286676802580801768486531851926538410523128140919767512082074034692005040977",
     "polymarket_slug": "will-ethan-hawke-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Wagner Moura",
@@ -2121,7 +2798,8 @@
     "polymarket_no_token": "48760153861088268502443624998528510516121927622095266316207726220106492910183",
     "polymarket_slug": "will-wagner-moura-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Michael B. Jordan",
@@ -2133,7 +2811,8 @@
     "polymarket_no_token": "114606530148334166418460190006077980741360671313732504689633511887744586905048",
     "polymarket_slug": "will-michael-b-jordan-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Actor Winner - Daniel Day-Lewis",
@@ -2145,7 +2824,8 @@
     "polymarket_no_token": "70214985132936768629772136227007698550802386872148771226931378694012079409552",
     "polymarket_slug": "will-daniel-day-lewis-win-best-actor-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - One Battle After Another",
@@ -2157,7 +2837,8 @@
     "polymarket_no_token": "101818439776033928818471919550932857351051302350112396692573347503051307979709",
     "polymarket_slug": "will-one-battle-after-another-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - Marty Supreme",
@@ -2169,7 +2850,8 @@
     "polymarket_no_token": "41909517390337506269578561946393939690952797212331290191404935145632561531096",
     "polymarket_slug": "will-marty-supreme-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - Hamnet",
@@ -2181,7 +2863,8 @@
     "polymarket_no_token": "69810463519685390977705287406030999283280450973077240059184219530164978871715",
     "polymarket_slug": "will-hamnet-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - Sinners",
@@ -2193,7 +2876,8 @@
     "polymarket_no_token": "73459237018178325517511938237778014293974381812181153063276727733805928508002",
     "polymarket_slug": "will-sinners-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - Bugonia",
@@ -2205,7 +2889,8 @@
     "polymarket_no_token": "101607178899252540003647394903771939183206092960905788946883703746586650017054",
     "polymarket_slug": "will-bugonia-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Oscars 2026: Best Picture Winner - Sentimental Value",
@@ -2217,7 +2902,8 @@
     "polymarket_no_token": "103445653913688204590429827609754970098059947043034813689371477999077756154403",
     "polymarket_slug": "will-sentimental-value-win-best-picture-at-the-98th-academy-awards",
     "similarity_score": 1.0,
-    "cutoff_at": 1773532800
+    "cutoff_at": 1773532800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 Seoul Mayoral Election Winner - Oh Se-hoon",
@@ -2229,7 +2915,8 @@
     "polymarket_no_token": "69119940120690198080427862456277899176151352667092917892731174838615809844766",
     "polymarket_slug": "will-oh-se-hoon-win-the-2026-seoul-mayoral-election",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 Seoul Mayoral Election Winner - Chong Won-oh",
@@ -2241,7 +2928,8 @@
     "polymarket_no_token": "4373508042153447807003037013866273722701523800631029869589071005100386330225",
     "polymarket_slug": "will-chong-won-oh-win-the-2026-seoul-mayoral-election",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 Seoul Mayoral Election Winner - Park Ju-min",
@@ -2253,7 +2941,8 @@
     "polymarket_no_token": "33180768152523300359608266378407672062602509411420976242276369931017390299193",
     "polymarket_slug": "will-park-ju-min-win-the-2026-seoul-mayoral-election",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 Seoul Mayoral Election Winner - Na Kyung-won",
@@ -2265,7 +2954,8 @@
     "polymarket_no_token": "54442952070893082888428970064397947557063143067543094565460789895590372419460",
     "polymarket_slug": "will-na-kyung-won-win-the-2026-seoul-mayoral-election",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 Seoul Mayoral Election Winner - Jeon Hyun-heui",
@@ -2277,7 +2967,8 @@
     "polymarket_no_token": "46530263120617042673840722177286553003299007442327117911728947764817048302043",
     "polymarket_slug": "will-jeon-hyun-heui-win-the-2026-seoul-mayoral-election",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 South Korean Local Elections: Party Winner - Democratic Party of Korea (DP)",
@@ -2289,7 +2980,8 @@
     "polymarket_no_token": "34769813353222500711676991653834004487148868508426041288322712895307942374356",
     "polymarket_slug": "will-the-democratic-party-of-korea-dp-win-the-2026-south-korean-local-elections",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 South Korean Local Elections: Party Winner - People Power Party (PPP)",
@@ -2301,7 +2993,8 @@
     "polymarket_no_token": "1423388073814376292828932274862823086735024318524777117112604462650054036931",
     "polymarket_slug": "will-the-people-power-party-ppp-win-the-2026-south-korean-local-elections",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 South Korean Local Elections: Party Winner - Rebuilding Korea Party (RKP)",
@@ -2313,7 +3006,8 @@
     "polymarket_no_token": "98378954723972110461939826184004654620086113510079346831639316940285514319122",
     "polymarket_slug": "will-the-rebuilding-korea-party-rkp-win-the-2026-south-korean-local-elections",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 South Korean Local Elections: Party Winner - Progressive Party (PP)",
@@ -2325,7 +3019,8 @@
     "polymarket_no_token": "31712863180387738158889171409795842621760823449075301680004805425903144512064",
     "polymarket_slug": "will-the-progressive-party-pp-win-the-2026-south-korean-local-elections",
     "similarity_score": 1.0,
-    "cutoff_at": 1780444800
+    "cutoff_at": 1780444800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Grok 5 released by...? - March 31, 2026",
@@ -2337,7 +3032,8 @@
     "polymarket_no_token": "43182654922523355554487760103848610368479277548038277439440055164132446025451",
     "polymarket_slug": "grok-5-released-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will the U.S. invade Venezuela by...? - December 31, 2025",
@@ -2349,7 +3045,8 @@
     "polymarket_no_token": "81046748927736052916392088237473207584765682653658270710464996485326088705956",
     "polymarket_slug": "will-the-us-invade-venezuela-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will the U.S. invade Venezuela by...? - March 31, 2026",
@@ -2361,7 +3058,8 @@
     "polymarket_no_token": "69910242282118971624533455808252879932448371195032444218608122709050627942212",
     "polymarket_slug": "will-the-us-invade-venezuela-by-march-31-2026-255",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Russia x Ukraine ceasefire by ...? - January 31, 2026",
@@ -2373,7 +3071,8 @@
     "polymarket_no_token": "28770223306876042609349339320023940766830944760118437790167392789285879039304",
     "polymarket_slug": "russia-x-ukraine-ceasefire-by-january-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $440–460",
@@ -2385,7 +3084,8 @@
     "polymarket_no_token": "24232802383001481002573368804914696524021082150902407018076423135251928697835",
     "polymarket_slug": "will-microsoft-msft-close-at-440460-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $460–480",
@@ -2397,7 +3097,8 @@
     "polymarket_no_token": "25774179615467655698930545855893332728464694125975055160950680743913623571065",
     "polymarket_slug": "will-microsoft-msft-close-at-460480-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $480–500",
@@ -2409,7 +3110,8 @@
     "polymarket_no_token": "82844615383580316948030997104300703037034112494468932405474244912118100765818",
     "polymarket_slug": "will-microsoft-msft-close-at-480500-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $500–520",
@@ -2421,7 +3123,8 @@
     "polymarket_no_token": "64054549865878887010805369043458774082089923059564528219850327145105107872740",
     "polymarket_slug": "will-microsoft-msft-close-at-500520-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $520–540",
@@ -2433,7 +3136,8 @@
     "polymarket_no_token": "38345843016516277729508803376003982026073727364930166694671211257593593223032",
     "polymarket_slug": "will-microsoft-msft-close-at-520540-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - $540–560",
@@ -2445,7 +3149,8 @@
     "polymarket_no_token": "104287723666961130595202332707579912334267738247053473977457130361263112322742",
     "polymarket_slug": "will-microsoft-msft-close-at-540560-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Microsoft (MSFT) close at in 2025? - >$560",
@@ -2457,7 +3162,8 @@
     "polymarket_no_token": "84452838862843195674139379583133999540785321288635645126058591084868551358319",
     "polymarket_slug": "will-microsoft-msft-close-at-560-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $280–295",
@@ -2469,7 +3175,8 @@
     "polymarket_no_token": "89749708360261550976628104656700457488147494602781170507978379190073640402120",
     "polymarket_slug": "will-google-googl-close-at-280295-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $295–310",
@@ -2481,7 +3188,8 @@
     "polymarket_no_token": "76722869678325055049449367197378515495910007980490869437236109347045202336410",
     "polymarket_slug": "will-google-googl-close-at-295310-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $310–325",
@@ -2493,7 +3201,8 @@
     "polymarket_no_token": "12618324874594758144888218671016895761459517614566638509022602790903823600678",
     "polymarket_slug": "will-google-googl-close-at-310325-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $325–340",
@@ -2505,7 +3214,8 @@
     "polymarket_no_token": "62648269865381163862766596479192775360280919991603018203516320408697823232595",
     "polymarket_slug": "will-google-googl-close-at-325340-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $340–355",
@@ -2517,7 +3227,8 @@
     "polymarket_no_token": "21534913247539422902024860751764270496114682419584039353110586404113208478410",
     "polymarket_slug": "will-google-googl-close-at-340355-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Google (GOOGL) close at in 2025? - $355–370",
@@ -2529,7 +3240,8 @@
     "polymarket_no_token": "6177331126864925169006975567298532418217738049394864486231305174484903200615",
     "polymarket_slug": "will-google-googl-close-at-355370-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $350–375",
@@ -2541,7 +3253,8 @@
     "polymarket_no_token": "113880234920504773746353455087706048388716556645098215692182056861467772881033",
     "polymarket_slug": "will-tesla-tsla-close-at-350375-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $375–400",
@@ -2553,7 +3266,8 @@
     "polymarket_no_token": "73893547512601554786254827394770324875850646471141082743735076921371315581536",
     "polymarket_slug": "will-tesla-tsla-close-at-375400-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $400–425",
@@ -2565,7 +3279,8 @@
     "polymarket_no_token": "54330864004586234242079427851390992083908198671695013577584863838108707083927",
     "polymarket_slug": "will-tesla-tsla-close-at-400425-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $425–450",
@@ -2577,7 +3292,8 @@
     "polymarket_no_token": "63426934526682819455441014201951758260684711143655278315283224889316851469327",
     "polymarket_slug": "will-tesla-tsla-close-at-425450-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $450–475",
@@ -2589,7 +3305,8 @@
     "polymarket_no_token": "47805571619674293208753348201700844300531334806177761342708259762915522088908",
     "polymarket_slug": "will-tesla-tsla-close-at-450475-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - $475–500",
@@ -2601,7 +3318,8 @@
     "polymarket_no_token": "103740785337229430662136591188360813202824746607612631052599511713639823054202",
     "polymarket_slug": "will-tesla-tsla-close-at-475500-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Tesla (TSLA) close at in 2025? - >$500",
@@ -2613,7 +3331,8 @@
     "polymarket_no_token": "40951071626502101333227235747427882028423014692946744058514705422195403322466",
     "polymarket_slug": "will-tesla-tsla-close-at-500-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will NVIDIA (NVDA) close at in 2025? - <$160",
@@ -2625,7 +3344,8 @@
     "polymarket_no_token": "66035217954055305637902976135844491548380155947457278361180746354411656663505",
     "polymarket_slug": "will-nvidia-nvda-close-at-160-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will NVIDIA (NVDA) close at in 2025? - >$220",
@@ -2637,7 +3357,8 @@
     "polymarket_no_token": "87042055738292020027861378085384672612674220441569214783391624170750201442706",
     "polymarket_slug": "will-nvidia-nvda-close-at-220-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - $275–280",
@@ -2649,7 +3370,8 @@
     "polymarket_no_token": "2146104677003970848372413456998273258860018922363457458491081650989770556457",
     "polymarket_slug": "will-apple-aapl-close-at-275280-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - $280–285",
@@ -2661,7 +3383,8 @@
     "polymarket_no_token": "92371244626603280568838064023450636574627795718784854684933011260776846801216",
     "polymarket_slug": "will-apple-aapl-close-at-280285-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - $285–290",
@@ -2673,7 +3396,8 @@
     "polymarket_no_token": "77229498398484481797728264457776879627654667757173025991252221380097109758857",
     "polymarket_slug": "will-apple-aapl-close-at-285290-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - $290–295",
@@ -2685,7 +3409,8 @@
     "polymarket_no_token": "95590690696914091481403297335062916879352097620664267256921302706717461539378",
     "polymarket_slug": "will-apple-aapl-close-at-290295-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - $295–300",
@@ -2697,7 +3422,8 @@
     "polymarket_no_token": "97067611878443334020616676587402595424420698162160435677235426845420214033280",
     "polymarket_slug": "will-apple-aapl-close-at-295300-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "What will Apple (AAPL) close at in 2025? - >$300",
@@ -2709,7 +3435,8 @@
     "polymarket_no_token": "106601916108925734163949965599390672246855205341191966621178921078780460095766",
     "polymarket_slug": "will-apple-aapl-close-at-300-in-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "ECB Rates Decision (DFR): February 2026 - 50+ bps decrease",
@@ -2721,7 +3448,8 @@
     "polymarket_no_token": "28035782704830977746792519428058891521357821754216271691984485301597741284100",
     "polymarket_slug": "will-the-ecb-announce-a-50-bps-decrease-at-the-february-2026-meeting",
     "similarity_score": 1.0,
-    "cutoff_at": 1770297300
+    "cutoff_at": 1770297300,
+    "polymarket_neg_risk": true
   },
   {
     "question": "ECB Rates Decision (DFR): February 2026 - 25 bps decrease",
@@ -2733,7 +3461,8 @@
     "polymarket_no_token": "6774874402629029300472358113676010387029781717669176269836896682439462555750",
     "polymarket_slug": "will-the-ecb-announce-a-25-bps-decrease-at-the-february-2026-meeting",
     "similarity_score": 1.0,
-    "cutoff_at": 1770297300
+    "cutoff_at": 1770297300,
+    "polymarket_neg_risk": true
   },
   {
     "question": "ECB Rates Decision (DFR): February 2026 - No change",
@@ -2745,7 +3474,8 @@
     "polymarket_no_token": "5502154794294561091176993625627527547899620345515688794176493172392642216862",
     "polymarket_slug": "will-the-ecb-announce-no-change-at-the-february-2026-meeting",
     "similarity_score": 1.0,
-    "cutoff_at": 1770297300
+    "cutoff_at": 1770297300,
+    "polymarket_neg_risk": true
   },
   {
     "question": "ECB Rates Decision (DFR): February 2026 - Increase",
@@ -2757,7 +3487,8 @@
     "polymarket_no_token": "104856882317866166379316158418492007271535464909962202119191073598479709746467",
     "polymarket_slug": "will-the-ecb-announce-an-increase-at-the-february-2026-meeting",
     "similarity_score": 1.0,
-    "cutoff_at": 1770297300
+    "cutoff_at": 1770297300,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Bank of Japan decision in January? - No change",
@@ -2769,19 +3500,34 @@
     "polymarket_no_token": "44656289640646827130020096140096799359994546120739401503992982377845751139873",
     "polymarket_slug": "no-change-in-bank-of-japans-interest-rates-after-january-2026-meeting",
     "similarity_score": 1.0,
-    "cutoff_at": 1769149800
+    "cutoff_at": 1769149800,
+    "polymarket_neg_risk": true
   },
   {
-    "question": "Will MetaMask launch a token by ... ? - September 30, 2026",
-    "opinion_market_id": 2104,
-    "opinion_yes_token": "78829778920343813203480160577638144293986957883283594013852726094869422602919",
-    "opinion_no_token": "22566129486303277470549396649201552770566593034387005771053179490208605013469",
-    "polymarket_condition_id": "0x404da036e872fe1c9bdb2176564502a43f12831ddcc346395aca3146f9e71bdc",
-    "polymarket_yes_token": "82017167864405769499774134034352265993930681918536647755800225490639218464999",
-    "polymarket_no_token": "24192542941326556420937589393283472461812173299056788843809804465380232715721",
-    "polymarket_slug": "will-metamask-launch-a-token-by-september-30-2026",
+    "question": "Will Base launch a token by ...? - June 30, 2026",
+    "opinion_market_id": 2112,
+    "opinion_yes_token": "27481615811202335671087127101447757885720105275434969119735290605681870892949",
+    "opinion_no_token": "42634028742018956793186122445547440338541792081576088753132609347483737417590",
+    "polymarket_condition_id": "0x9873d0448faebb53d0040a958b40bfd17960f57a164f69a36f2f400e945c36c1",
+    "polymarket_yes_token": "73916079699906389194973750600611907885736641148308464550611829122042479621960",
+    "polymarket_no_token": "111395431477341319990490806549685062184767317046913627686270380262287734089926",
+    "polymarket_slug": "will-base-launch-a-token-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Base launch a token by ...? - December 31, 2026",
+    "opinion_market_id": 2114,
+    "opinion_yes_token": "14204934520772944331382914831557837202547429772250218400099039594534268489872",
+    "opinion_no_token": "50064601970512347971100265638006335866772083177833059156172084609297067934416",
+    "polymarket_condition_id": "0x1a659ad303630472713278ed1f3d6489eaaaa0171098dba04df2793dfc16a302",
+    "polymarket_yes_token": "44816229620748629831606438593495518497709847643579849056284090396785477672494",
+    "polymarket_no_token": "25537301018568558689509959375134200843374787525809263597130671425208747239474",
+    "polymarket_slug": "will-base-launch-a-token-by-december-31-2026-154",
+    "similarity_score": 1.0,
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Maduro out by...? - March 31, 2026",
@@ -2793,7 +3539,8 @@
     "polymarket_no_token": "51557640493959409967450715581364676138625317681860098426262565961674126617926",
     "polymarket_slug": "maduro-out-by-march-31-2026-187-483",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "NBA MVP 2026 - Nikola Jokic",
@@ -2805,7 +3552,8 @@
     "polymarket_no_token": "30885264975049865092748359742333241537074701219580535980389571462548467191811",
     "polymarket_slug": "will-nikola-jokic-win-2023-nba-mvp",
     "similarity_score": 1.0,
-    "cutoff_at": 1781049600
+    "cutoff_at": 1781049600,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Bitcoin hit $150k by ...? - March 31, 2026",
@@ -2817,7 +3565,8 @@
     "polymarket_no_token": "60813700210650265030095330536872262773206509817006423823871227216046493542827",
     "polymarket_slug": "will-bitcoin-hit-150k-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Bitcoin hit $150k by ...? - June 30, 2026",
@@ -2829,7 +3578,8 @@
     "polymarket_no_token": "13290642914521189871602119663452054126359842904805799115978921503195267156991",
     "polymarket_slug": "will-bitcoin-hit-150k-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Bitcoin hit $150k by ...? - December 31, 2026",
@@ -2841,7 +3591,8 @@
     "polymarket_no_token": "55119388124180116303253993098894090042427725500010038140578121972388485050538",
     "polymarket_slug": "will-bitcoin-hit-150k-by-december-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "MicroStrategy sells any Bitcoin by ...? - March 31, 2026",
@@ -2853,7 +3604,8 @@
     "polymarket_no_token": "61476326573463890939120700176570456436619008823217970387484180237661307640203",
     "polymarket_slug": "microstrategy-sells-any-bitcoin-by-march-31-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "MicroStrategy sells any Bitcoin by ...? - June 30, 2026",
@@ -2865,7 +3617,8 @@
     "polymarket_no_token": "65176388692130651396848427090788038285140833850265294793449655516920659740141",
     "polymarket_slug": "microstrategy-sells-any-bitcoin-by-june-30-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 0
+    "cutoff_at": 0,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Who will Trump nominate as Fed Chair? - Kevin Hassett",
@@ -2877,7 +3630,8 @@
     "polymarket_no_token": "22802130763821766047382314926654345322953005062130920361011056163048911488589",
     "polymarket_slug": "will-trump-nominate-kevin-hassett-as-the-next-fed-chair",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Who will Trump nominate as Fed Chair? - Christopher Waller",
@@ -2889,7 +3643,8 @@
     "polymarket_no_token": "31167532153450638526564509379216016814499874840833154348394853115050097836415",
     "polymarket_slug": "will-trump-nominate-christopher-waller-as-the-next-fed-chair",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Who will Trump nominate as Fed Chair? - Kevin Warsh",
@@ -2901,7 +3656,8 @@
     "polymarket_no_token": "18289842382539867639079362738467334752951741961393928566628307174343542320349",
     "polymarket_slug": "will-trump-nominate-kevin-warsh-as-the-next-fed-chair",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Who will Trump nominate as Fed Chair? - Rick Rieder",
@@ -2913,7 +3669,8 @@
     "polymarket_no_token": "97278843093518170983116788293559302501059038797143772070255096806379425818363",
     "polymarket_slug": "will-trump-nominate-rick-rieder-as-the-next-fed-chair",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Who will Trump nominate as Fed Chair? - Scott Bessent",
@@ -2925,7 +3682,8 @@
     "polymarket_no_token": "8838690940631108527048181272855936786008275308935355455406740809777377823660",
     "polymarket_slug": "will-trump-nominate-scott-bessent-as-the-next-fed-chair",
     "similarity_score": 1.0,
-    "cutoff_at": 1798675200
+    "cutoff_at": 1798675200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Oklahoma City Thunder",
@@ -2937,7 +3695,8 @@
     "polymarket_no_token": "44914465637297319816681463234953032477919413063019359633128421605039733545953",
     "polymarket_slug": "will-the-oklahoma-city-thunder-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Denver Nuggets",
@@ -2949,7 +3708,8 @@
     "polymarket_no_token": "76502490060038468983308870100553689583720145873703214557423080536912388384600",
     "polymarket_slug": "will-the-denver-nuggets-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Cleveland Cavaliers",
@@ -2961,7 +3721,8 @@
     "polymarket_no_token": "87330689906224096887625709229706923472442188571057301299963059101866409440363",
     "polymarket_slug": "will-the-cleveland-cavaliers-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Houston Rockets",
@@ -2973,7 +3734,8 @@
     "polymarket_no_token": "90032510016992035908144344334497034888131477599689435939081777415620747474258",
     "polymarket_slug": "will-the-houston-rockets-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Los Angeles Lakers",
@@ -2985,7 +3747,8 @@
     "polymarket_no_token": "70799758189725267592147252808427831117090382599571633897338944002834894241449",
     "polymarket_slug": "will-the-los-angeles-lakers-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - New York Knicks",
@@ -2997,7 +3760,8 @@
     "polymarket_no_token": "1770840559776249239623005379825945674336282130390798724203946923853499387834",
     "polymarket_slug": "will-the-new-york-knicks-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Detroit Pistons",
@@ -3009,7 +3773,8 @@
     "polymarket_no_token": "17229559412398170618704225341353811929634795955092110836823940954753499964583",
     "polymarket_slug": "will-the-detroit-pistons-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Golden State Warriors",
@@ -3021,7 +3786,8 @@
     "polymarket_no_token": "96954689694848789665674862217402225728143997247600075527510661060109238213695",
     "polymarket_slug": "will-the-golden-state-warriors-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - San Antonio Spurs",
@@ -3033,7 +3799,8 @@
     "polymarket_no_token": "12636035070565821048178968461063687179393834041535317885287743395873720755118",
     "polymarket_slug": "will-the-san-antonio-spurs-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 NBA Champion - Boston Celtics",
@@ -3045,7 +3812,8 @@
     "polymarket_no_token": "68988781087071608596579516085819336301201525599500826069950065091990393143710",
     "polymarket_slug": "will-the-boston-celtics-win-the-2026-nba-finals",
     "similarity_score": 1.0,
-    "cutoff_at": 1782864000
+    "cutoff_at": 1782864000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Highest grossing movie in 2025? - Wicked: For Good",
@@ -3057,7 +3825,8 @@
     "polymarket_no_token": "24392063984627190307257767585691140245716045207914817527470093499518405056967",
     "polymarket_slug": "will-wicked-for-good-be-the-top-grossing-movie-of-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Highest grossing movie in 2025? - Zootopia 2",
@@ -3069,7 +3838,8 @@
     "polymarket_no_token": "32547511354537402737906707386159811464601407572722378636661354247067721792930",
     "polymarket_slug": "will-zootopia-2-be-the-top-grossing-movie-of-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Highest grossing movie in 2025? - A Minecraft Movie",
@@ -3081,7 +3851,8 @@
     "polymarket_no_token": "64115571112663071888929599027003715026866623388277198289581125847375946298399",
     "polymarket_slug": "will-a-minecraft-movie-be-the-top-grossing-movie-of-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Highest grossing movie in 2025? - Avatar 3",
@@ -3093,7 +3864,8 @@
     "polymarket_no_token": "97483512396734374396901092556083776727016015018005180917776704659356263830525",
     "polymarket_slug": "will-avatar-3-be-the-top-grossing-movie-of-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767225600
+    "cutoff_at": 1767225600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Arsenal",
@@ -3105,7 +3877,8 @@
     "polymarket_no_token": "40207448075213637709805668474726325753733020974923638056549809058860608450985",
     "polymarket_slug": "will-arsenal-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - PSG",
@@ -3117,7 +3890,8 @@
     "polymarket_no_token": "17522237181479319953129418683394157683167669858670412329571078616243234898741",
     "polymarket_slug": "will-psg-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Bayern Munich",
@@ -3129,7 +3903,8 @@
     "polymarket_no_token": "46985784934245469874674051973070583024711389039998687745451745904831527332283",
     "polymarket_slug": "will-bayern-munich-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Barcelona",
@@ -3141,7 +3916,8 @@
     "polymarket_no_token": "44316820324326475573649547254648033139339541714376543824778689356013656495018",
     "polymarket_slug": "will-barcelona-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Real Madrid",
@@ -3153,7 +3929,8 @@
     "polymarket_no_token": "12905796939799815677187294753823746821359945387637800747970148392857538825639",
     "polymarket_slug": "will-real-madrid-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Liverpool",
@@ -3165,7 +3942,8 @@
     "polymarket_no_token": "61363321151738894082270158001558726485654573525177047497641264416022287833194",
     "polymarket_slug": "will-liverpool-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Man City",
@@ -3177,7 +3955,8 @@
     "polymarket_no_token": "112574489854879876348403352508736279198755657572621272542900243530924839503706",
     "polymarket_slug": "will-man-city-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "UEFA Champions League Winner 2026 - Chelsea",
@@ -3189,7 +3968,8 @@
     "polymarket_no_token": "12655741801215963455918354112862966501046753413817436839424508949889159340688",
     "polymarket_slug": "will-chelsea-win-the-202526-champions-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1780185600
+    "cutoff_at": 1780185600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Buffalo",
@@ -3201,7 +3981,8 @@
     "polymarket_no_token": "20830052946262425318347897889378986218676355013257249888938222536677638197588",
     "polymarket_slug": "will-the-buffalo-bills-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Philadelphia",
@@ -3213,19 +3994,8 @@
     "polymarket_no_token": "16882955783129418223479453957289228633869007482032286469228116546801591569776",
     "polymarket_slug": "will-the-philadelphia-eagles-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
-  },
-  {
-    "question": "Super Bowl Champion 2026 - Detroit",
-    "opinion_market_id": 1372,
-    "opinion_yes_token": "4155421981174162830030445166531287748287874500338356400236583987349756994258",
-    "opinion_no_token": "16426712778078219980524836529940884391658784580178589525353576083582354131730",
-    "polymarket_condition_id": "0x918ad84643db0f17ffc10e46b5f5088f2cb775bf2162c7462f23ae212c3166cd",
-    "polymarket_yes_token": "67891021111562857082489664302205864185176138401339187863876943602703165406121",
-    "polymarket_no_token": "7662022715425618950750806860867298674987641588706934484885688938090039714344",
-    "polymarket_slug": "will-the-detroit-lions-win-super-bowl-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Los Angeles R",
@@ -3237,7 +4007,8 @@
     "polymarket_no_token": "113554675031456886662456333518442351760965732494459471513820718399879139049322",
     "polymarket_slug": "will-the-los-angeles-rams-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Green Bay",
@@ -3249,7 +4020,8 @@
     "polymarket_no_token": "66899210149802960818318734350663481088206803948046032744038620155576797472616",
     "polymarket_slug": "will-the-green-bay-packers-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Baltimore",
@@ -3261,19 +4033,8 @@
     "polymarket_no_token": "13650729373396863503149204494735335464119911986355339951778806205194377721658",
     "polymarket_slug": "will-the-baltimore-ravens-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
-  },
-  {
-    "question": "Super Bowl Champion 2026 - Indianapolis",
-    "opinion_market_id": 1376,
-    "opinion_yes_token": "42765137854641290541564088463035131789230804862903885973776601030256576168898",
-    "opinion_no_token": "46141906787881902799796544175435297014656520595296373107649679360176469854047",
-    "polymarket_condition_id": "0xfdb1bd342b9e2ade01add3bac20cbdd38d377de978b0396c4f3ed47a4c6d89d6",
-    "polymarket_yes_token": "105637894230686353756386891009381210182641100121425227257145702361692222468856",
-    "polymarket_no_token": "99258891601014474212506783885224914406276605965895959077052260566694318359215",
-    "polymarket_slug": "will-the-indianapolis-colts-win-super-bowl-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Seattle",
@@ -3285,7 +4046,8 @@
     "polymarket_no_token": "47021554520147489198499363137978179318351470490672224768430579421357197997727",
     "polymarket_slug": "will-the-seattle-seahawks-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - New England",
@@ -3297,7 +4059,8 @@
     "polymarket_no_token": "49985214708919646661175099546558878672426321417556753698510266808095631910814",
     "polymarket_slug": "will-the-new-england-patriots-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Denver",
@@ -3309,7 +4072,8 @@
     "polymarket_no_token": "102298659433550248987215228870688081194500704214812846837468302147039715413908",
     "polymarket_slug": "will-the-denver-broncos-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Super Bowl Champion 2026 - Houston",
@@ -3321,7 +4085,47 @@
     "polymarket_no_token": "37644442109958671483839281901148464420383581860521606875059260299609130105698",
     "polymarket_slug": "will-the-houston-texans-win-super-bowl-2026",
     "similarity_score": 1.0,
-    "cutoff_at": 1770508800
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "Super Bowl Champion 2026 - San Francisco",
+    "opinion_market_id": 3345,
+    "opinion_yes_token": "52510626799624952038038578237585947250140584303628269325747416768262182423998",
+    "opinion_no_token": "112130630182986102261927506636363773009523223158084343046750414309313479746348",
+    "polymarket_condition_id": "0x29635b9089e6c26fdb8ac7eb57bfe2ce1e97ebea54ed4b950ba1524e3cc31c8c",
+    "polymarket_yes_token": "103964639796881000708283597869972982246291255020090641475005021108194817942325",
+    "polymarket_no_token": "96537739999689514992552605690581301450220422857778981013161054585731075770921",
+    "polymarket_slug": "will-the-san-francisco-49ers-win-super-bowl-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "Super Bowl Champion 2026 - Jacksonville",
+    "opinion_market_id": 3346,
+    "opinion_yes_token": "12799890853256450141668671398999175892638468658425260320555936879841713528322",
+    "opinion_no_token": "70670600378085126836539168806601843565093235899273892130487320601164663979109",
+    "polymarket_condition_id": "0x0982d83a9ec2e63a62af868d4e014e8d7eb6ca3cbbdf769b2454038c5b056cd3",
+    "polymarket_yes_token": "39296145995635021791944507425831065188555372645669782645968052851588435283455",
+    "polymarket_no_token": "11178570378811432941465534626935774582019223161301504081733294961489709628770",
+    "polymarket_slug": "will-the-jacksonville-jaguars-win-super-bowl-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
+  },
+  {
+    "question": "Super Bowl Champion 2026 - Chicago",
+    "opinion_market_id": 3347,
+    "opinion_yes_token": "64009822179608034113489458163533980492078614567497411913765242818056369170779",
+    "opinion_no_token": "8766066151261540743496312119668876623637435101728792049004416874237859732490",
+    "polymarket_condition_id": "0xeac63aba0e4483cad2138aa41401e30363f50c8b583476a774cc895fa4a51d0f",
+    "polymarket_yes_token": "98328612241005079298480588888413183448693837922137555607354456149974993923116",
+    "polymarket_no_token": "90235318156174390107916613062725593492957057218815573793636376869202408014196",
+    "polymarket_slug": "will-the-chicago-bears-win-super-bowl-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1770508800,
+    "polymarket_neg_risk": true
   },
   {
     "question": "English Premier League Winner 2026 - Arsenal",
@@ -3333,7 +4137,8 @@
     "polymarket_no_token": "110702402419434606997240498590139657923776420245193392095489394526960556962226",
     "polymarket_slug": "will-arsenal-win-the-202526-english-premier-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1779840000
+    "cutoff_at": 1779840000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "English Premier League Winner 2026 - Liverpool",
@@ -3345,7 +4150,8 @@
     "polymarket_no_token": "98019691446282827283674116828841315574891853949493251990346236030685612262858",
     "polymarket_slug": "will-liverpool-win-the-202526-english-premier-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1779840000
+    "cutoff_at": 1779840000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "English Premier League Winner 2026 - Chelsea",
@@ -3357,7 +4163,8 @@
     "polymarket_no_token": "13665856474824246252882373981735747012808966011418599989960226198773124694185",
     "polymarket_slug": "will-chelsea-win-the-202526-english-premier-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1779840000
+    "cutoff_at": 1779840000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "English Premier League Winner 2026 - Aston Villa",
@@ -3369,7 +4176,8 @@
     "polymarket_no_token": "42411362942871625791264806970415546212059967717285110439043637146881463498986",
     "polymarket_slug": "will-aston-villa-win-the-202526-english-premier-league",
     "similarity_score": 1.0,
-    "cutoff_at": 1779840000
+    "cutoff_at": 1779840000,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Spain",
@@ -3381,7 +4189,8 @@
     "polymarket_no_token": "112680630004798425069810935278212000865453267506345451433803052322987302357330",
     "polymarket_slug": "will-spain-win-the-2026-fifa-world-cup-963",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - France",
@@ -3393,7 +4202,8 @@
     "polymarket_no_token": "32270411694523539495262303868629477861017829722282576458031815333486368239544",
     "polymarket_slug": "will-france-win-the-2026-fifa-world-cup-924",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - England",
@@ -3405,7 +4215,8 @@
     "polymarket_no_token": "77121637225348873006259930776623502125079210522997384841464684944292365296940",
     "polymarket_slug": "will-england-win-the-2026-fifa-world-cup-937",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Brazil",
@@ -3417,7 +4228,8 @@
     "polymarket_no_token": "52986718774908357330412653486471347449818893503063830313445318937088822580057",
     "polymarket_slug": "will-brazil-win-the-2026-fifa-world-cup-183",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Argentina",
@@ -3429,7 +4241,8 @@
     "polymarket_no_token": "115428153746996892211798999366308897078723117634059783423375188043903703749062",
     "polymarket_slug": "will-argentina-win-the-2026-fifa-world-cup-245",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Portugal",
@@ -3441,7 +4254,8 @@
     "polymarket_no_token": "31940783580344558651011323787577288681658737625185216525249046282994042503801",
     "polymarket_slug": "will-portugal-win-the-2026-fifa-world-cup-912",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Germany",
@@ -3453,7 +4267,8 @@
     "polymarket_no_token": "45484070731786948288366703334552551439356529561722304542938873238430842810537",
     "polymarket_slug": "will-germany-win-the-2026-fifa-world-cup-467",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Netherlands",
@@ -3465,7 +4280,8 @@
     "polymarket_no_token": "103711573894614472510743687764792452240919804104728889027222697502832804498206",
     "polymarket_slug": "will-netherlands-win-the-2026-fifa-world-cup-739",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Norway",
@@ -3477,7 +4293,8 @@
     "polymarket_no_token": "111538579557239934343870815626480092245052857494675784434731223739153238373070",
     "polymarket_slug": "will-norway-win-the-2026-fifa-world-cup-893",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "2026 FIFA World Cup Winner - Italy",
@@ -3489,7 +4306,8 @@
     "polymarket_no_token": "17567294778637229825908271987925808954865907947626969581496912375435402975317",
     "polymarket_slug": "will-italy-win-the-2026-fifa-world-cup-813",
     "similarity_score": 1.0,
-    "cutoff_at": 1784505600
+    "cutoff_at": 1784505600,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which company has best AI model end of 2025? - Google",
@@ -3501,7 +4319,8 @@
     "polymarket_no_token": "56700920570772611352447671072645661081247297678677316893421987058530396786756",
     "polymarket_slug": "which-company-has-best-ai-model-end-of-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which company has best AI model end of 2025? - OpenAI",
@@ -3513,7 +4332,8 @@
     "polymarket_no_token": "95286602888911342401050506870419045522584469981654993778586844315860386218126",
     "polymarket_slug": "will-openai-have-the-top-ai-model-on-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which company has best AI model end of 2025? - xAI",
@@ -3525,7 +4345,8 @@
     "polymarket_no_token": "11967243848797501524178855415837512005660205521087701279176033570887179480479",
     "polymarket_slug": "will-xai-have-the-top-ai-model-on-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which company has best AI model end of 2025? - Anthropic",
@@ -3537,7 +4358,8 @@
     "polymarket_no_token": "115488619402747803745077131460111151178611848819833924488238348841948233683716",
     "polymarket_slug": "will-anthropic-have-the-top-ai-model-on-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Which company has best AI model end of 2025? - Alibaba",
@@ -3549,7 +4371,8 @@
     "polymarket_no_token": "55570329119013707680699904247616921993840095653839343267619453543159930491735",
     "polymarket_slug": "will-alibaba-have-the-top-ai-model-on-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Largest Company end of 2025? - NVIDIA",
@@ -3561,7 +4384,8 @@
     "polymarket_no_token": "69263280792958981516606123639467754139758192236863611059536531765186180114584",
     "polymarket_slug": "will-nvidia-be-the-largest-company-in-the-world-by-market-cap-on-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Largest Company end of 2025? - Microsoft",
@@ -3573,7 +4397,8 @@
     "polymarket_no_token": "11283302747327789018087926846254253631780904936940686956275996205259552151441",
     "polymarket_slug": "will-microsoft-be-the-largest-company-in-the-world-by-market-cap-on-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Largest Company end of 2025? - Apple",
@@ -3585,7 +4410,8 @@
     "polymarket_no_token": "111095287708850368473970563529499622074027245567277743974315214509863867378027",
     "polymarket_slug": "will-apple-be-the-largest-company-in-the-world-by-market-cap-on-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Largest Company end of 2025? - Alphabet",
@@ -3597,7 +4423,8 @@
     "polymarket_no_token": "79404696503229054452320164114223047905332303426304528417513718352134418382846",
     "polymarket_slug": "will-alphabet-be-the-largest-company-in-the-world-by-market-cap-on-december-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   },
   {
     "question": "Largest Company end of 2025? - Other",
@@ -3609,6 +4436,7 @@
     "polymarket_no_token": "18158002744140294273040375069310795056872489238220822015733598544940055923284",
     "polymarket_slug": "will-another-company-be-the-largest-company-in-the-world-by-market-cap-on-december-31-2025",
     "similarity_score": 1.0,
-    "cutoff_at": 1767139200
+    "cutoff_at": 1767139200,
+    "polymarket_neg_risk": true
   }
 ]
