@@ -13,6 +13,21 @@
     "polymarket_neg_risk": false
   },
   {
+    "question": "Bitcoin Up or Down on December 31?(12:00 ET)",
+    "opinion_market_id": 3429,
+    "opinion_yes_token": "28747356039251454938939621313646914533872535527499177087749604144821761902954",
+    "opinion_no_token": "27179045180534653166225097130269177542869734195166877547301063974668472969363",
+    "polymarket_condition_id": "0x6f7345e87cd8afb73e46ee6bf29e6a0f36168a6bd760cea859557c6aa01d651d",
+    "polymarket_yes_token": "64854393811836563052018142002476403381117065513282590387811738347074741838845",
+    "polymarket_no_token": "34851567217556956552697765351552914625618959926661042925533104316197618298785",
+    "polymarket_slug": "bitcoin-up-or-down-on-december-31",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767225600,
+    "op_rules": "This market will resolve to \"Up\" if the \"Close\" price for the Binance 1 minute candle for BTC/USDT Dec 30 '25 12:00 in the ET timezone (noon) is lower than the final \"Close\" price for the Dec 31 '25 12:00 ET candle.\n\nThis market will resolve to \"Down\" if the \"Close\" price for the Binance 1 minute candle for BTC/USDT Dec 30 '25 12:00 in the ET timezone (noon) is higher than the final \"Close\" price for the Dec 31 '25 12:00 ET candle.\n\nIf the final \"Close\" price for both of these candles is exactly equal on Binance, this market will resolve 50-50.\n\nThe resolution source for this market is Binance, specifically the BTC/USDT \"Close\" prices currently available at https://www.binance.com/en/trade/BTC_USDT with \"1m\" and \"Candles\" selected on the top bar.\n\nPlease note that this market is about the price according to Binance BTC/USDT, not according to other sources or spot markets.",
+    "poly_rules": "This market will resolve to \"Up\" if the \"Close\" price for the Binance 1 minute candle for BTC/USDT Dec 30 '25 12:00 in the ET timezone (noon) is lower than the final \"Close\" price for the Dec 31 '25 12:00 ET candle.\n\nThis market will resolve to \"Down\" if the \"Close\" price for the Binance 1 minute candle for BTC/USDT Dec 30 '25 12:00 in the ET timezone (noon) is higher than the final \"Close\" price for the Dec 31 '25 12:00 ET candle.\n\nIf the final \"Close\" price for both of these candles is exactly equal on Binance, this market will resolve 50-50.\n\nThe resolution source for this market is Binance, specifically the BTC/USDT \"Close\" prices currently available at https://www.binance.com/en/trade/BTC_USDT with \"1m\" and \"Candles\" selected on the top bar.\n\nPlease note that this market is about the price according to Binance BTC/USDT, not according to other sources or spot markets.",
+    "polymarket_neg_risk": false
+  },
+  {
     "question": "US strike on Syria by March 31st, 2026?",
     "opinion_market_id": 3355,
     "opinion_yes_token": "97816074762516582419883373987054950900356558355122649364177862713778695373547",
