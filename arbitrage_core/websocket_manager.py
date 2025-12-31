@@ -47,6 +47,8 @@ class PolymarketWebSocket:
         self.reconnect_delay = 1.0  # Start with 1 second
         self.max_reconnect_delay = 60.0  # Max 60 seconds
         self.is_closing = False
+        self._reconnecting = False  # 防止多个重连线程
+        self._reconnect_lock = threading.Lock()
 
     def on_message(self, ws, message):
         """处理接收到的消息"""
@@ -176,6 +178,11 @@ class PolymarketWebSocket:
 
         # Attempt reconnection if not intentionally closing
         if self.auto_reconnect and not self.is_closing:
+            with self._reconnect_lock:
+                if self._reconnecting:
+                    logger.debug("🔄 Polymarket reconnection already in progress, skipping...")
+                    return
+                self._reconnecting = True
             logger.info(f"🔄 Polymarket WebSocket will attempt to reconnect...")
             threading.Thread(target=self._reconnect, daemon=True).start()
 
@@ -213,50 +220,55 @@ class PolymarketWebSocket:
 
     def _reconnect(self):
         """重连逻辑,使用指数退避"""
-        while self.auto_reconnect and not self.is_closing and self.reconnect_attempts < self.max_reconnect_attempts:
-            self.reconnect_attempts += 1
+        try:
+            while self.auto_reconnect and not self.is_closing and self.reconnect_attempts < self.max_reconnect_attempts:
+                self.reconnect_attempts += 1
 
-            logger.info(f"🔄 Polymarket reconnect attempt {self.reconnect_attempts}/{self.max_reconnect_attempts} in {self.reconnect_delay:.1f}s...")
-            time.sleep(self.reconnect_delay)
+                logger.info(f"🔄 Polymarket reconnect attempt {self.reconnect_attempts}/{self.max_reconnect_attempts} in {self.reconnect_delay:.1f}s...")
+                time.sleep(self.reconnect_delay)
 
-            try:
-                # Close old connection if exists
-                if self.ws:
-                    try:
-                        self.ws.close()
-                    except:
-                        pass
+                try:
+                    # Close old connection if exists
+                    if self.ws:
+                        try:
+                            self.ws.close()
+                        except:
+                            pass
 
-                # Create new connection
-                url = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
-                self.ws = WebSocketApp(
-                    url,
-                    on_message=self.on_message,
-                    on_error=self.on_error,
-                    on_close=self.on_close,
-                    on_open=self.on_open,
-                )
+                    # Create new connection
+                    url = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+                    self.ws = WebSocketApp(
+                        url,
+                        on_message=self.on_message,
+                        on_error=self.on_error,
+                        on_close=self.on_close,
+                        on_open=self.on_open,
+                    )
 
-                # Run in background thread
-                threading.Thread(target=self.ws.run_forever, daemon=True).start()
+                    # Run in background thread
+                    threading.Thread(target=self.ws.run_forever, daemon=True).start()
 
-                # Wait for connection
-                if self.connected.wait(timeout=10):
-                    logger.info(f"✅ Polymarket reconnected successfully!")
-                    return
-                else:
-                    logger.warning(f"⚠️ Polymarket reconnection attempt {self.reconnect_attempts} timed out")
+                    # Wait for connection
+                    if self.connected.wait(timeout=10):
+                        logger.info(f"✅ Polymarket reconnected successfully!")
+                        return
+                    else:
+                        logger.warning(f"⚠️ Polymarket reconnection attempt {self.reconnect_attempts} timed out")
 
-            except Exception as e:
-                logger.error(f"❌ Polymarket reconnection error: {e}")
+                except Exception as e:
+                    logger.error(f"❌ Polymarket reconnection error: {e}")
 
-            # Exponential backoff
-            self.reconnect_delay = min(self.reconnect_delay * 2, self.max_reconnect_delay)
+                # Exponential backoff
+                self.reconnect_delay = min(self.reconnect_delay * 2, self.max_reconnect_delay)
 
-        if self.reconnect_attempts >= self.max_reconnect_attempts:
-            logger.error(f"❌ Polymarket WebSocket failed after {self.max_reconnect_attempts} reconnection attempts")
-        elif not self.auto_reconnect:
-            logger.info("🛑 Polymarket auto-reconnect disabled")
+            if self.reconnect_attempts >= self.max_reconnect_attempts:
+                logger.error(f"❌ Polymarket WebSocket failed after {self.max_reconnect_attempts} reconnection attempts")
+            elif not self.auto_reconnect:
+                logger.info("🛑 Polymarket auto-reconnect disabled")
+        finally:
+            # Reset reconnecting flag
+            with self._reconnect_lock:
+                self._reconnecting = False
 
     def connect(self, asset_ids: List[str]) -> bool:
         """
@@ -330,6 +342,8 @@ class OpinionWebSocket:
         self.reconnect_delay = 1.0  # Start with 1 second
         self.max_reconnect_delay = 60.0  # Max 60 seconds
         self.is_closing = False
+        self._reconnecting = False  # 防止多个重连线程
+        self._reconnect_lock = threading.Lock()
 
     def on_message(self, ws, message):
         """处理接收到的消息"""
@@ -457,6 +471,11 @@ class OpinionWebSocket:
 
         # Attempt reconnection if not intentionally closing
         if self.auto_reconnect and not self.is_closing:
+            with self._reconnect_lock:
+                if self._reconnecting:
+                    logger.debug("🔄 Opinion reconnection already in progress, skipping...")
+                    return
+                self._reconnecting = True
             logger.info(f"🔄 Opinion WebSocket will attempt to reconnect...")
             threading.Thread(target=self._reconnect, daemon=True).start()
 
@@ -476,25 +495,42 @@ class OpinionWebSocket:
         threading.Thread(target=self._heartbeat_loop, daemon=True).start()
 
     def _subscribe_to_markets(self, ws):
-        """订阅所有市场 - 批量发送以加快速度"""
+        """订阅所有市场 - 分批发送以避免服务器拒绝"""
         if not self.subscribed_markets:
             return
 
-        logger.info(f"📡 Subscribing to {len(self.subscribed_markets)} Opinion markets...")
+        market_list = list(self.subscribed_markets)
+        total = len(market_list)
+        logger.info(f"📡 Subscribing to {total} Opinion markets...")
 
-        # Send subscriptions in parallel (batch all messages quickly)
-        for market_id in self.subscribed_markets:
-            msg = {
-                "action": "SUBSCRIBE",
-                "channel": "market.depth.diff",
-                "marketId": market_id
-            }
-            try:
-                ws.send(json.dumps(msg))
-            except Exception as e:
-                logger.error(f"Failed to subscribe to market {market_id}: {e}")
+        # 分批发送，每批50个市场，避免服务器过载
+        batch_size = 50
+        batch_delay = 0.1  # 每批之间延迟100ms
 
-        logger.info(f"✅ Sent {len(self.subscribed_markets)} subscription requests")
+        for i in range(0, total, batch_size):
+            batch = market_list[i:i+batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (total + batch_size - 1) // batch_size
+
+            logger.info(f"📤 Sending batch {batch_num}/{total_batches} ({len(batch)} markets)...")
+
+            for market_id in batch:
+                msg = {
+                    "action": "SUBSCRIBE",
+                    "channel": "market.depth.diff",
+                    "marketId": market_id
+                }
+                try:
+                    ws.send(json.dumps(msg))
+                except Exception as e:
+                    logger.error(f"Failed to subscribe to market {market_id}: {e}")
+                    return  # Stop if connection is lost
+
+            # 批次之间短暂延迟
+            if i + batch_size < total:
+                time.sleep(batch_delay)
+
+        logger.info(f"✅ Sent {total} subscription requests in {total_batches} batches")
 
     def _heartbeat_loop(self):
         """定期发送HEARTBEAT保持连接"""
@@ -510,54 +546,59 @@ class OpinionWebSocket:
 
     def _reconnect(self):
         """重连逻辑,使用指数退避"""
-        while self.auto_reconnect and not self.is_closing and self.reconnect_attempts < self.max_reconnect_attempts:
-            self.reconnect_attempts += 1
+        try:
+            while self.auto_reconnect and not self.is_closing and self.reconnect_attempts < self.max_reconnect_attempts:
+                self.reconnect_attempts += 1
 
-            logger.info(f"🔄 Opinion reconnect attempt {self.reconnect_attempts}/{self.max_reconnect_attempts} in {self.reconnect_delay:.1f}s...")
-            time.sleep(self.reconnect_delay)
+                logger.info(f"🔄 Opinion reconnect attempt {self.reconnect_attempts}/{self.max_reconnect_attempts} in {self.reconnect_delay:.1f}s...")
+                time.sleep(self.reconnect_delay)
 
-            try:
-                # Close old connection if exists
-                if self.ws:
-                    try:
-                        self.ws.close()
-                    except:
-                        pass
+                try:
+                    # Close old connection if exists
+                    if self.ws:
+                        try:
+                            self.ws.close()
+                        except:
+                            pass
 
-                # Create new connection
-                if not self.config.opinion_api_key:
-                    logger.error("❌ Opinion API key not configured")
-                    return
+                    # Create new connection
+                    if not self.config.opinion_api_key:
+                        logger.error("❌ Opinion API key not configured")
+                        return
 
-                url = f"wss://ws.opinion.trade?apikey={self.config.opinion_api_key}"
-                self.ws = WebSocketApp(
-                    url,
-                    on_message=self.on_message,
-                    on_error=self.on_error,
-                    on_close=self.on_close,
-                    on_open=self.on_open,
-                )
+                    url = f"wss://ws.opinion.trade?apikey={self.config.opinion_api_key}"
+                    self.ws = WebSocketApp(
+                        url,
+                        on_message=self.on_message,
+                        on_error=self.on_error,
+                        on_close=self.on_close,
+                        on_open=self.on_open,
+                    )
 
-                # Run in background thread
-                threading.Thread(target=self.ws.run_forever, daemon=True).start()
+                    # Run in background thread
+                    threading.Thread(target=self.ws.run_forever, daemon=True).start()
 
-                # Wait for connection
-                if self.connected.wait(timeout=10):
-                    logger.info(f"✅ Opinion reconnected successfully!")
-                    return
-                else:
-                    logger.warning(f"⚠️ Opinion reconnection attempt {self.reconnect_attempts} timed out")
+                    # Wait for connection
+                    if self.connected.wait(timeout=10):
+                        logger.info(f"✅ Opinion reconnected successfully!")
+                        return
+                    else:
+                        logger.warning(f"⚠️ Opinion reconnection attempt {self.reconnect_attempts} timed out")
 
-            except Exception as e:
-                logger.error(f"❌ Opinion reconnection error: {e}")
+                except Exception as e:
+                    logger.error(f"❌ Opinion reconnection error: {e}")
 
-            # Exponential backoff
-            self.reconnect_delay = min(self.reconnect_delay * 2, self.max_reconnect_delay)
+                # Exponential backoff
+                self.reconnect_delay = min(self.reconnect_delay * 2, self.max_reconnect_delay)
 
-        if self.reconnect_attempts >= self.max_reconnect_attempts:
-            logger.error(f"❌ Opinion WebSocket failed after {self.max_reconnect_attempts} reconnection attempts")
-        elif not self.auto_reconnect:
-            logger.info("🛑 Opinion auto-reconnect disabled")
+            if self.reconnect_attempts >= self.max_reconnect_attempts:
+                logger.error(f"❌ Opinion WebSocket failed after {self.max_reconnect_attempts} reconnection attempts")
+            elif not self.auto_reconnect:
+                logger.info("🛑 Opinion auto-reconnect disabled")
+        finally:
+            # Reset reconnecting flag
+            with self._reconnect_lock:
+                self._reconnecting = False
 
     def connect(self, market_ids: List[int]) -> bool:
         """
