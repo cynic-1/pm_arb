@@ -152,7 +152,7 @@ class RealtimeArbitrage:
             update: 订单簿更新事件
         """
         callback_start = time.time()
-        logger.debug(f"[回调] 收到订单簿更新: source={update.source}, token={update.token_id[:20]}...")
+        logger.info(f"[回调] 收到订单簿更新: source={update.source}, token={update.token_id[:20]}..., snapshot={update.snapshot}")
 
         # Update statistics
         with self.stats_lock:
