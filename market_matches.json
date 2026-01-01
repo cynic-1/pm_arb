@@ -13,19 +13,6 @@
     "polymarket_neg_risk": false
   },
   {
-    "question": "Will CZ return to Binance By March 31?",
-    "opinion_market_id": 3369,
-    "opinion_yes_token": "93908468685815930855385008790416086718145354504719747485658730921525718511731",
-    "opinion_no_token": "47839672948575895335108862259425371781612182333121867900361249801434678762899",
-    "polymarket_condition_id": "0x2e20604bdeb3d5915d8b4d64153501514c15a5f032f9ca6b3fcfa35de1c6bf13",
-    "polymarket_yes_token": "92122624471291268676053025452909182622905926273156611970677367498131446139536",
-    "polymarket_no_token": "47819752079757179430672463277630243807719570171749566272540368659922661844735",
-    "polymarket_slug": "will-cz-return-to-binance-by-december-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1775001600,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "Megaquake by March 31st, 2026?",
     "opinion_market_id": 3356,
     "opinion_yes_token": "100491264135454826874240747640718935982603193727282983855516298160858940039692",
