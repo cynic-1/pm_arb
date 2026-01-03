@@ -124,6 +124,10 @@ class PolymarketWebSocket:
                     f"best_bid={best_bid}, best_ask={best_ask}"
                 )
                 logger.error(f"   完整订单簿: bids={bids}, asks={asks}")
+                logger.warning(
+                    f"⚠️ [Polymarket] Polymarket发送完整快照，交叉订单簿可能是服务器端问题，"
+                    f"无法通过REST API修复（Polymarket不提供REST订单簿API）"
+                )
 
         # Cache the snapshot
         cache_start = time.time()
@@ -459,6 +463,15 @@ class OpinionWebSocket:
                         f"刚更新的: side={side}, price={price}, size={size}"
                     )
                     logger.error(f"   完整订单簿: bids={snapshot.bids}, asks={snapshot.asks}")
+
+                    # 尝试通过REST API重新获取完整订单簿修复错误
+                    logger.warning(f"🔄 [Opinion] 尝试通过REST API重新获取订单簿修复错误...")
+                    if self._initialize_orderbook_from_rest(token_id):
+                        logger.info(f"✅ [Opinion] 订单簿已通过REST API刷新并修复")
+                        # 重新读取刷新后的订单簿用于后续处理
+                        snapshot = self.orderbook_cache.get(token_id)
+                    else:
+                        logger.error(f"❌ [Opinion] REST API刷新失败，保留原订单簿")
 
             # Cache updated snapshot
             self.orderbook_cache[token_id] = snapshot
