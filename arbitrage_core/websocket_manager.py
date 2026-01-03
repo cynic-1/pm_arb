@@ -114,6 +114,17 @@ class PolymarketWebSocket:
             timestamp=recv_time
         )
 
+        # Validate orderbook: best ask should be > best bid
+        if bids and asks:
+            best_bid = bids[0].price
+            best_ask = asks[0].price
+            if best_ask <= best_bid:
+                logger.error(
+                    f"❌ [Polymarket] 交叉订单簿检测! asset_id={asset_id[:20]}..., "
+                    f"best_bid={best_bid}, best_ask={best_ask}"
+                )
+                logger.error(f"   完整订单簿: bids={bids}, asks={asks}")
+
         # Cache the snapshot
         cache_start = time.time()
         with self.lock:
@@ -379,10 +390,11 @@ class OpinionWebSocket:
         market_id = data.get("marketId")
         token_id = data.get("tokenId")
         side = data.get("side")  # 'bids' or 'asks'
+        outcome_side = data.get("outcomeSide")  # 1=YES, 2=NO
         price = float(data.get("price", 0))
         size = float(data.get("size", 0))
 
-        logger.debug(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., side={side}, price={price}, size={size}")
+        logger.debug(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., outcomeSide={outcome_side}, side={side}, price={price}, size={size}")
 
         if not (market_id and token_id and side and price > 0):
             return
@@ -434,6 +446,18 @@ class OpinionWebSocket:
 
             update_time = (time.time() - update_start) * 1000
             logger.debug(f"[Opinion] 订单簿更新耗时: {update_time:.2f}ms")
+
+            # Validate orderbook: best ask should be > best bid
+            if snapshot.bids and snapshot.asks:
+                best_bid = snapshot.bids[0].price
+                best_ask = snapshot.asks[0].price
+                if best_ask <= best_bid:
+                    logger.error(
+                        f"❌ [Opinion] 交叉订单簿检测! market={market_id}, token={token_id[:20]}..., "
+                        f"outcomeSide={outcome_side}, best_bid={best_bid}, best_ask={best_ask}, "
+                        f"刚更新的: side={side}, price={price}, size={size}"
+                    )
+                    logger.error(f"   完整订单簿: bids={snapshot.bids}, asks={snapshot.asks}")
 
             # Cache updated snapshot
             self.orderbook_cache[token_id] = snapshot
