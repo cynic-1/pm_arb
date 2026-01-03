@@ -335,8 +335,9 @@ class PolymarketWebSocket:
 class OpinionWebSocket:
     """Opinion WebSocket连接管理器"""
 
-    def __init__(self, config: ArbitrageConfig):
+    def __init__(self, config: ArbitrageConfig, opinion_client=None):
         self.config = config
+        self.opinion_client = opinion_client  # REST API客户端，用于获取初始订单簿
         self.ws: Optional[WebSocketApp] = None
         self.connected = threading.Event()
         self.message_count = 0
@@ -624,17 +625,92 @@ class OpinionWebSocket:
             with self._reconnect_lock:
                 self._reconnecting = False
 
-    def connect(self, market_ids: List[int]) -> bool:
+    def _initialize_orderbook_from_rest(self, token_id: str) -> bool:
+        """通过REST API获取单个token的初始订单簿"""
+        if not self.opinion_client:
+            return False
+
+        try:
+            response = self.opinion_client.get_orderbook(token_id)
+
+            if response.errno != 0:
+                logger.warning(f"⚠️ Opinion REST API返回错误码 {response.errno} for token {token_id[:20]}...")
+                return False
+
+            book = response.result
+
+            # Parse bids and asks
+            bids_raw = getattr(book, 'bids', [])
+            asks_raw = getattr(book, 'asks', [])
+
+            # Convert to OrderBookLevel format
+            bids = []
+            for bid in bids_raw[:5]:  # Top 5 levels
+                try:
+                    price = float(getattr(bid, 'price', 0))
+                    size = float(getattr(bid, 'size', 0) or getattr(bid, 'quantity', 0) or getattr(bid, 'makerAmountInBaseToken', 0))
+                    if price > 0 and size > 0:
+                        bids.append(OrderBookLevel(price=price, size=size))
+                except (ValueError, TypeError):
+                    continue
+
+            # Sort bids descending
+            bids.sort(key=lambda x: x.price, reverse=True)
+
+            # Similar for asks
+            asks = []
+            for ask in asks_raw[:5]:  # Top 5 levels
+                try:
+                    price = float(getattr(ask, 'price', 0))
+                    size = float(getattr(ask, 'size', 0) or getattr(ask, 'quantity', 0) or getattr(ask, 'makerAmountInBaseToken', 0))
+                    if price > 0 and size > 0:
+                        asks.append(OrderBookLevel(price=price, size=size))
+                except (ValueError, TypeError):
+                    continue
+
+            # Sort asks ascending
+            asks.sort(key=lambda x: x.price)
+
+            # Create and cache snapshot
+            snapshot = OrderBookSnapshot(
+                bids=bids,
+                asks=asks,
+                source="opinion",
+                token_id=token_id,
+                timestamp=time.time()
+            )
+
+            with self.lock:
+                self.orderbook_cache[token_id] = snapshot
+
+            logger.debug(f"✅ [Opinion REST] 初始化订单簿: token={token_id[:20]}..., bids={len(bids)}, asks={len(asks)}")
+            return True
+
+        except Exception as e:
+            logger.error(f"❌ [Opinion REST] 获取初始订单簿失败 (token={token_id[:20]}...): {e}")
+            return False
+
+    def connect(self, market_ids: List[int], token_ids: Optional[List[str]] = None) -> bool:
         """
         建立WebSocket连接并订阅市场
 
         Args:
             market_ids: 要订阅的market ID列表
+            token_ids: 可选的token ID列表，用于预先通过REST API获取初始订单簿
 
         Returns:
             连接是否成功
         """
         self.subscribed_markets = set(market_ids)
+
+        # 如果提供了token_ids，先通过REST API获取初始订单簿
+        if token_ids and self.opinion_client:
+            logger.info(f"📥 [Opinion REST] 通过REST API获取 {len(token_ids)} 个token的初始订单簿...")
+            success_count = 0
+            for token_id in token_ids:
+                if self._initialize_orderbook_from_rest(token_id):
+                    success_count += 1
+            logger.info(f"✅ [Opinion REST] 初始订单簿获取完成: {success_count}/{len(token_ids)} 成功，缓存了 {len(self.orderbook_cache)} 个订单簿")
 
         if not self.config.opinion_api_key:
             logger.error("❌ Opinion API key not configured")
@@ -682,19 +758,21 @@ class OpinionWebSocket:
 class WebSocketManager:
     """统一的WebSocket管理器,同时管理Polymarket和Opinion连接"""
 
-    def __init__(self, config: ArbitrageConfig):
+    def __init__(self, config: ArbitrageConfig, opinion_client=None):
         self.config = config
         self.polymarket_ws = PolymarketWebSocket(config)
-        self.opinion_ws = OpinionWebSocket(config)
+        self.opinion_ws = OpinionWebSocket(config, opinion_client=opinion_client)
         self.update_callbacks: List[Callable[[OrderBookUpdate], None]] = []
 
-    def connect_all(self, polymarket_assets: List[str], opinion_markets: List[int]) -> bool:
+    def connect_all(self, polymarket_assets: List[str], opinion_markets: List[int],
+                    opinion_tokens: Optional[List[str]] = None) -> bool:
         """
         连接到两个平台的WebSocket
 
         Args:
             polymarket_assets: Polymarket asset IDs
             opinion_markets: Opinion market IDs
+            opinion_tokens: 可选的Opinion token IDs，用于预先通过REST API获取初始订单簿
 
         Returns:
             是否都连接成功
@@ -704,8 +782,8 @@ class WebSocketManager:
         # Connect Polymarket
         poly_success = self.polymarket_ws.connect(polymarket_assets)
 
-        # Connect Opinion
-        opinion_success = self.opinion_ws.connect(opinion_markets)
+        # Connect Opinion (with initial orderbook fetch if token_ids provided)
+        opinion_success = self.opinion_ws.connect(opinion_markets, token_ids=opinion_tokens)
 
         if poly_success and opinion_success:
             logger.info("✅ All WebSocket connections established!")

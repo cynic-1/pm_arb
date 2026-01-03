@@ -66,7 +66,10 @@ class RealtimeArbitrage:
         print("🔧 初始化核心组件...")
         self.clients = PlatformClients(self.config)
         self.fee_calculator = FeeCalculator(self.config)
-        self.ws_manager = WebSocketManager(self.config)
+
+        # 传递Opinion客户端给WebSocketManager，用于获取初始订单簿
+        opinion_client = self.clients.get_opinion_client()
+        self.ws_manager = WebSocketManager(self.config, opinion_client=opinion_client)
 
         # 市场匹配
         self.market_matches: List[MarketMatch] = []
@@ -890,21 +893,28 @@ class RealtimeArbitrage:
         # 优化: Polymarket只订阅YES tokens，NO tokens通过推导获得
         poly_assets = []
         opinion_markets = []
+        opinion_tokens = []  # Opinion token IDs for initial REST API fetch
 
         for match in self.market_matches:
             poly_assets.append(match.polymarket_yes_token)
             # 不订阅NO token，将通过YES token推导
             opinion_markets.append(match.opinion_market_id)
+            # 收集Opinion YES token用于初始订单簿获取
+            opinion_tokens.append(match.opinion_yes_token)
+
+        # 去重
+        opinion_tokens = list(set(opinion_tokens))
 
         logger.info(
-            f"📡 准备连接: {len(poly_assets)} Polymarket YES tokens (NO tokens将自动推导), {len(opinion_markets)} Opinion markets"
+            f"📡 准备连接: {len(poly_assets)} Polymarket YES tokens (NO tokens将自动推导), "
+            f"{len(opinion_markets)} Opinion markets, {len(opinion_tokens)} Opinion tokens (初始订单簿)"
         )
 
         # Register callback
         self.ws_manager.add_update_callback(self.on_orderbook_update)
 
-        # Connect
-        success = self.ws_manager.connect_all(poly_assets, opinion_markets)
+        # Connect with Opinion token IDs for initial orderbook fetch
+        success = self.ws_manager.connect_all(poly_assets, opinion_markets, opinion_tokens=opinion_tokens)
 
         if success:
             logger.info("✅ WebSocket连接成功，开始实时监控!")
