@@ -958,9 +958,25 @@ class RealtimeArbitrage:
                 logger.info(
                     f"  Polymarket: {stats['polymarket']['messages']} msgs, {stats['polymarket']['cached_books']} books, {'✅' if stats['polymarket']['connected'] else '❌'} connected"
                 )
+
+                # Opinion状态，包含时效性信息
+                opinion_stats = stats['opinion']
+                ws_healthy_icon = '✅' if opinion_stats.get('ws_healthy', True) else '❌'
+                ws_age = opinion_stats.get('ws_age', 0)
                 logger.info(
-                    f"  Opinion: {stats['opinion']['messages']} msgs, {stats['opinion']['cached_books']} books, {'✅' if stats['opinion']['connected'] else '❌'} connected"
+                    f"  Opinion: {opinion_stats['messages']} msgs, {opinion_stats['cached_books']} books, "
+                    f"{'✅' if opinion_stats['connected'] else '❌'} connected, "
+                    f"{ws_healthy_icon} WS活跃 (距上次消息 {ws_age:.1f}s)"
                 )
+
+                # 订单簿时效性
+                fresh = opinion_stats.get('fresh_books', 0)
+                stale = opinion_stats.get('stale_books', 0)
+                if stale > 0:
+                    logger.warning(f"  ⚠️ Opinion订单簿: {fresh} 新鲜, {stale} 过期")
+                else:
+                    logger.info(f"  Opinion订单簿: {fresh} 新鲜, {stale} 过期")
+
                 logger.info(f"  订单簿更新: {app_stats['orderbook_updates']}")
                 logger.info(f"  发现机会: {app_stats['opportunities_found']}")
                 logger.info(f"  已执行: {app_stats['opportunities_executed']}")

@@ -351,6 +351,12 @@ class OpinionWebSocket:
         self.callbacks: List[Callable[[OrderBookUpdate], None]] = []
         self.subscribed_markets: Set[int] = set()
 
+        # Orderbook freshness tracking
+        self.orderbook_last_update: Dict[str, float] = {}  # token_id -> last update timestamp
+        self.orderbook_stale_threshold = 10.0  # 订单簿30秒未更新视为过期
+        self.last_message_time = time.time()  # WebSocket最后接收消息时间
+        self.ws_stale_threshold = 20.0  # WebSocket 60秒无消息视为可能断连
+
         # Auto-reconnection settings
         self.auto_reconnect = True
         self.reconnect_attempts = 0
@@ -365,6 +371,7 @@ class OpinionWebSocket:
         """处理接收到的消息"""
         recv_time = time.time()
         self.message_count += 1
+        self.last_message_time = recv_time  # 更新最后消息时间
 
         logger.debug(f"[Opinion WS] 收到消息 #{self.message_count}, 长度={len(message)}")
 
@@ -473,8 +480,9 @@ class OpinionWebSocket:
                     else:
                         logger.error(f"❌ [Opinion] REST API刷新失败，保留原订单簿")
 
-            # Cache updated snapshot
+            # Cache updated snapshot and record update time
             self.orderbook_cache[token_id] = snapshot
+            self.orderbook_last_update[token_id] = recv_time  # 记录订单簿更新时间
             self.token_to_market[token_id] = market_id
 
         # Notify callbacks
@@ -571,12 +579,29 @@ class OpinionWebSocket:
         logger.info(f"✅ Sent {total} subscription requests in {total_batches} batches")
 
     def _heartbeat_loop(self):
-        """定期发送HEARTBEAT保持连接"""
+        """定期发送HEARTBEAT保持连接，并检查WebSocket健康状态"""
         while self.ws and self.ws.sock and self.ws.sock.connected:
             try:
+                # 发送心跳
                 msg = {"action": "HEARTBEAT"}
                 self.ws.send(json.dumps(msg))
                 logger.debug("💓 Sent Opinion HEARTBEAT")
+
+                # 检查WebSocket是否长时间无消息
+                time_since_last_msg = time.time() - self.last_message_time
+                if time_since_last_msg > self.ws_stale_threshold:
+                    logger.error(
+                        f"❌ [Opinion] WebSocket可能已断连! "
+                        f"已 {time_since_last_msg:.1f}秒 无消息（阈值={self.ws_stale_threshold}s）"
+                    )
+                    logger.warning("🔄 [Opinion] 触发主动重连...")
+                    # 主动关闭连接触发重连
+                    try:
+                        self.ws.close()
+                    except:
+                        pass
+                    break
+
                 time.sleep(30)
             except Exception as e:
                 logger.debug(f"Heartbeat error: {e}")
@@ -695,6 +720,7 @@ class OpinionWebSocket:
 
             with self.lock:
                 self.orderbook_cache[token_id] = snapshot
+                self.orderbook_last_update[token_id] = time.time()  # 记录初始化时间
 
             logger.debug(f"✅ [Opinion REST] 初始化订单簿: token={token_id[:20]}..., bids={len(bids)}, asks={len(asks)}")
             return True
@@ -752,13 +778,74 @@ class OpinionWebSocket:
             return False
 
     def get_orderbook(self, token_id: str) -> Optional[OrderBookSnapshot]:
-        """获取缓存的订单簿"""
+        """
+        获取缓存的订单簿，如果订单簿过期则自动刷新
+
+        Args:
+            token_id: Token ID
+
+        Returns:
+            订单簿快照，如果不存在或刷新失败则返回None
+        """
         with self.lock:
-            return self.orderbook_cache.get(token_id)
+            snapshot = self.orderbook_cache.get(token_id)
+            last_update = self.orderbook_last_update.get(token_id, 0)
+
+        # 检查订单簿是否过期
+        if snapshot and last_update > 0:
+            age = time.time() - last_update
+            if age > self.orderbook_stale_threshold:
+                logger.warning(
+                    f"⚠️ [Opinion] 订单簿过期! token={token_id[:20]}..., "
+                    f"已 {age:.1f}秒 未更新（阈值={self.orderbook_stale_threshold}s）"
+                )
+                # 尝试通过REST API刷新
+                if self._initialize_orderbook_from_rest(token_id):
+                    logger.info(f"✅ [Opinion] 过期订单簿已通过REST API刷新")
+                    with self.lock:
+                        snapshot = self.orderbook_cache.get(token_id)
+                else:
+                    logger.error(f"❌ [Opinion] 过期订单簿刷新失败，返回旧数据")
+
+        return snapshot
 
     def add_callback(self, callback: Callable[[OrderBookUpdate], None]):
         """添加订单簿更新回调"""
         self.callbacks.append(callback)
+
+    def get_staleness_report(self) -> Dict[str, any]:
+        """
+        获取订单簿时效性报告
+
+        Returns:
+            包含过期订单簿统计的字典
+        """
+        current_time = time.time()
+        stale_books = []
+        fresh_books = 0
+
+        with self.lock:
+            for token_id, last_update in self.orderbook_last_update.items():
+                age = current_time - last_update
+                if age > self.orderbook_stale_threshold:
+                    stale_books.append({
+                        'token': token_id[:20] + '...',
+                        'age': age,
+                        'market_id': self.token_to_market.get(token_id)
+                    })
+                else:
+                    fresh_books += 1
+
+        ws_age = current_time - self.last_message_time
+
+        return {
+            'total_books': len(self.orderbook_cache),
+            'fresh_books': fresh_books,
+            'stale_books': len(stale_books),
+            'stale_details': stale_books,
+            'ws_last_message_age': ws_age,
+            'ws_healthy': ws_age < self.ws_stale_threshold
+        }
 
     def close(self):
         """关闭WebSocket连接"""
@@ -831,7 +918,9 @@ class WebSocketManager:
         self.opinion_ws.add_callback(callback)
 
     def get_stats(self) -> dict:
-        """获取统计信息"""
+        """获取统计信息，包括订单簿时效性"""
+        opinion_staleness = self.opinion_ws.get_staleness_report()
+
         return {
             "polymarket": {
                 "messages": self.polymarket_ws.message_count,
@@ -841,7 +930,11 @@ class WebSocketManager:
             "opinion": {
                 "messages": self.opinion_ws.message_count,
                 "cached_books": len(self.opinion_ws.orderbook_cache),
-                "connected": self.opinion_ws.connected.is_set()
+                "connected": self.opinion_ws.connected.is_set(),
+                "fresh_books": opinion_staleness['fresh_books'],
+                "stale_books": opinion_staleness['stale_books'],
+                "ws_age": opinion_staleness['ws_last_message_age'],
+                "ws_healthy": opinion_staleness['ws_healthy']
             }
         }
 
