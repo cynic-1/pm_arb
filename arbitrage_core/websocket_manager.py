@@ -530,6 +530,9 @@ class OpinionWebSocket:
         logger.info("✅ Opinion WebSocket connected!")
         self.connected.set()
 
+        # Reset last message time to prevent immediate disconnect detection
+        self.last_message_time = time.time()
+
         # Reset reconnect counter on successful connection
         self.reconnect_attempts = 0
         self.reconnect_delay = 1.0
