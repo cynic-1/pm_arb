@@ -595,11 +595,27 @@ class OpinionWebSocket:
                         f"已 {time_since_last_msg:.1f}秒 无消息（阈值={self.ws_stale_threshold}s）"
                     )
                     logger.warning("🔄 [Opinion] 触发主动重连...")
-                    # 主动关闭连接触发重连
+
+                    # 检查是否已经有重连在进行
+                    with self._reconnect_lock:
+                        if self._reconnecting:
+                            logger.debug("🔄 Opinion reconnection already in progress, skipping...")
+                            break
+                        self._reconnecting = True
+
+                    # 清除连接状态
+                    self.connected.clear()
+
+                    # 主动关闭旧连接
                     try:
-                        self.ws.close()
+                        if self.ws:
+                            self.ws.close()
                     except:
                         pass
+
+                    # 直接启动重连线程
+                    logger.info("🔄 Opinion 启动重连线程...")
+                    threading.Thread(target=self._reconnect, daemon=True).start()
                     break
 
                 time.sleep(30)
