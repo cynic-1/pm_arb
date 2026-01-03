@@ -1,18 +1,5 @@
 [
   {
-    "question": "Bitcoin Up or Down on January 1?(12:00 ET)",
-    "opinion_market_id": 3512,
-    "opinion_yes_token": "58306188547748879606434194984871218464331664922667758566448002009217643248532",
-    "opinion_no_token": "30451336232005818386798376039290953589679797744706525717547563811732108245888",
-    "polymarket_condition_id": "0x75e5517cb9f10afc8592fd283fd7cdc7da544e9bb9212586928b4015f7125271",
-    "polymarket_yes_token": "55331466074183692834677717676010788828979064119532113495995295646897520777826",
-    "polymarket_no_token": "25850824252464438281862640665986230433485390785186664917827449394013177041457",
-    "polymarket_slug": "bitcoin-up-or-down-on-january-1",
-    "similarity_score": 1.0,
-    "cutoff_at": 1767225600,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "Megaquake by March 31st, 2026?",
     "opinion_market_id": 3356,
     "opinion_yes_token": "100491264135454826874240747640718935982603193727282983855516298160858940039692",
@@ -25,6 +12,32 @@
     "cutoff_at": 1775001600,
     "polymarket_neg_risk": false
   },
+  {
+    "question": "Ethereum Up or Down on January 3?",
+    "opinion_market_id": 3575,
+    "opinion_yes_token": "78037292310221433267093633760952516975329740431948272234715762932732274652957",
+    "opinion_no_token": "56785309127296038269832259877862485741765446631513824068118909963227312580857",
+    "polymarket_condition_id": "0x9fc72ae2b384dab8e79b2c993371ec9a942db2c8942f125c8909849811fd6eeb",
+    "polymarket_yes_token": "103310738783773892720887628289286789478886935471866620369732692333197266430362",
+    "polymarket_no_token": "96318408605672263754777499586368823666005706470298025471264881233618894613595",
+    "polymarket_slug": "ethereum-up-or-down-on-january-3",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767484800,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Bitcoin Up or Down on January 3?",
+    "opinion_market_id": 3571,
+    "opinion_yes_token": "79746206937680793708751718201038452338964545147223712491948264011489386403885",
+    "opinion_no_token": "45077949809569133606850449094300701152439220636879764684485098331957249500714",
+    "polymarket_condition_id": "0xb8d8056c947f1117e9175e55a444b366ac15a8f13ac2a110e7fa79280ac96c04",
+    "polymarket_yes_token": "38857414599115017636237041697337948955971957704390966988316965110196966838081",
+    "polymarket_no_token": "103430480190224659758419214356483374608705479815742269121885005084235630403342",
+    "polymarket_slug": "bitcoin-up-or-down-on-january-3",
+    "similarity_score": 1.0,
+    "cutoff_at": 1767484800,
+    "polymarket_neg_risk": false
+  },  
   {
     "question": "US strike on Syria by March 31?",
     "opinion_market_id": 3355,
@@ -75,19 +88,6 @@
     "polymarket_slug": "will-bitcoin-replace-sha-256-before-2027",
     "similarity_score": 1.0,
     "cutoff_at": 1798761600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will Japan conduct a yen-buying FX intervention by Jan 31?",
-    "opinion_market_id": 3132,
-    "opinion_yes_token": "83055766231462249420145556985977260397219069037169124901375627379234930463333",
-    "opinion_no_token": "46721205603746610339105866478662778913260120090980412475325944118799216807627",
-    "polymarket_condition_id": "0x9908c8b23e64f512ca24a323d8d720101e0d76e87147d085b09f5c01b6dc91b6",
-    "polymarket_yes_token": "76005080882855555246854325942635126168841076374499816777534443517019754089753",
-    "polymarket_no_token": "21543759742200604836405651343532977095329590576542320054370792116764410298856",
-    "polymarket_slug": "will-kim-jong-un-meet-with-sanae-takaichi-by-december-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -528,19 +528,6 @@
     "polymarket_yes_token": "108368686934589285414559149137133512701664906400051112456443550229390049578166",
     "polymarket_no_token": "27159427766269566121290175140233577124278684386385445262099428434259028831833",
     "polymarket_slug": "will-google-have-the-best-ai-model-at-the-end-of-january-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": true
-  },
-  {
-    "question": "Which company has the best AI model end of January? - xAI",
-    "opinion_market_id": 3443,
-    "opinion_yes_token": "23631590454917247426621038322821492844109877048774252692223275000931553445583",
-    "opinion_no_token": "76961540430642140093780329133127101177119282792737262018363727413144034827415",
-    "polymarket_condition_id": "0x2a6b222354f86941b5fb5571a9256b8db85d6ab468ba7f865e43cefbfb83b812",
-    "polymarket_yes_token": "28693306912535102386770309979225843181502641395794338579896708255087540940559",
-    "polymarket_no_token": "26698104708719832345233575030302681009052355762748512017337182263514492754135",
-    "polymarket_slug": "will-xai-have-the-best-ai-model-at-the-end-of-january-2026",
     "similarity_score": 1.0,
     "cutoff_at": 1769817600,
     "polymarket_neg_risk": true

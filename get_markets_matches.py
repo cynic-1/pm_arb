@@ -386,6 +386,8 @@ class CrossPlatformArbitrage:
             print(f"\n📊 处理 {len(binary_markets)} 个 BINARY 市场...")
             for i, op_market in enumerate(binary_markets, 1):
                 op_title = op_market["title"]
+                if "?" in op_title and not op_title.endswith("?"):
+                    op_title = op_title.split("?", 1)[0] + "?"
                 print(f"[{i}/{len(binary_markets)}] 搜索: {op_title[:60]}...")
 
                 # 只在第一次调用时启用调试
