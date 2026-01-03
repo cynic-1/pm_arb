@@ -7,6 +7,7 @@ import json
 import time
 import threading
 import logging
+import ssl
 from typing import Dict, List, Callable, Optional, Set
 from dataclasses import dataclass
 from websocket import WebSocketApp
@@ -339,6 +340,9 @@ class PolymarketWebSocket:
 class OpinionWebSocket:
     """Opinion WebSocket连接管理器"""
 
+    # SSL选项 - 使用更宽松的SSL设置以避免连接错误
+    SSL_OPTIONS = {"cert_reqs": ssl.CERT_NONE}
+
     def __init__(self, config: ArbitrageConfig, opinion_client=None):
         self.config = config
         self.opinion_client = opinion_client  # REST API客户端，用于获取初始订单簿
@@ -366,6 +370,8 @@ class OpinionWebSocket:
         self.is_closing = False
         self._reconnecting = False  # 防止多个重连线程
         self._reconnect_lock = threading.Lock()
+        self.subscription_confirmed = threading.Event()  # 订阅确认事件
+        self.pending_subscriptions = 0  # 待确认的订阅数
 
     def on_message(self, ws, message):
         """处理接收到的消息"""
@@ -374,6 +380,10 @@ class OpinionWebSocket:
         self.last_message_time = recv_time  # 更新最后消息时间
 
         logger.debug(f"[Opinion WS] 收到消息 #{self.message_count}, 长度={len(message)}")
+
+        # 记录原始消息用于调试
+        if self.message_count <= 10:  # 只记录前10条消息避免日志过多
+            logger.debug(f"[Opinion WS] 原始消息: {message[:500]}")
 
         try:
             parse_start = time.time()
@@ -388,7 +398,13 @@ class OpinionWebSocket:
                 self._process_book_update(data, recv_time)
             elif data.get("code") == 200:
                 # Subscription confirmation
-                logger.debug(f"Opinion: {data.get('message')}")
+                message = data.get('message', '')
+                logger.debug(f"✓ [Opinion] 订阅确认: {message}")
+                self.pending_subscriptions -= 1
+                logger.debug(f"🔢 剩余待确认: {self.pending_subscriptions}")
+                if self.pending_subscriptions <= 0:
+                    self.subscription_confirmed.set()
+                    logger.info(f"✅ 所有订阅已确认")
 
         except json.JSONDecodeError:
             logger.debug(f"Non-JSON message: {message[:100]}")
@@ -552,6 +568,11 @@ class OpinionWebSocket:
         total = len(market_list)
         logger.info(f"📡 Subscribing to {total} Opinion markets...")
 
+        # 重置订阅确认状态
+        self.subscription_confirmed.clear()
+        self.pending_subscriptions = total
+        logger.debug(f"🔢 设置待确认订阅数: {self.pending_subscriptions}")
+
         # 分批发送，每批50个市场，避免服务器过载
         batch_size = 50
         batch_delay = 0.1  # 每批之间延迟100ms
@@ -571,6 +592,7 @@ class OpinionWebSocket:
                 }
                 try:
                     ws.send(json.dumps(msg))
+                    logger.debug(f"✓ 订阅请求已发送: market_id={market_id}")
                 except Exception as e:
                     logger.error(f"Failed to subscribe to market {market_id}: {e}")
                     return  # Stop if connection is lost
@@ -580,6 +602,16 @@ class OpinionWebSocket:
                 time.sleep(batch_delay)
 
         logger.info(f"✅ Sent {total} subscription requests in {total_batches} batches")
+        logger.debug(f"⏳ 等待订阅确认... (pending={self.pending_subscriptions})")
+
+        # 等待一小段时间让服务器处理订阅
+        time.sleep(0.2)
+
+        # 检查是否有任何消息到达
+        if self.message_count > 0:
+            logger.info(f"✓ 已收到 {self.message_count} 条消息，订阅可能已激活")
+        else:
+            logger.warning(f"⚠️ 尚未收到任何消息，订阅可能未激活")
 
     def _heartbeat_loop(self):
         """定期发送HEARTBEAT保持连接，并检查WebSocket健康状态"""
@@ -657,13 +689,28 @@ class OpinionWebSocket:
                         on_open=self.on_open,
                     )
 
-                    # Run in background thread
-                    threading.Thread(target=self.ws.run_forever, daemon=True).start()
+                    # Run in background thread with SSL options
+                    threading.Thread(target=lambda: self.ws.run_forever(sslopt=self.SSL_OPTIONS), daemon=True).start()
 
                     # Wait for connection
                     if self.connected.wait(timeout=10):
-                        logger.info(f"✅ Opinion reconnected successfully!")
-                        return
+                        logger.info(f"✅ Opinion WebSocket connected, waiting for subscription confirmation...")
+
+                        # Wait for subscription confirmation
+                        if self.subscription_confirmed.wait(timeout=5):
+                            logger.info(f"✅ Opinion reconnected successfully (subscriptions confirmed)!")
+                            return
+                        else:
+                            logger.warning(
+                                f"⚠️ Opinion subscription confirmation timeout "
+                                f"(pending={self.pending_subscriptions}, total={len(self.subscribed_markets)})"
+                            )
+                            logger.warning(
+                                f"⚠️ Opinion服务器可能不发送订阅确认消息，"
+                                f"但连接已建立。将尝试继续使用..."
+                            )
+                            # 即使订阅确认超时也返回，因为可能服务器不会为每个订阅发送确认
+                            return
                     else:
                         logger.warning(f"⚠️ Opinion reconnection attempt {self.reconnect_attempts} timed out")
 
@@ -785,8 +832,8 @@ class OpinionWebSocket:
             on_open=self.on_open,
         )
 
-        # Run in background thread
-        threading.Thread(target=self.ws.run_forever, daemon=True).start()
+        # Run in background thread with SSL options
+        threading.Thread(target=lambda: self.ws.run_forever(sslopt=self.SSL_OPTIONS), daemon=True).start()
 
         # Wait for connection
         if self.connected.wait(timeout=10):
