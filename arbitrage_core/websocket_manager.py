@@ -365,7 +365,7 @@ class OpinionWebSocket:
                 self._process_book_update(data, recv_time)
             elif data.get("code") == 200:
                 # Subscription confirmation
-                logger.debug(f"Opinion: {data.get('message')}")
+                logger.info(f"Opinion: {data.get('message')}")
 
         except json.JSONDecodeError:
             logger.debug(f"Non-JSON message: {message[:100]}")
@@ -382,7 +382,7 @@ class OpinionWebSocket:
         price = float(data.get("price", 0))
         size = float(data.get("size", 0))
 
-        logger.debug(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., side={side}, price={price}, size={size}")
+        logger.info(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., side={side}, price={price}, size={size}")
 
         if not (market_id and token_id and side and price > 0):
             return
