@@ -896,6 +896,12 @@ class RealtimeArbitrage:
             # 不订阅NO token，将通过YES token推导
             opinion_markets.append(match.opinion_market_id)
 
+            # 设置Opinion市场ID到YES token的映射（用于REST API轮询）
+            self.ws_manager.opinion_ws.set_market_token_mapping(
+                match.opinion_market_id,
+                match.opinion_yes_token
+            )
+
         logger.info(
             f"📡 准备连接: {len(poly_assets)} Polymarket YES tokens (NO tokens将自动推导), {len(opinion_markets)} Opinion markets"
         )

@@ -332,6 +332,7 @@ class OpinionWebSocket:
         self.message_count = 0
         self.orderbook_cache: Dict[str, OrderBookSnapshot] = {}
         self.token_to_market: Dict[str, int] = {}  # token_id -> market_id mapping
+        self.market_to_yes_token: Dict[int, str] = {}  # market_id -> opinion_yes_token mapping
         self.lock = threading.Lock()
         self.callbacks: List[Callable[[OrderBookUpdate], None]] = []
         self.subscribed_markets: Set[int] = set()
@@ -339,7 +340,7 @@ class OpinionWebSocket:
         # REST API轮询设置
         self._rest_poll_thread = None
         self._rest_poll_stop = threading.Event()
-        self._last_rest_fetch: Dict[int, float] = {}  # market_id -> timestamp
+        self._last_rest_fetch: Dict[str, float] = {}  # token_id -> timestamp
 
         # Auto-reconnection settings
         self.auto_reconnect = True
@@ -371,7 +372,7 @@ class OpinionWebSocket:
                 self._process_book_update(data, recv_time)
             elif data.get("code") == 200:
                 # Subscription confirmation
-                logger.info(f"Opinion: {data.get('message')}")
+                logger.debug(f"Opinion: {data.get('message')}")
 
         except json.JSONDecodeError:
             logger.debug(f"Non-JSON message: {message[:100]}")
@@ -596,7 +597,7 @@ class OpinionWebSocket:
 
     def _poll_all_markets(self):
         """轮询所有订阅的市场订单簿"""
-        if not self.opinion_client or not self.subscribed_markets:
+        if not self.opinion_client or not self.market_to_yes_token:
             return
 
         poll_start = time.time()
@@ -604,18 +605,19 @@ class OpinionWebSocket:
         validated_count = 0
         error_count = 0
 
-        for market_id in list(self.subscribed_markets):
+        # 使用 opinion_yes_token 进行轮询
+        for token_id in list(self.market_to_yes_token.values()):
             try:
                 # 获取订单簿
-                response = self.opinion_client.get_orderbook(str(market_id))
+                response = self.opinion_client.get_orderbook(token_id)
 
                 if response.errno != 0:
-                    logger.debug(f"REST API error for market {market_id}: {response.errmsg}")
+                    logger.debug(f"REST API error for token {token_id[:20]}...: {response.errmsg}")
                     error_count += 1
                     continue
 
                 book = response.result
-                rest_snapshot = self._convert_rest_orderbook(book, market_id)
+                rest_snapshot = self._convert_rest_orderbook(book, token_id)
 
                 if not rest_snapshot:
                     continue
@@ -646,28 +648,25 @@ class OpinionWebSocket:
                         self.orderbook_cache[rest_snapshot.token_id] = rest_snapshot
 
                 polled_count += 1
-                self._last_rest_fetch[market_id] = time.time()
+                self._last_rest_fetch[token_id] = time.time()
 
             except Exception as e:
-                logger.debug(f"Error polling market {market_id}: {e}")
+                logger.debug(f"Error polling token {token_id[:20]}...: {e}")
                 error_count += 1
 
         poll_time = time.time() - poll_start
         if polled_count > 0:
             logger.debug(
-                f"📊 REST API poll: {polled_count} markets, {validated_count} validated, "
+                f"📊 REST API poll: {polled_count} tokens, {validated_count} validated, "
                 f"{error_count} errors, {poll_time:.2f}s"
             )
 
     def _convert_rest_orderbook(
-        self, rest_book, market_id: int
+        self, rest_book, token_id: str
     ) -> Optional[OrderBookSnapshot]:
         """将REST API返回的订单簿转换为OrderBookSnapshot"""
         try:
-            # 获取token ID (从rest_book中提取)
-            # Opinion REST API返回的订单簿结构需要根据实际API调整
-            token_id = getattr(rest_book, 'token_id', None) or str(market_id)
-
+            # Opinion REST API返回的订单簿结构
             bids = self._parse_rest_levels(getattr(rest_book, 'bids', []), reverse=True)
             asks = self._parse_rest_levels(getattr(rest_book, 'asks', []), reverse=False)
 
@@ -822,6 +821,12 @@ class OpinionWebSocket:
         """获取缓存的订单簿"""
         with self.lock:
             return self.orderbook_cache.get(token_id)
+
+    def set_market_token_mapping(self, market_id: int, yes_token: str):
+        """设置市场ID到YES token的映射 - 用于REST API轮询"""
+        with self.lock:
+            self.market_to_yes_token[market_id] = yes_token
+            self.token_to_market[yes_token] = market_id
 
     def add_callback(self, callback: Callable[[OrderBookUpdate], None]):
         """添加订单簿更新回调"""
