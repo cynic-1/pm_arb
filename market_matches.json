@@ -1,96 +1,5 @@
 [
   {
-    "question": "Grok 5 released by...? - March 31, 2026",
-    "opinion_market_id": 2176,
-    "opinion_yes_token": "97618704669060253271671833053318705991502950033675883689169065441535063843617",
-    "opinion_no_token": "106110130273827439072769063295502872142742611277608369658691477835317696963246",
-    "polymarket_condition_id": "0xb7b4b48d233d854fa0793bb3ac3da246bd7863e6039300b61df035125fe4f581",
-    "polymarket_yes_token": "111199335102802129986385434826729904605097886098325344211061360860214628320521",
-    "polymarket_no_token": "43182654922523355554487760103848610368479277548038277439440055164132446025451",
-    "polymarket_slug": "grok-5-released-by-march-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1774886400,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Russia x Ukraine ceasefire by ...? - January 31, 2026",
-    "opinion_market_id": 2170,
-    "opinion_yes_token": "78381026976476115833055080478490551839895275231264784619886223581624346309363",
-    "opinion_no_token": "99825187359825171260211051442758311720257284812022777962499414901509159818077",
-    "polymarket_condition_id": "0xb8c1bd306a8a4cedfb280e114e655c5092b3f37edccae05cd877d7f21a5774ce",
-    "polymarket_yes_token": "14705029091296171110674089399091656949154521086160164017708184564241023149952",
-    "polymarket_no_token": "28770223306876042609349339320023940766830944760118437790167392789285879039304",
-    "polymarket_slug": "russia-x-ukraine-ceasefire-by-january-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769788800,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will Bitcoin hit $150k by ...? - March 31, 2026",
-    "opinion_market_id": 2066,
-    "opinion_yes_token": "70313466730842561524165823867056694371841523594633337111117025859759323517115",
-    "opinion_no_token": "34575500811920792149501513075954104501085315529176461621126700203980083841713",
-    "polymarket_condition_id": "0xe857d6cd180acdb314dd38e583e625172407fa83d54156c78679e601b312d068",
-    "polymarket_yes_token": "46866868857194367945413771860582064655745092128562966218540356888709464260149",
-    "polymarket_no_token": "60813700210650265030095330536872262773206509817006423823871227216046493542827",
-    "polymarket_slug": "will-bitcoin-hit-150k-by-march-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1774886400,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will Bitcoin hit $150k by ...? - June 30, 2026",
-    "opinion_market_id": 2067,
-    "opinion_yes_token": "31958753566690549600413844578719584199900424338524943578771313323405796276127",
-    "opinion_no_token": "98283894039774068106493592580977615380648774352445052580549424914420986914229",
-    "polymarket_condition_id": "0xa0f4c4924ea1a8b410b4ce821c2a9955fad21a1b19bdcfde90816732278b3dd5",
-    "polymarket_yes_token": "13915689317269078219168496739008737517740566192006337297676041270492637394586",
-    "polymarket_no_token": "13290642914521189871602119663452054126359842904805799115978921503195267156991",
-    "polymarket_slug": "will-bitcoin-hit-150k-by-june-30-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1782748800,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will Bitcoin hit $150k by ...? - December 31, 2026",
-    "opinion_market_id": 2068,
-    "opinion_yes_token": "97913044128094681901221043536407530441801710759789765834621622844521681441829",
-    "opinion_no_token": "84414587454614646911836269393369633011935996609836765171747180387207967197281",
-    "polymarket_condition_id": "0x02deb9538f5c123373adaa4ee6217b01745f1662bc902e46ac92f3fe6f8741e8",
-    "polymarket_yes_token": "93694900555669388759405753550770573998169287228984912881955464376232163096213",
-    "polymarket_no_token": "55119388124180116303253993098894090042427725500010038140578121972388485050538",
-    "polymarket_slug": "will-bitcoin-hit-150k-by-december-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1798646400,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "MicroStrategy sells any Bitcoin by ...? - March 31, 2026",
-    "opinion_market_id": 2057,
-    "opinion_yes_token": "44640385968037794297252132924126866415553210405799463874393613085154512508174",
-    "opinion_no_token": "48452478028518627606787454649739333769744338444346013809409807920594600259226",
-    "polymarket_condition_id": "0x9a4db724246b51cbfbc8000dbbd6b54d72b057767c3690e63d940b26d78c6cb0",
-    "polymarket_yes_token": "108547978327958467449318042977006580876058560639743186491243488736783119648127",
-    "polymarket_no_token": "61476326573463890939120700176570456436619008823217970387484180237661307640203",
-    "polymarket_slug": "microstrategy-sells-any-bitcoin-by-march-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1774886400,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "MicroStrategy sells any Bitcoin by ...? - June 30, 2026",
-    "opinion_market_id": 2058,
-    "opinion_yes_token": "20570587562419574077208291364360317309986264665359813831362095404116336355051",
-    "opinion_no_token": "23171727439885816074629136486450291353531851870334511274723926476066238624484",
-    "polymarket_condition_id": "0x8e7a03cb1970e2ad6533b01892403516b6b3f5b5fa90ed7d104c28b27e40ba00",
-    "polymarket_yes_token": "110251828161543119357013227499774714771527179764174739487025581227481937033858",
-    "polymarket_no_token": "65176388692130651396848427090788038285140833850265294793449655516920659740141",
-    "polymarket_slug": "microstrategy-sells-any-bitcoin-by-june-30-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1782748800,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "US strike on Syria by December 31?",
     "opinion_market_id": 3057,
     "opinion_yes_token": "11329323862880074665481267124998129910792297852808666836417888369651329703441",
@@ -362,6 +271,19 @@
     "similarity_score": 1.0,
     "cutoff_at": 1769149800,
     "polymarket_neg_risk": true
+  },
+  {
+    "question": "Russia x Ukraine ceasefire by ...? - January 31, 2026",
+    "opinion_market_id": 2170,
+    "opinion_yes_token": "78381026976476115833055080478490551839895275231264784619886223581624346309363",
+    "opinion_no_token": "99825187359825171260211051442758311720257284812022777962499414901509159818077",
+    "polymarket_condition_id": "0xb8c1bd306a8a4cedfb280e114e655c5092b3f37edccae05cd877d7f21a5774ce",
+    "polymarket_yes_token": "14705029091296171110674089399091656949154521086160164017708184564241023149952",
+    "polymarket_no_token": "28770223306876042609349339320023940766830944760118437790167392789285879039304",
+    "polymarket_slug": "russia-x-ukraine-ceasefire-by-january-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1769788800,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will there be another US government shutdown by January 31?",
@@ -1456,6 +1378,45 @@
     "polymarket_neg_risk": true
   },
   {
+    "question": "Grok 5 released by...? - March 31, 2026",
+    "opinion_market_id": 2176,
+    "opinion_yes_token": "97618704669060253271671833053318705991502950033675883689169065441535063843617",
+    "opinion_no_token": "106110130273827439072769063295502872142742611277608369658691477835317696963246",
+    "polymarket_condition_id": "0xb7b4b48d233d854fa0793bb3ac3da246bd7863e6039300b61df035125fe4f581",
+    "polymarket_yes_token": "111199335102802129986385434826729904605097886098325344211061360860214628320521",
+    "polymarket_no_token": "43182654922523355554487760103848610368479277548038277439440055164132446025451",
+    "polymarket_slug": "grok-5-released-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1774886400,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Bitcoin hit $150k by ...? - March 31, 2026",
+    "opinion_market_id": 2066,
+    "opinion_yes_token": "70313466730842561524165823867056694371841523594633337111117025859759323517115",
+    "opinion_no_token": "34575500811920792149501513075954104501085315529176461621126700203980083841713",
+    "polymarket_condition_id": "0xe857d6cd180acdb314dd38e583e625172407fa83d54156c78679e601b312d068",
+    "polymarket_yes_token": "46866868857194367945413771860582064655745092128562966218540356888709464260149",
+    "polymarket_no_token": "60813700210650265030095330536872262773206509817006423823871227216046493542827",
+    "polymarket_slug": "will-bitcoin-hit-150k-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1774886400,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "MicroStrategy sells any Bitcoin by ...? - March 31, 2026",
+    "opinion_market_id": 2057,
+    "opinion_yes_token": "44640385968037794297252132924126866415553210405799463874393613085154512508174",
+    "opinion_no_token": "48452478028518627606787454649739333769744338444346013809409807920594600259226",
+    "polymarket_condition_id": "0x9a4db724246b51cbfbc8000dbbd6b54d72b057767c3690e63d940b26d78c6cb0",
+    "polymarket_yes_token": "108547978327958467449318042977006580876058560639743186491243488736783119648127",
+    "polymarket_no_token": "61476326573463890939120700176570456436619008823217970387484180237661307640203",
+    "polymarket_slug": "microstrategy-sells-any-bitcoin-by-march-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1774886400,
+    "polymarket_neg_risk": false
+  },
+  {
     "question": "Microstrategy delisted from MSCI index by March 31?",
     "opinion_market_id": 3257,
     "opinion_yes_token": "69137126177974040815169446076568545857279968397088418402747390025794542424358",
@@ -1817,6 +1778,32 @@
     "polymarket_slug": "will-nikola-jokic-win-2023-nba-mvp",
     "similarity_score": 1.0,
     "cutoff_at": 1781049600,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "Will Bitcoin hit $150k by ...? - June 30, 2026",
+    "opinion_market_id": 2067,
+    "opinion_yes_token": "31958753566690549600413844578719584199900424338524943578771313323405796276127",
+    "opinion_no_token": "98283894039774068106493592580977615380648774352445052580549424914420986914229",
+    "polymarket_condition_id": "0xa0f4c4924ea1a8b410b4ce821c2a9955fad21a1b19bdcfde90816732278b3dd5",
+    "polymarket_yes_token": "13915689317269078219168496739008737517740566192006337297676041270492637394586",
+    "polymarket_no_token": "13290642914521189871602119663452054126359842904805799115978921503195267156991",
+    "polymarket_slug": "will-bitcoin-hit-150k-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1782748800,
+    "polymarket_neg_risk": false
+  },
+  {
+    "question": "MicroStrategy sells any Bitcoin by ...? - June 30, 2026",
+    "opinion_market_id": 2058,
+    "opinion_yes_token": "20570587562419574077208291364360317309986264665359813831362095404116336355051",
+    "opinion_no_token": "23171727439885816074629136486450291353531851870334511274723926476066238624484",
+    "polymarket_condition_id": "0x8e7a03cb1970e2ad6533b01892403516b6b3f5b5fa90ed7d104c28b27e40ba00",
+    "polymarket_yes_token": "110251828161543119357013227499774714771527179764174739487025581227481937033858",
+    "polymarket_no_token": "65176388692130651396848427090788038285140833850265294793449655516920659740141",
+    "polymarket_slug": "microstrategy-sells-any-bitcoin-by-june-30-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1782748800,
     "polymarket_neg_risk": false
   },
   {
@@ -2195,6 +2182,19 @@
     "similarity_score": 1.0,
     "cutoff_at": 1784505600,
     "polymarket_neg_risk": true
+  },
+  {
+    "question": "Will Bitcoin hit $150k by ...? - December 31, 2026",
+    "opinion_market_id": 2068,
+    "opinion_yes_token": "97913044128094681901221043536407530441801710759789765834621622844521681441829",
+    "opinion_no_token": "84414587454614646911836269393369633011935996609836765171747180387207967197281",
+    "polymarket_condition_id": "0x02deb9538f5c123373adaa4ee6217b01745f1662bc902e46ac92f3fe6f8741e8",
+    "polymarket_yes_token": "93694900555669388759405753550770573998169287228984912881955464376232163096213",
+    "polymarket_no_token": "55119388124180116303253993098894090042427725500010038140578121972388485050538",
+    "polymarket_slug": "will-bitcoin-hit-150k-by-december-31-2026",
+    "similarity_score": 1.0,
+    "cutoff_at": 1798646400,
+    "polymarket_neg_risk": false
   },
   {
     "question": "Will Jesus Christ return before 2027?",
