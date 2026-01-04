@@ -1049,7 +1049,7 @@ class ModularArbitrage:
 
     def run_pro_loop(self, interval_seconds: float):
         """持续运行专业模式"""
-        min_interval = max(5.0, interval_seconds)
+        min_interval = max(0.5, interval_seconds)
         print(f"♻️ 启动专业套利循环，间隔 {min_interval:.1f}s")
 
         try:
