@@ -422,6 +422,8 @@ class CrossPlatformArbitrage:
             for group_idx, (parent_id, group_info) in enumerate(categorical_groups.items(), 1):
                 parent_title = group_info["parent_title"]
                 op_children = group_info["children"]
+                if "?" in parent_title and not parent_title.endswith("?"):
+                    parent_title = parent_title.split("?", 1)[0] + "?"
 
                 print(f"\n[{group_idx}/{len(categorical_groups)}] 父市场: {parent_title}")
                 print(f"  Opinion 子市场数: {len(op_children)}")
