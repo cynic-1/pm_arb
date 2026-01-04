@@ -322,10 +322,11 @@ class PolymarketWebSocket:
 
 
 class OpinionWebSocket:
-    """Opinion WebSocket连接管理器"""
+    """Opinion WebSocket连接管理器 - 支持WebSocket + REST API混合模式"""
 
-    def __init__(self, config: ArbitrageConfig):
+    def __init__(self, config: ArbitrageConfig, opinion_client=None):
         self.config = config
+        self.opinion_client = opinion_client  # REST API客户端
         self.ws: Optional[WebSocketApp] = None
         self.connected = threading.Event()
         self.message_count = 0
@@ -334,6 +335,11 @@ class OpinionWebSocket:
         self.lock = threading.Lock()
         self.callbacks: List[Callable[[OrderBookUpdate], None]] = []
         self.subscribed_markets: Set[int] = set()
+
+        # REST API轮询设置
+        self._rest_poll_thread = None
+        self._rest_poll_stop = threading.Event()
+        self._last_rest_fetch: Dict[int, float] = {}  # market_id -> timestamp
 
         # Auto-reconnection settings
         self.auto_reconnect = True
@@ -494,6 +500,10 @@ class OpinionWebSocket:
         # Start heartbeat thread
         threading.Thread(target=self._heartbeat_loop, daemon=True).start()
 
+        # Start REST API polling thread if enabled
+        if self.config.opinion_rest_poll_enabled and self.opinion_client:
+            self._start_rest_polling()
+
     def _subscribe_to_markets(self, ws):
         """订阅所有市场 - 分批发送以避免服务器拒绝"""
         if not self.subscribed_markets:
@@ -543,6 +553,176 @@ class OpinionWebSocket:
             except Exception as e:
                 logger.debug(f"Heartbeat error: {e}")
                 break
+
+    def _start_rest_polling(self):
+        """启动REST API轮询线程"""
+        if self._rest_poll_thread and self._rest_poll_thread.is_alive():
+            logger.debug("REST API polling thread already running")
+            return
+
+        self._rest_poll_stop.clear()
+        self._rest_poll_thread = threading.Thread(
+            target=self._rest_poll_loop,
+            daemon=True,
+            name="opinion-rest-poll"
+        )
+        self._rest_poll_thread.start()
+        logger.info(f"🔄 Started REST API polling (interval={self.config.opinion_rest_poll_interval}s)")
+
+    def _stop_rest_polling(self):
+        """停止REST API轮询"""
+        self._rest_poll_stop.set()
+        if self._rest_poll_thread and self._rest_poll_thread.is_alive():
+            logger.info("🛑 Stopping REST API polling thread...")
+            self._rest_poll_thread.join(timeout=5.0)
+
+    def _rest_poll_loop(self):
+        """REST API轮询循环 - 定期获取完整订单簿以验证和补充WebSocket数据"""
+        while not self._rest_poll_stop.is_set() and not self.is_closing:
+            try:
+                # 等待配置的间隔时间
+                self._rest_poll_stop.wait(timeout=self.config.opinion_rest_poll_interval)
+
+                if self._rest_poll_stop.is_set() or self.is_closing:
+                    break
+
+                # 轮询所有订阅的市场
+                self._poll_all_markets()
+
+            except Exception as e:
+                logger.error(f"❌ REST API polling error: {e}")
+
+        logger.debug("REST API polling loop ended")
+
+    def _poll_all_markets(self):
+        """轮询所有订阅的市场订单簿"""
+        if not self.opinion_client or not self.subscribed_markets:
+            return
+
+        poll_start = time.time()
+        polled_count = 0
+        validated_count = 0
+        error_count = 0
+
+        for market_id in list(self.subscribed_markets):
+            try:
+                # 获取订单簿
+                response = self.opinion_client.get_orderbook(str(market_id))
+
+                if response.errno != 0:
+                    logger.debug(f"REST API error for market {market_id}: {response.errmsg}")
+                    error_count += 1
+                    continue
+
+                book = response.result
+                rest_snapshot = self._convert_rest_orderbook(book, market_id)
+
+                if not rest_snapshot:
+                    continue
+
+                # 验证WebSocket缓存的订单簿
+                with self.lock:
+                    cached_snapshot = self.orderbook_cache.get(rest_snapshot.token_id)
+
+                    if cached_snapshot:
+                        # 检查订单簿是否过期
+                        age = time.time() - cached_snapshot.timestamp
+                        if age > self.config.opinion_max_orderbook_age:
+                            logger.warning(
+                                f"⚠️ Orderbook for {rest_snapshot.token_id[:20]}... is stale ({age:.1f}s old), "
+                                f"replacing with REST API data"
+                            )
+                            self.orderbook_cache[rest_snapshot.token_id] = rest_snapshot
+                        elif self._is_orderbook_corrupted(cached_snapshot):
+                            logger.warning(
+                                f"⚠️ Orderbook for {rest_snapshot.token_id[:20]}... appears corrupted (bids > asks), "
+                                f"replacing with REST API data"
+                            )
+                            self.orderbook_cache[rest_snapshot.token_id] = rest_snapshot
+                        else:
+                            validated_count += 1
+                    else:
+                        # 如果缓存中没有，使用REST API数据
+                        self.orderbook_cache[rest_snapshot.token_id] = rest_snapshot
+
+                polled_count += 1
+                self._last_rest_fetch[market_id] = time.time()
+
+            except Exception as e:
+                logger.debug(f"Error polling market {market_id}: {e}")
+                error_count += 1
+
+        poll_time = time.time() - poll_start
+        if polled_count > 0:
+            logger.debug(
+                f"📊 REST API poll: {polled_count} markets, {validated_count} validated, "
+                f"{error_count} errors, {poll_time:.2f}s"
+            )
+
+    def _convert_rest_orderbook(
+        self, rest_book, market_id: int
+    ) -> Optional[OrderBookSnapshot]:
+        """将REST API返回的订单簿转换为OrderBookSnapshot"""
+        try:
+            # 获取token ID (从rest_book中提取)
+            # Opinion REST API返回的订单簿结构需要根据实际API调整
+            token_id = getattr(rest_book, 'token_id', None) or str(market_id)
+
+            bids = self._parse_rest_levels(getattr(rest_book, 'bids', []), reverse=True)
+            asks = self._parse_rest_levels(getattr(rest_book, 'asks', []), reverse=False)
+
+            return OrderBookSnapshot(
+                bids=bids,
+                asks=asks,
+                source='opinion',
+                token_id=token_id,
+                timestamp=time.time()
+            )
+        except Exception as e:
+            logger.debug(f"Error converting REST orderbook: {e}")
+            return None
+
+    def _parse_rest_levels(self, levels: List, reverse: bool) -> List[OrderBookLevel]:
+        """解析REST API返回的订单簿档位"""
+        result = []
+        for level in levels:
+            try:
+                if isinstance(level, dict):
+                    price = float(level.get("price", 0))
+                    size = float(level.get("size", 0))
+                elif hasattr(level, 'price'):
+                    price = float(level.price)
+                    size = float(getattr(level, 'size', 0) or getattr(level, 'quantity', 0))
+                else:
+                    continue
+
+                if price > 0 and size > 0:
+                    result.append(OrderBookLevel(price=price, size=size))
+            except (ValueError, TypeError, AttributeError):
+                continue
+
+        result.sort(key=lambda x: x.price, reverse=reverse)
+        return result[:5]  # Top 5 levels
+
+    def _is_orderbook_corrupted(self, snapshot: OrderBookSnapshot) -> bool:
+        """
+        检查订单簿是否损坏
+        判断标准: 最高买价 >= 最低卖价
+        """
+        if not snapshot.bids or not snapshot.asks:
+            return False
+
+        best_bid = snapshot.bids[0].price
+        best_ask = snapshot.asks[0].price
+
+        # 如果最佳买价 >= 最佳卖价，说明订单簿损坏
+        if best_bid >= best_ask:
+            logger.warning(
+                f"🔍 Corrupted orderbook detected: best_bid={best_bid:.4f} >= best_ask={best_ask:.4f}"
+            )
+            return True
+
+        return False
 
     def _reconnect(self):
         """重连逻辑,使用指数退避"""
@@ -651,6 +831,10 @@ class OpinionWebSocket:
         """关闭WebSocket连接"""
         self.is_closing = True
         self.auto_reconnect = False
+
+        # 停止REST API轮询
+        self._stop_rest_polling()
+
         if self.ws:
             self.ws.close()
 
@@ -658,10 +842,10 @@ class OpinionWebSocket:
 class WebSocketManager:
     """统一的WebSocket管理器,同时管理Polymarket和Opinion连接"""
 
-    def __init__(self, config: ArbitrageConfig):
+    def __init__(self, config: ArbitrageConfig, opinion_client=None):
         self.config = config
         self.polymarket_ws = PolymarketWebSocket(config)
-        self.opinion_ws = OpinionWebSocket(config)
+        self.opinion_ws = OpinionWebSocket(config, opinion_client)
         self.update_callbacks: List[Callable[[OrderBookUpdate], None]] = []
 
     def connect_all(self, polymarket_assets: List[str], opinion_markets: List[int]) -> bool:

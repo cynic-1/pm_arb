@@ -37,6 +37,12 @@ class ArbitrageConfig:
     opinion_orderbook_timeout: Optional[float] = None
     polymarket_orderbook_timeout: Optional[float] = None
 
+    # Opinion REST API轮询配置
+    opinion_rest_poll_enabled: bool = field(default_factory=lambda: os.getenv("OPINION_REST_POLL_ENABLED", "1") not in {"0", "false", "False"})
+    opinion_rest_poll_interval: float = field(default_factory=lambda: max(1.0, float(os.getenv("OPINION_REST_POLL_INTERVAL", "10.0"))))
+    opinion_rest_poll_timeout: float = field(default_factory=lambda: max(1.0, float(os.getenv("OPINION_REST_POLL_TIMEOUT", "5.0"))))
+    opinion_max_orderbook_age: float = field(default_factory=lambda: max(1.0, float(os.getenv("OPINION_MAX_ORDERBOOK_AGE", "30.0"))))  # 订单簿最大有效时间（秒）
+
     # ==================== 下单配置 ====================
     order_max_retries: int = field(default_factory=lambda: max(1, int(os.getenv("ORDER_MAX_RETRIES", "3"))))
     order_retry_delay: float = field(default_factory=lambda: max(0.0, float(os.getenv("ORDER_RETRY_DELAY", "1.0"))))

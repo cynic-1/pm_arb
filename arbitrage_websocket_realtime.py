@@ -66,7 +66,7 @@ class RealtimeArbitrage:
         print("🔧 初始化核心组件...")
         self.clients = PlatformClients(self.config)
         self.fee_calculator = FeeCalculator(self.config)
-        self.ws_manager = WebSocketManager(self.config)
+        self.ws_manager = WebSocketManager(self.config, self.clients.get_opinion_client())
 
         # 市场匹配
         self.market_matches: List[MarketMatch] = []
