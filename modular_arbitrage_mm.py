@@ -113,7 +113,8 @@ class ModularArbitrageMM(ModularArbitrage):
 
     def _status_is_cancelled(self, status: Optional[str]) -> bool:
         normalized = str(status or "").strip().lower()
-        return normalized in {"cancelled", "canceled", "rejected", "expired", "failed", "cancel"}
+        # cancelinprogress 表示取消请求已被接受，可视为已取消，无需继续监控
+        return normalized in {"cancelled", "canceled", "rejected", "expired", "failed", "cancel", "cancelinprogress"}
 
     def _parse_opinion_status(self, entry: Any) -> Optional[str]:
         text_value = self._extract_from_entry(entry, ["status_enum", "statusEnum", "status_text", "statusText"])
