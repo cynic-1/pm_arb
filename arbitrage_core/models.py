@@ -113,3 +113,4 @@ class LiquidityOrderState:
     last_reported_status: Optional[str] = None
     last_status_log: float = 0.0
     last_status_check: float = 0.0
+    marked_for_removal: bool = False  # 标记为已移除，但保留在监控中以确保对冲完成

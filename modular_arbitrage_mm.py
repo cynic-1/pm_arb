@@ -367,13 +367,31 @@ class ModularArbitrageMM(ModularArbitrage):
             logger.info(f"📥 追踪流动性挂单 {state.order_id} -> {state.key}")
         self._ensure_liquidity_status_thread()
 
-    def _remove_liquidity_order_state(self, key: str) -> None:
+    def _remove_liquidity_order_state(self, key: str, force: bool = False) -> None:
+        """移除流动性订单状态。
+
+        Args:
+            key: 订单唯一标识
+            force: 是否强制删除。默认 False 时仅标记为已完成，不从数组中删除，
+                   以确保即使取消订单出现错误，依然能够在检测成交后顺利完成对冲。
+        """
         with self._liquidity_orders_lock:
-            state = self.liquidity_orders.pop(key, None)
+            state = self.liquidity_orders.get(key)
             if state:
-                self.liquidity_orders_by_id.pop(state.order_id, None)
-        if state and self.liquidity_debug:
-            logger.info(f"📤 移除流动性挂单 {state.order_id} -> {key}")
+                if force:
+                    # 强制删除：从两个字典中完全移除
+                    self.liquidity_orders.pop(key, None)
+                    self.liquidity_orders_by_id.pop(state.order_id, None)
+                    if self.liquidity_debug:
+                        logger.info(f"📤 强制移除流动性挂单 {state.order_id} -> {key}")
+                else:
+                    # 非强制：仅标记为已移除，保留在 by_id 字典中继续监控
+                    # 这样即使取消订单失败，仍能检测到成交并完成对冲
+                    state.marked_for_removal = True
+                    # 从 liquidity_orders 中移除（不再参与新的机会匹配）
+                    self.liquidity_orders.pop(key, None)
+                    if self.liquidity_debug:
+                        logger.info(f"📤 标记流动性挂单为已移除（保留监控）{state.order_id} -> {key}")
 
     def _fetch_opinion_order_status(self, order_id: str) -> Optional[Any]:
         try:
@@ -431,8 +449,9 @@ class ModularArbitrageMM(ModularArbitrage):
             logger.info(f"🔍 取消后验证状态: {state.order_id[:10]}... status={current_status}")
 
             if self._status_is_cancelled(current_status):
-                logger.info(f"✅ 确认订单已取消: {state.order_id[:10]}...")
-                self._remove_liquidity_order_state(state.key)
+                logger.info(f"✅ 确认订单已取消: {state.order_id[:10]}...，标记为已移除但继续监控")
+                # 不强制删除，保留监控以防取消状态误判（如 cancelinprogress）
+                self._remove_liquidity_order_state(state.key, force=False)
                 return True
 
             filled_amount = self._to_float(
@@ -457,7 +476,8 @@ class ModularArbitrageMM(ModularArbitrage):
                     state.filled_size = filled_amount
                     if self.polymarket_trading_enabled:
                         self._hedge_polymarket(state, delta)
-                self._remove_liquidity_order_state(state.key)
+                # 订单已完全成交，可以强制删除
+                self._remove_liquidity_order_state(state.key, force=True)
                 return True
 
             return False
@@ -549,6 +569,9 @@ class ModularArbitrageMM(ModularArbitrage):
         self._stop_liquidity_status_thread()
 
     def _update_liquidity_order_statuses(self, tracked_states: Optional[List[Tuple[str, LiquidityOrderState]]] = None) -> None:
+        # 清理超时的已标记移除订单（保留监控 5 分钟后强制清理）
+        MARKED_REMOVAL_TIMEOUT = 12*60*60.0  # 5 分钟
+
         if tracked_states is None:
             with self._liquidity_orders_lock:
                 if not self.liquidity_orders_by_id:
@@ -557,8 +580,21 @@ class ModularArbitrageMM(ModularArbitrage):
         elif not tracked_states:
             return
 
+        orders_to_force_remove: List[str] = []
+
         for order_id, state in tracked_states:
             now = time.time()
+
+            # 检查是否需要强制清理已标记为移除的订单
+            if state.marked_for_removal:
+                time_since_update = now - state.updated_at
+                if time_since_update > MARKED_REMOVAL_TIMEOUT:
+                    logger.info(
+                        f"🧹 订单 {order_id[:10]}... 已标记移除超过 {MARKED_REMOVAL_TIMEOUT:.0f}s，强制清理"
+                    )
+                    orders_to_force_remove.append(order_id)
+                    continue
+
             if now - state.last_status_check < self.liquidity_status_poll_interval:
                 continue
 
@@ -642,13 +678,23 @@ class ModularArbitrageMM(ModularArbitrage):
                     logger.error("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
             if self._status_is_cancelled(state.status):
-                logger.info(f"⚠️ Opinion 挂单 {order_id[:10]}... 状态 {state.status}，停止跟踪")
-                self._remove_liquidity_order_state(state.key)
+                logger.info(f"⚠️ Opinion 挂单 {order_id[:10]}... 状态 {state.status}，标记为已移除但继续监控")
+                # 不从 by_id 中删除，保留监控以确保即使取消失败也能检测到成交并对冲
+                self._remove_liquidity_order_state(state.key, force=False)
                 continue
 
             if self._status_is_filled(state.status, filled_amount, total_amount):
-                logger.info(f"🏁 Opinion 挂单 {order_id[:10]}... 已完成")
-                self._remove_liquidity_order_state(state.key)
+                logger.info(f"🏁 Opinion 挂单 {order_id[:10]}... 已完成，强制移除")
+                # 订单完全成交，可以安全地强制删除
+                self._remove_liquidity_order_state(state.key, force=True)
+
+        # 执行强制清理超时的已标记移除订单
+        if orders_to_force_remove:
+            with self._liquidity_orders_lock:
+                for order_id in orders_to_force_remove:
+                    state = self.liquidity_orders_by_id.pop(order_id, None)
+                    if state and self.liquidity_debug:
+                        logger.info(f"🧹 已强制清理订单 {order_id[:10]}... from by_id")
 
     def _poll_opinion_trades(self) -> None:
         now = time.time()
@@ -804,8 +850,9 @@ class ModularArbitrageMM(ModularArbitrage):
             logger.warning("⚠️⚠️⚠️ Polymarket 未启用交易，无法对冲！")
 
         if state.filled_size >= state.effective_size - 1e-6:
-            logger.info(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交")
-            self._remove_liquidity_order_state(state.key)
+            logger.info(f"🏁 Opinion 挂单 {state.order_id[:10]}... 已完全成交，强制移除")
+            # 订单完全成交，可以安全地强制删除
+            self._remove_liquidity_order_state(state.key, force=True)
 
     def _hedge_polymarket(self, state: LiquidityOrderState, hedge_size: float) -> None:
         remaining = max(0.0, hedge_size)
