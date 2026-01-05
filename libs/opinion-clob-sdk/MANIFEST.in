@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+recursive-include opinion_clob_sdk *.py
+recursive-include opinion_clob_sdk/chain *.py
+recursive-include opinion_clob_sdk/chain/contracts *.py
+recursive-include opinion_clob_sdk/chain/py_order_utils *.py *.json
+recursive-include opinion_clob_sdk/chain/safe *.py

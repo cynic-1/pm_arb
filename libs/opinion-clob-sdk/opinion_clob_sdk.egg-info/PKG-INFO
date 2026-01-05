@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: opinion_clob_sdk
+Version: 0.4.3
+Summary: Opinion CLOB SDK (Tech Preview) - Python SDK for Opinion Prediction Market Central Limit Order Book API
+Home-page: https://opinion.trade
+Author: Opinion Labs
+Author-email: support@opinion.trade
+Keywords: PredictionMarket,CLOB,Trading,Blockchain,BNBChain,BSC,Opinion
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: urllib3>=2.3.0
+Requires-Dist: six>=1.17.0
+Requires-Dist: certifi>=2024.12.14
+Requires-Dist: python-dateutil>=2.9.0.post0
+Requires-Dist: hexbytes>=1.2.1
+Requires-Dist: web3>=7.6.1
+Requires-Dist: eth_account>=0.13.0
+Requires-Dist: poly_eip712_structs>=0.0.1
+Requires-Dist: opinion_api>=0.2.1
+Requires-Dist: pytest>=7.0.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+
+# Opinion CLOB SDK (Tech Preview)
+
+**Technology Preview Release - BNB Chain Support**
+
+Python SDK for interacting with Opinion prediction markets via the CLOB (Central Limit Order Book) API.
+
+## Features
+
+- Market data queries (markets, orderbooks, prices, candles)
+- Order management (place, cancel, query orders)
+- Position and balance tracking
+- Smart contract interactions (split, merge, redeem)
+- Support for BNB Chain mainnet (chain ID 56)
+
+## Installation
+
+```bash
+pip install opinion_clob_sdk
+```
+
+## Quick Start
+
+```python
+from opinion_clob_sdk import Client
+
+client = Client(
+    host='https://proxy.opinion.trade:8443',
+    apikey='your_api_key',
+    chain_id=56,  # BNB Chain mainnet
+    rpc_url='https://bsc-dataseed.binance.org',
+    private_key='your_private_key',
+    multi_sig_addr='your_multi_sig_address'
+)
+
+# Get markets
+markets = client.get_markets(page=1, limit=10)
+
+# Get orderbook
+orderbook = client.get_orderbook(token_id='token_id')
+
+# Place an order
+from opinion_clob_sdk.chain.py_order_utils.model.order import PlaceOrderDataInput
+from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
+from opinion_clob_sdk.chain.py_order_utils.model.order_type import LIMIT_ORDER
+
+order_data = PlaceOrderDataInput(
+    marketId=123,
+    tokenId='token_id',
+    side=OrderSide.BUY,
+    orderType=LIMIT_ORDER,
+    price='0.5',
+    makerAmountInQuoteToken=10
+)
+
+result = client.place_order(order_data)
+```
+    
