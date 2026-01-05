@@ -651,7 +651,10 @@ class Client:
             raise OpenApiError(f"Failed to place order: {e}")
 
     def place_order(self, data: PlaceOrderDataInput, check_approval=False):
-        """Place an order on the market"""
+        """Place an order on the market (with network requests for quote token info)
+
+        For lower latency, use place_order_fast() instead if you know the quote token parameters.
+        """
         quote_token_list_response = self.get_quote_tokens()
         quote_token_list = self._parse_list_response(quote_token_list_response, "get quote tokens")
 
@@ -669,8 +672,57 @@ class Client:
             raise OpenApiError('Quote token not found for this market')
 
         exchange_addr = quote_token.ctf_exchange_address
-        chain_id = quote_token.chain_id
 
+        return self._place_order_with_params(
+            data=data,
+            exchange_addr=exchange_addr,
+            quote_token_addr=quote_token_addr,
+            quote_token_decimal=int(quote_token.decimal),
+            check_approval=check_approval
+        )
+
+    def place_order_fast(
+        self,
+        data: PlaceOrderDataInput,
+        exchange_addr: str = '0x5f45344126d6488025b0b84a3a8189f2487a7246',
+        quote_token_addr: str = '0x55d398326f99059fF775485246999027B3197955',
+        quote_token_decimal: int = 18,
+        check_approval: bool = False
+    ):
+        """Place an order with fixed parameters to avoid network requests (low latency version).
+
+        Default parameters are for BSC mainnet USDT:
+        - exchange_addr: 0x5f45344126d6488025b0b84a3a8189f2487a7246 (CTF Exchange on BSC)
+        - quote_token_addr: 0x55d398326f99059fF775485246999027B3197955 (USDT on BSC)
+        - quote_token_decimal: 18
+
+        Args:
+            data: PlaceOrderDataInput with order details
+            exchange_addr: CTF Exchange contract address
+            quote_token_addr: Quote token (e.g., USDT) contract address
+            quote_token_decimal: Quote token decimals (default 18 for USDT)
+            check_approval: Whether to check and enable trading approvals first (default False)
+
+        Returns:
+            Order placement result from API
+        """
+        return self._place_order_with_params(
+            data=data,
+            exchange_addr=exchange_addr,
+            quote_token_addr=quote_token_addr,
+            quote_token_decimal=quote_token_decimal,
+            check_approval=check_approval
+        )
+
+    def _place_order_with_params(
+        self,
+        data: PlaceOrderDataInput,
+        exchange_addr: str,
+        quote_token_addr: str,
+        quote_token_decimal: int,
+        check_approval: bool = False
+    ):
+        """Internal method to place order with explicit parameters (no network requests)."""
         makerAmount = 0
         minimal_maker_amount = 1
 
@@ -738,8 +790,7 @@ class Client:
         if makerAmount <= 0:
             raise InvalidParamError(f"Calculated makerAmount must be positive, got: {makerAmount}")
 
-
-        input = OrderDataInput(
+        order_input = OrderDataInput(
             marketId=data.marketId,
             tokenId=data.tokenId,
             makerAmount=makerAmount,
@@ -747,8 +798,7 @@ class Client:
             orderType=data.orderType,
             side=data.side
         )
-
-        return self._place_order(input, exchange_addr, chain_id, quote_token_addr, int(quote_token.decimal), check_approval)
+        return self._place_order(order_input, exchange_addr, self.chain_id, quote_token_addr, quote_token_decimal, check_approval)
 
     def cancel_order(self, order_id):
         """

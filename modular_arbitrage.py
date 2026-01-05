@@ -423,7 +423,7 @@ class ModularArbitrage:
 
         for attempt in range(1, self.config.order_max_retries + 1):
             try:
-                result = self.clients.get_opinion_client().place_order(order)
+                result = self.clients.get_opinion_client().place_order_fast(order)
                 last_result = result
 
                 if getattr(result, "errno", 0) == 0:
