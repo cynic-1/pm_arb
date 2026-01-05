@@ -42,8 +42,9 @@ from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
 from opinion_clob_sdk.chain.py_order_utils.model.order_type import LIMIT_ORDER
 
 # Polymarket SDK
-from py_clob_client.clob_types import OrderArgs, OrderType
+from py_clob_client.clob_types import OrderArgs, OrderType, PartialCreateOrderOptions
 from py_clob_client.order_builder.constants import BUY
+from arbitrage_core.utils.helpers import infer_tick_size_from_price
 
 logger = logging.getLogger(__name__)
 
@@ -841,11 +842,17 @@ class ModularArbitrageMM(ModularArbitrage):
                 price=best_ask.price,
                 size=tradable,
                 side=state.hedge_side,
+                fee_rate_bps=0,
+            )
+            # 创建选项以避免额外的网络请求
+            options = PartialCreateOrderOptions(
+                tick_size=infer_tick_size_from_price(best_ask.price),
+                neg_risk=state.match.polymarket_neg_risk,
             )
 
             logger.info(f"║ 📤 正在下单：数量 {tradable:.2f}, 价格 {best_ask.price}, 尝试 {hedge_attempts}")
 
-            success, _ = self.place_polymarket_order_with_retries(order, OrderType.GTC, context="流动性对冲")
+            success, _ = self.place_polymarket_order_with_retries(order, OrderType.GTC, context="流动性对冲", options=options)
             if not success:
                 logger.warning(f"║ ❌ 对冲下单失败，剩余 {remaining:.2f}")
                 self._hedge_failures += 1
