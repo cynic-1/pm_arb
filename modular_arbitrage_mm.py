@@ -1015,7 +1015,7 @@ class ModularArbitrageMM(ModularArbitrage):
         self._update_liquidity_order_statuses()
 
     def run_liquidity_provider_loop(self, interval_seconds: Optional[float] = None) -> None:
-        interval = max(5.0, interval_seconds or self.liquidity_loop_interval)
+        interval = max(0.5, interval_seconds or self.liquidity_loop_interval)
         logger.info(f"♻️ 启动流动性提供循环，间隔 {interval:.1f}s")
         try:
             while not self._monitor_stop_event.is_set():
