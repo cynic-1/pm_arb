@@ -648,10 +648,10 @@ class ModularArbitrageMM(ModularArbitrage):
                 log_needed = True
 
             if log_needed:
-                logger.info(
-                    f"🔍 Opinion 状态: {order_id[:10]} status={state.status or previous_status} "
-                    f"filled={filled_amount:.2f}/{target_total:.2f}"
-                )
+#                 logger.info(
+                    # f"🔍 Opinion 状态: {order_id[:10]} status={state.status or previous_status} "
+                    # f"filled={filled_amount:.2f}/{target_total:.2f}"
+                # )
                 state.last_reported_status = state.status
                 state.last_status_log = now
 
