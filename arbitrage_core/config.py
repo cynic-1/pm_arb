@@ -69,7 +69,7 @@ class ArbitrageConfig:
     max_liquidity_orders: int = field(default_factory=lambda: max(1, int(os.getenv("LIQUIDITY_MAX_ACTIVE", "20"))))
     liquidity_price_tolerance: float = field(default_factory=lambda: max(0.0, float(os.getenv("LIQUIDITY_PRICE_TOLERANCE", "0.003"))))
     liquidity_status_poll_interval: float = field(default_factory=lambda: max(0.5, float(os.getenv("LIQUIDITY_STATUS_POLL_INTERVAL", "1.5"))))
-    liquidity_loop_interval: float = field(default_factory=lambda: max(5.0, float(os.getenv("LIQUIDITY_LOOP_INTERVAL", "12"))))
+    liquidity_loop_interval: float = field(default_factory=lambda: max(0.5, float(os.getenv("LIQUIDITY_LOOP_INTERVAL", "12"))))
     liquidity_requote_increment: float = field(default_factory=lambda: max(0.0, float(os.getenv("LIQUIDITY_REQUOTE_INCREMENT", "0.0"))))
     liquidity_wait_timeout: float = field(default_factory=lambda: max(0.0, float(os.getenv("LIQUIDITY_WAIT_TIMEOUT", "0"))))
     liquidity_trade_poll_interval: float = field(default_factory=lambda: max(0.5, float(os.getenv("LIQUIDITY_TRADE_POLL_INTERVAL", "2.0"))))
