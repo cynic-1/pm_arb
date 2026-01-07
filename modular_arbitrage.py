@@ -120,6 +120,8 @@ class ModularArbitrage:
         self._monitor_stop_event = threading.Event()
         self._active_exec_threads: List[threading.Thread] = []
         self._insufficient_balance_flag = threading.Event()  # 余额不足标志
+        self._last_immediate_exec_time: float = 0.0  # 上次立即套利执行时间
+        self._immediate_exec_lock = threading.Lock()  # 保护时间戳的锁
 
         # 速率限制 - 使用令牌桶算法
         # capacity 设置为 workers 数量，允许并行请求同时发出
@@ -688,6 +690,16 @@ class ModularArbitrage:
 
     def _spawn_execute_thread(self, opportunity: Dict[str, Any]) -> None:
         """启动一个后台线程来执行给定的套利机会（非交互）"""
+        # 检查距离上次执行是否超过 1 秒
+        with self._immediate_exec_lock:
+            now = time.time()
+            elapsed = now - self._last_immediate_exec_time
+            if elapsed < 1.0:
+                print(f"  ⏳ 距离上次立即套利下单仅 {elapsed:.2f}s，跳过本次执行 (需间隔 >= 1s)")
+                return
+            # 更新上次执行时间
+            self._last_immediate_exec_time = now
+
         thread_name = f"instant-exec-{len(self._active_exec_threads)+1}"
         t = threading.Thread(
             target=self._execute_opportunity,
