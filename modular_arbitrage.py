@@ -15,6 +15,56 @@ from typing import Any, Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 
+
+class TokenBucket:
+    """令牌桶算法实现，支持真正的并行请求速率限制"""
+
+    def __init__(self, rate: float, capacity: int):
+        """
+        Args:
+            rate: 每秒补充的令牌数（即最大RPS）
+            capacity: 桶的容量（允许的突发请求数）
+        """
+        self.rate = rate
+        self.capacity = capacity
+        self.tokens = float(capacity)
+        self.last_update = time.perf_counter()
+        self.lock = threading.Lock()
+
+    def acquire(self, timeout: float = 5.0) -> bool:
+        """
+        获取一个令牌，如果没有可用令牌则等待
+
+        Args:
+            timeout: 最大等待时间（秒）
+
+        Returns:
+            True 如果成功获取令牌，False 如果超时
+        """
+        deadline = time.perf_counter() + timeout
+
+        while True:
+            with self.lock:
+                now = time.perf_counter()
+                # 补充令牌
+                elapsed = now - self.last_update
+                self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
+                self.last_update = now
+
+                if self.tokens >= 1.0:
+                    self.tokens -= 1.0
+                    return True
+
+                # 计算需要等待的时间
+                wait_time = (1.0 - self.tokens) / self.rate
+
+            # 检查是否超时
+            if time.perf_counter() + wait_time > deadline:
+                return False
+
+            # 等待一小段时间后重试
+            time.sleep(min(wait_time, 0.01))
+
 # 加载环境变量
 load_dotenv()
 
@@ -71,29 +121,23 @@ class ModularArbitrage:
         self._active_exec_threads: List[threading.Thread] = []
         self._insufficient_balance_flag = threading.Event()  # 余额不足标志
 
-        # 速率限制
-        self._opinion_rate_lock = threading.Lock()
-        self._opinion_last_request = 0.0
+        # 速率限制 - 使用令牌桶算法
+        # capacity 设置为 workers 数量，允许并行请求同时发出
+        self._opinion_token_bucket = TokenBucket(
+            rate=self.config.opinion_max_rps,
+            capacity=self.config.opinion_orderbook_workers
+        )
 
         print("✅ 模块化套利检测器初始化完成!\n")
 
     # ==================== 订单簿管理 ====================
 
     def _throttle_opinion_request(self) -> None:
-        """Opinion API 速率限制"""
-        max_rps = self.config.opinion_max_rps
-        if max_rps <= 0:
+        """Opinion API 速率限制 - 使用令牌桶算法"""
+        if self.config.opinion_max_rps <= 0:
             return
-
-        min_interval = 1.0 / max_rps
-        while True:
-            with self._opinion_rate_lock:
-                now = time.perf_counter()
-                wait = min_interval - (now - self._opinion_last_request)
-                if wait <= 0:
-                    self._opinion_last_request = now
-                    return
-            time.sleep(min_interval / 2.0)
+        # 获取令牌，最多等待5秒
+        self._opinion_token_bucket.acquire(timeout=5.0)
 
     def get_opinion_orderbook(
         self, token_id: str, depth: int = 5
