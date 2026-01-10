@@ -156,6 +156,7 @@ class FeeCalculator:
         price: float,
         target_amount: float,
         is_hedge: bool = False,
+        is_maker_order: bool = False,
         verbose: bool = True
     ) -> Tuple[float, float]:
         """
@@ -169,16 +170,21 @@ class FeeCalculator:
             price: 订单价格
             target_amount: 目标数量（希望实际得到的数量）
             is_hedge: 是否是对冲单（对冲单需要精确匹配首单的实际数量）
+            is_maker_order: 是否为流动性做市订单（maker order 不收手续费）
             verbose: 是否打印详细信息
 
         Returns:
             (order_size, effective_size): 下单数量和实际得到的数量
         """
         if platform == 'opinion':
-            # Opinion 需要考虑手续费修正
-            order_size = self.calculate_opinion_adjusted_amount(price, target_amount, verbose=verbose)
-            effective_size = target_amount  # 修正后应该能得到目标数量
-            return order_size, effective_size
+            if is_maker_order:
+                # Maker order 不收手续费，直接使用目标数量
+                return target_amount, target_amount
+            else:
+                # Taker order 需要考虑手续费修正
+                order_size = self.calculate_opinion_adjusted_amount(price, target_amount, verbose=verbose)
+                effective_size = target_amount  # 修正后应该能得到目标数量
+                return order_size, effective_size
         else:
             # Polymarket 直接使用目标数量
             return target_amount, target_amount

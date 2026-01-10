@@ -273,6 +273,7 @@ class ModularArbitrageMM(ModularArbitrage):
         if available_hedge < self.liquidity_min_size:
             return None
 
+        # 流动性做市模式：Opinion 挂单为 maker order，不收手续费
         metrics = self.compute_profitability_metrics(
             match,
             "opinion",
@@ -280,6 +281,7 @@ class ModularArbitrageMM(ModularArbitrage):
             "polymarket",
             hedge_level.price,
             available_hedge,
+            is_maker_order=True,
         )
         if not metrics:
             return None
@@ -945,8 +947,9 @@ class ModularArbitrageMM(ModularArbitrage):
         if opinion_price is None:
             return None
 
+        # 流动性做市模式：Opinion 挂单为 maker order，不收手续费
         order_size, effective_size = self.fee_calculator.get_order_size_for_platform(
-            "opinion", opinion_price, target_size, verbose=False
+            "opinion", opinion_price, target_size, is_maker_order=True, verbose=False
         )
 
         # Opinion 最小名义金额检查：order_size * price >= 1.3 USDT

@@ -417,18 +417,34 @@ class ModularArbitrage:
         second_platform: str,
         second_price: Optional[float],
         min_size: Optional[float],
+        is_maker_order: bool = False,
     ) -> Optional[Dict[str, float]]:
-        """计算盈利性指标"""
+        """计算盈利性指标
+
+        Args:
+            match: 市场匹配对象
+            first_platform: 第一个平台名称
+            first_price: 第一个平台价格
+            second_platform: 第二个平台名称
+            second_price: 第二个平台价格
+            min_size: 最小数量
+            is_maker_order: 是否为流动性做市订单（maker order 不收手续费）
+        """
         assumed_size = max(self.config.roi_reference_size, min_size or 0.0)
 
         # 计算有效价格（含手续费）
-        eff_first = self.fee_calculator.calculate_opinion_cost_per_token(
-            first_price, assumed_size
-        ) if first_platform == "opinion" else self.fee_calculator.round_price(first_price)
+        # 如果是 maker order，Opinion 平台不收取手续费，直接使用价格
+        if is_maker_order:
+            eff_first = self.fee_calculator.round_price(first_price)
+            eff_second = self.fee_calculator.round_price(second_price)
+        else:
+            eff_first = self.fee_calculator.calculate_opinion_cost_per_token(
+                first_price, assumed_size
+            ) if first_platform == "opinion" else self.fee_calculator.round_price(first_price)
 
-        eff_second = self.fee_calculator.calculate_opinion_cost_per_token(
-            second_price, assumed_size
-        ) if second_platform == "opinion" else self.fee_calculator.round_price(second_price)
+            eff_second = self.fee_calculator.calculate_opinion_cost_per_token(
+                second_price, assumed_size
+            ) if second_platform == "opinion" else self.fee_calculator.round_price(second_price)
 
         if eff_first is None or eff_second is None:
             return None
