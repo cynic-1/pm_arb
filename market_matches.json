@@ -1391,32 +1391,6 @@
     "polymarket_neg_risk": false
   },
   {
-    "question": "Logan Paul’s Pikachu Illustrator Sale Price - >$6m",
-    "opinion_market_id": 3242,
-    "opinion_yes_token": "53681999169640517905664742348301962996725824046969990273975225823335307123712",
-    "opinion_no_token": "29316653039005710043617386056630584701127815044813492253995044237687598414729",
-    "polymarket_condition_id": "0x4f48e6165ed94dfc8d70e9c41bd9461b6cdcd8131695f1721cfe6eaa5599c262",
-    "polymarket_yes_token": "97616985323142580983971807548850764902081243604205991139877269532503118698325",
-    "polymarket_no_token": "78011236440210301900948684264515942271208527805809303716211744955049570165464",
-    "polymarket_slug": "will-logan-pauls-psa-10-pokmon-illustrator-sale-price-be-over-16-million-278",
-    "similarity_score": 1.0,
-    "cutoff_at": 1772236800,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Logan Paul’s Pikachu Illustrator Sale Price - >$7m",
-    "opinion_market_id": 3243,
-    "opinion_yes_token": "13575671746647308945092717060575474858368813074295074837849010246614996700166",
-    "opinion_no_token": "71860179212514674745931716524999707634209358655041046558608506488378304933975",
-    "polymarket_condition_id": "0x203e95f71b02303e25857ba137d53d5a475f2a27c208b5ae0a7f7f702ae2d0ac",
-    "polymarket_yes_token": "115181553947891495706456427038958711490227235500427258978841776605777912751210",
-    "polymarket_no_token": "7161906153224224407370336760633445103785276166334589188046811681528887945384",
-    "polymarket_slug": "will-logan-pauls-psa-10-pokmon-illustrator-sale-price-be-over-17-million-669",
-    "similarity_score": 1.0,
-    "cutoff_at": 1772236800,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "Logan Paul’s Pikachu Illustrator Sale Price - >$10m",
     "opinion_market_id": 3246,
     "opinion_yes_token": "93435953815215320700598632988882838098234557514206527089879439125622229414856",
