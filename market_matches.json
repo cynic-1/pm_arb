@@ -1950,19 +1950,6 @@
     "polymarket_neg_risk": false
   },
   {
-    "question": "Logan Paul 1st edition Charizard Sale Price? - >1m",
-    "opinion_market_id": 3474,
-    "opinion_yes_token": "59977705441172209038664332037788868188349800877545323435996739343664273714615",
-    "opinion_no_token": "3873180416362913902323157610197728827002043329166300175856286507021912369567",
-    "polymarket_condition_id": "0x1d6ce8bb517f0d984875825b7cb59545f6756129b07785886dbd43af8f850785",
-    "polymarket_yes_token": "20367049410797771352220450889646002461172937595172751757773716732464055162178",
-    "polymarket_no_token": "100270974168471906262737791142523579773490044617020238272344242333507889053683",
-    "polymarket_slug": "will-the-logan-paul-1st-edition-charizard-sale-price-be-over-1pt1m",
-    "similarity_score": 1.0,
-    "cutoff_at": 1772236800,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "Logan Paul’s Pikachu Illustrator Sale Price - >$4m",
     "opinion_market_id": 3240,
     "opinion_yes_token": "53647924542344405029573840902671185339851514238912476637970950176486675203792",
@@ -2023,19 +2010,6 @@
     "polymarket_yes_token": "82901799715930045311809212542225092826839455972178920747166234033810084508110",
     "polymarket_no_token": "2067891916326150127826753884863730268931932594834881748788499812590988545417",
     "polymarket_slug": "will-the-us-collect-less-than-100b-in-revenue-in-2025",
-    "similarity_score": 1.0,
-    "cutoff_at": 1772236800,
-    "polymarket_neg_risk": true
-  },
-  {
-    "question": "How much revenue will the U.S. raise from tariffs in 2025? - $500b+",
-    "opinion_market_id": 3020,
-    "opinion_yes_token": "82074865043724030638303074410782111175374273694337200248804195967226449281208",
-    "opinion_no_token": "1190595278742215234655782595515572935983430544832653499883275764442224342431",
-    "polymarket_condition_id": "0x7130b8d9bb59393ede189911ba57783debc1900dffb8143c3cb0027952e2f7df",
-    "polymarket_yes_token": "19180751334892649957685662514970856594118361572000181281162861811532650604260",
-    "polymarket_no_token": "50221315964000194764695024582522009520159992363520263771661265416131198909217",
-    "polymarket_slug": "will-the-us-collect-between-200b-and-500b-in-revenue-in-2025",
     "similarity_score": 1.0,
     "cutoff_at": 1772236800,
     "polymarket_neg_risk": true
