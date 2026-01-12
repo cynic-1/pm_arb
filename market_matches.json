@@ -1781,32 +1781,6 @@
     "polymarket_neg_risk": true
   },
   {
-    "question": "How many jobs added in the U.S. in January? - <0",
-    "opinion_market_id": 3982,
-    "opinion_yes_token": "57873293518071928343625939815399677184034119008513981680724079488079018149681",
-    "opinion_no_token": "58523014391490868533925114424878862974614898232462431078821305003067280089655",
-    "polymarket_condition_id": "0x70ba5e3be93b05076d870f17eec57b45ab7c89aae44a6c3f37171bee5ae320fa",
-    "polymarket_yes_token": "98284609236456440285077723924969606622436775822298650136189080634966708666140",
-    "polymarket_no_token": "59937401409592963032887603572563039554401960369329386860863695363177568066025",
-    "polymarket_slug": "will-the-us-add-between-75k-and-100k-jobs-in-january",
-    "similarity_score": 1.0,
-    "cutoff_at": 1770336000,
-    "polymarket_neg_risk": true
-  },
-  {
-    "question": "How many jobs added in the U.S. in January? - >125k",
-    "opinion_market_id": 3988,
-    "opinion_yes_token": "61214136380395517885887942920069829722138507875903456263232028773565248250779",
-    "opinion_no_token": "68254653022799647946466497106718783033401992963391467542739217740259391542828",
-    "polymarket_condition_id": "0x7f95c14386e9f8c1cad42e4db45975d1aea5ed9f735c6473d6985052e2163299",
-    "polymarket_yes_token": "39228096108047728442807537221912004599348738318787464051426179122074571507871",
-    "polymarket_no_token": "26068494461228572655800545555837506365324935728985966228129092150503518227331",
-    "polymarket_slug": "will-the-us-add-between-100k-and-125k-jobs-in-january",
-    "similarity_score": 1.0,
-    "cutoff_at": 1770336000,
-    "polymarket_neg_risk": true
-  },
-  {
     "question": "Super Bowl Champion 2026 - Buffalo",
     "opinion_market_id": 1370,
     "opinion_yes_token": "10385568570732655019718006491263381698577534692002228361905799284899271917664",
