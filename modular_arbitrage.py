@@ -483,39 +483,37 @@ class ModularArbitrage:
         prefix = f"[{context}] " if context else ""
         last_result = None
 
-        for attempt in range(1, self.config.order_max_retries + 1):
-            try:
-                result = self.clients.get_opinion_client().place_order_fast(order)
-                last_result = result
+        # opinion下单不重试，因为重试耗时可能导致订单过期
+        try:
+            result = self.clients.get_opinion_client().place_order_fast(order)
+            last_result = result
 
-                if getattr(result, "errno", 0) == 0:
-                    return True, result
+            if getattr(result, "errno", 0) == 0:
+                return True, result
 
-                err_msg = str(getattr(result, "errmsg", "unknown error"))
-                logger.error(
-                    f"⚠️ {prefix}Opinion 下单失败 (尝试 {attempt}/{self.config.order_max_retries}): {err_msg}"
-                )
+            err_msg = str(getattr(result, "errmsg", "unknown error"))
+            logger.error(
+                f"⚠️ {prefix}Opinion 下单失败 : {err_msg}"
+            )
 
-                # 检查余额不足错误
-                if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
-                    logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
-                    logger.error(f"错误详情: {err_msg}")
-                    self._insufficient_balance_flag.set()
-                    os._exit(1)  # 强制退出整个进程
+            # 检查余额不足错误
+            if "insufficient balance" in err_msg.lower() or "balance" in err_msg.lower():
+                logger.error(f"\n❌ 检测到 Opinion 余额不足，立即退出程序")
+                logger.error(f"错误详情: {err_msg}")
+                self._insufficient_balance_flag.set()
+                os._exit(1)  # 强制退出整个进程
 
-            except Exception as exc:
-                exc_msg = str(exc)
-                logger.error(f"⚠️ {prefix}Opinion 下单异常 (尝试 {attempt}/{self.config.order_max_retries}): {exc_msg}")
+        except Exception as exc:
+            exc_msg = str(exc)
+            logger.error(f"⚠️ {prefix}Opinion 下单异常 : {exc_msg}")
 
-                # 检查余额不足错误
-                if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
-                    logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
-                    logger.error(f"异常详情: {exc_msg}")
-                    self._insufficient_balance_flag.set()
-                    os._exit(1)  # 强制退出整个进程
+            # 检查余额不足错误
+            if "insufficient balance" in exc_msg.lower() or "balance" in exc_msg.lower():
+                logger.error(f"\n❌ 检测到 Opinion 余额不足异常，立即退出程序")
+                logger.error(f"异常详情: {exc_msg}")
+                self._insufficient_balance_flag.set()
+                os._exit(1)  # 强制退出整个进程
 
-            if attempt < self.config.order_max_retries:
-                time.sleep(self.config.order_retry_delay)
 
         return False, last_result
 

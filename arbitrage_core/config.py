@@ -44,7 +44,7 @@ class ArbitrageConfig:
     opinion_max_orderbook_age: float = field(default_factory=lambda: max(1.0, float(os.getenv("OPINION_MAX_ORDERBOOK_AGE", "30.0"))))  # 订单簿最大有效时间（秒）
 
     # ==================== 下单配置 ====================
-    order_max_retries: int = field(default_factory=lambda: max(1, int(os.getenv("ORDER_MAX_RETRIES", "3"))))
+    order_max_retries: int = field(default_factory=lambda: max(0, int(os.getenv("ORDER_MAX_RETRIES", "3"))))
     order_retry_delay: float = field(default_factory=lambda: max(0.0, float(os.getenv("ORDER_RETRY_DELAY", "1.0"))))
 
     # ==================== 价格和手续费配置 ====================
