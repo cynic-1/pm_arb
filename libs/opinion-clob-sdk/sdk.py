@@ -3,6 +3,8 @@ import logging
 import math
 from time import time
 from decimal import Decimal
+import time as time_module  # 用于perf_counter
+import threading
 
 from eth_typing import ChecksumAddress, HexStr
 from opinion_api.api.prediction_market_api import PredictionMarketApi
@@ -609,7 +611,13 @@ class Client:
                 signatureType=POLY_GNOSIS_SAFE,
                 signer=self.contract_caller.signer.address()
             )
+
+            # t5: 密码学签名开始
+            t5_start = time_module.perf_counter()
             signerOrder = builder.build_signed_order(order_data)
+            t5_elapsed = (time_module.perf_counter() - t5_start) * 1000
+            if t5_elapsed > 1.0:  # 只记录有意义的时间
+                logging.info(f"⏱️ [SDK] t5_crypto_signing: {t5_elapsed:.2f}ms")
 
             order_dict = signerOrder.order.dict()
 
@@ -641,7 +649,13 @@ class Client:
                 order_exp_time='0'
             )
 
+            # t6: HTTP请求开始
+            t6_start = time_module.perf_counter()
             result = self.market_api.openapi_order_post(apikey=self.api_key, add_order_req=v2_add_order_req)
+            t6_elapsed = (time_module.perf_counter() - t6_start) * 1000
+            if t6_elapsed > 1.0:  # 只记录有意义的时间
+                logging.info(f"⏱️ [SDK] t6_http_request: {t6_elapsed:.2f}ms")
+
             return result
         except InvalidParamError as e:
             logging.error(f"Validation error: {e}")

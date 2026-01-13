@@ -80,6 +80,7 @@ from arbitrage_core import (
 )
 from arbitrage_core.utils import setup_logger
 from arbitrage_core.utils.helpers import to_float, to_int, dedupe_tokens, infer_tick_size_from_price
+from arbitrage_core.timing import get_timing_tracker, get_token_bucket_monitor
 
 # Opinion SDK
 from opinion_clob_sdk.chain.py_order_utils.model.order import PlaceOrderDataInput
@@ -130,6 +131,10 @@ class ModularArbitrage:
             capacity=self.config.opinion_orderbook_workers
         )
 
+        # 时间测量追踪器
+        self._timing_tracker = get_timing_tracker()
+        self._token_bucket_monitor = get_token_bucket_monitor()
+
         print("✅ 模块化套利检测器初始化完成!\n")
 
     # ==================== 订单簿管理 ====================
@@ -138,8 +143,12 @@ class ModularArbitrage:
         """Opinion API 速率限制 - 使用令牌桶算法"""
         if self.config.opinion_max_rps <= 0:
             return
-        # 获取令牌，最多等待5秒
+        # 获取令牌，最多等待5秒（监控等待时间）
+        start_time = time.perf_counter()
         self._opinion_token_bucket.acquire(timeout=5.0)
+        wait_time_ms = (time.perf_counter() - start_time) * 1000
+        if wait_time_ms > 0.1:  # 只记录有意义的等待
+            self._token_bucket_monitor.record_wait(wait_time_ms)
 
     def get_opinion_orderbook(
         self, token_id: str, depth: int = 5
@@ -477,18 +486,26 @@ class ModularArbitrage:
     # ==================== 订单执行 ====================
 
     def place_opinion_order_with_retries(
-        self, order: Any, context: str = ""
+        self, order: Any, context: str = "", session_id: Optional[str] = None
     ) -> Tuple[bool, Optional[Any]]:
         """Opinion 下单带重试"""
         prefix = f"[{context}] " if context else ""
         last_result = None
 
+        # t4: 进入Opinion SDK（即将调用place_order_fast）
+        if session_id:
+            self._timing_tracker.mark("t4_enter_opinion_sdk", session_id)
+
         # opinion下单不重试，因为重试耗时可能导致订单过期
         try:
+            # t5和t6将在Opinion SDK内部测量（通过修改SDK）
             result = self.clients.get_opinion_client().place_order_fast(order)
             last_result = result
 
             if getattr(result, "errno", 0) == 0:
+                # t7: 订单提交成功
+                if session_id:
+                    self._timing_tracker.mark("t7_order_success", session_id)
                 return True, result
 
             err_msg = str(getattr(result, "errmsg", "unknown error"))
@@ -694,25 +711,48 @@ class ModularArbitrage:
 
         if lower <= annualized_rate <= upper:
             profit_rate = opportunity.get('profit_rate', 0)
+
+            # t0: 发现套利机会（启动时间测量会话）
+            session_id = self._timing_tracker.start_session(
+                profit_rate=profit_rate,
+                annualized_rate=annualized_rate,
+                opportunity_type=opportunity.get('type'),
+                order_size=float(os.getenv("IMMEDIATE_ORDER_SIZE", "200"))
+            )
+            opportunity['_timing_session_id'] = session_id  # 保存session_id
+
             print(f"  ⚡ 年化收益率 {annualized_rate:.2f}% 在阈值 [{lower:.2f}%,{upper:.2f}%]，启动即时执行线程 (利润率={profit_rate:.2f}%)")
+
+            # t1: 进入自动执行判断
+            self._timing_tracker.mark("t1_auto_execute_check", session_id)
+
             try:
                 self._spawn_execute_thread(opportunity)
             except Exception as exc:
                 print(f"⚠️ 无法启动即时执行线程: {exc}")
+                self._timing_tracker.end_session(session_id, success=False)
         else:
             print(f"  🔶 年化收益率 {annualized_rate:.2f}% 不在阈值范围 [{lower:.2f}%,{upper:.2f}%]，跳过自动执行")
 
     def _spawn_execute_thread(self, opportunity: Dict[str, Any]) -> None:
         """启动一个后台线程来执行给定的套利机会（非交互）"""
+        session_id = opportunity.get('_timing_session_id')
+
         # 检查距离上次执行是否超过 1 秒
         with self._immediate_exec_lock:
             now = time.time()
             elapsed = now - self._last_immediate_exec_time
             if elapsed < 1.0:
                 print(f"  ⏳ 距离上次立即套利下单仅 {elapsed:.2f}s，跳过本次执行 (需间隔 >= 1s)")
+                if session_id:
+                    self._timing_tracker.end_session(session_id, success=False)
                 return
             # 更新上次执行时间
             self._last_immediate_exec_time = now
+
+        # t2: 线程启动完成
+        if session_id:
+            self._timing_tracker.mark("t2_thread_spawn", session_id)
 
         thread_name = f"instant-exec-{len(self._active_exec_threads)+1}"
         t = threading.Thread(
@@ -752,6 +792,8 @@ class ModularArbitrage:
         注意: 此函数尽量复用已有下单逻辑，但为避免复杂交互，采取保守策略：
         - immediate: 在两个平台分别下限价买单
         """
+        session_id = opp.get('_timing_session_id')
+
         try:
             # 读取最小下单量配置
             try:
@@ -765,6 +807,10 @@ class ModularArbitrage:
                 order_size = default_size
 
             print(f"🟢 即时执行机会: {opp.get('name')} | 利润率={opp.get('profit_rate'):.2f}% | 数量={order_size:.2f}")
+
+            # t3: 订单准备完成（在线程内部）
+            if session_id:
+                self._timing_tracker.mark("t3_order_prepare_start", session_id)
 
             # Immediate execution: place both orders
             if opp.get('type') == 'immediate':
@@ -802,14 +848,22 @@ class ModularArbitrage:
                         )
                         success, res1 = self.place_opinion_order_with_retries(
                             order1,
-                            context="即时执行首单"
+                            context="即时执行首单",
+                            session_id=session_id
                         )
                         if success and res1:
                             print("✅ Opinion 订单提交成功 (即时执行)")
+                            # 结束时间测量会话
+                            if session_id:
+                                self._timing_tracker.end_session(session_id, success=True)
                         else:
                             print(f"❌ Opinion 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                            if session_id:
+                                self._timing_tracker.end_session(session_id, success=False)
                     except Exception as e:
                         print(f"❌ Opinion 下单异常: {e}")
+                        if session_id:
+                            self._timing_tracker.end_session(session_id, success=False)
                 else:
                     try:
                         # 创建 Polymarket 订单参数
@@ -1215,6 +1269,22 @@ def main():
     except Exception as e:
         print(f"\n❌ 发生错误: {e}")
         traceback.print_exc()
+    finally:
+        # 打印时间测量统计
+        print("\n" + "="*80)
+        print("📊 性能统计报告")
+        print("="*80 + "\n")
+
+        timing_tracker = get_timing_tracker()
+        tb_monitor = get_token_bucket_monitor()
+
+        # 打印时间统计
+        timing_tracker.log_statistics()
+
+        # 打印Token Bucket统计
+        tb_monitor.log_statistics()
+
+        print("💡 提示: 使用 'python tools/timing_analyzer.py' 查看详细分析\n")
 
 
 if __name__ == "__main__":
