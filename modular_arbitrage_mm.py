@@ -312,15 +312,19 @@ class ModularArbitrageMM(ModularArbitrage):
             "cost": metrics.get("cost"),
         }
 
-    def _scan_liquidity_opportunities(self) -> List[Dict[str, Any]]:
+    def _scan_and_execute_liquidity_opportunities(self) -> None:
+        """扫描流动性机会并在每对市场获取订单簿后立即执行下单/撤单操作。"""
         if not self.market_matches:
             logger.error("⚠️ 未加载市场匹配，无法扫描流动性机会")
-            return []
+            return
 
-        candidate_map: Dict[str, Dict[str, Any]] = {}
         total_matches = len(self.market_matches)
         batch_size = self.config.orderbook_batch_size
         logger.info(f"🔍 扫描 {total_matches} 个市场的流动性机会 (年化阈值 ≥ {self.liquidity_min_annualized:.2f}%)")
+
+        # 跟踪本轮扫描中仍然有效的订单 keys
+        active_keys_this_cycle: set = set()
+        total_opportunities_found = 0
 
         for batch_start in range(0, total_matches, batch_size):
             batch_matches = self.market_matches[batch_start : batch_start + batch_size]
@@ -339,20 +343,76 @@ class ModularArbitrageMM(ModularArbitrage):
                 poly_books = future_poly.result()
                 opinion_books = future_opinion.result()
 
+            # 收集本批次的候选机会
+            batch_candidates: Dict[str, Dict[str, Any]] = {}
+            batch_match_keys: set = set()  # 本批次涉及的所有可能的 keys
+
             for match in batch_matches:
                 opinion_yes_book = opinion_books.get(match.opinion_yes_token)
                 poly_yes_book = poly_books.get(match.polymarket_yes_token)
                 opinion_yes_book, poly_yes_book = self._ensure_book_skew_within_bounds(match, opinion_yes_book, poly_yes_book)
+
+                # 记录本批次涉及的所有可能的 keys（无论是否有机会）
+                if match.opinion_yes_token:
+                    batch_match_keys.add(self._make_liquidity_key(match, match.opinion_yes_token, "opinion_yes_poly_no"))
+                if match.opinion_no_token:
+                    batch_match_keys.add(self._make_liquidity_key(match, match.opinion_no_token, "opinion_no_poly_yes"))
+
                 if not opinion_yes_book or not poly_yes_book:
                     continue
 
                 for candidate in self._collect_liquidity_candidates(match, opinion_yes_book, poly_yes_book):
-                    prev = candidate_map.get(candidate["key"])
+                    prev = batch_candidates.get(candidate["key"])
                     if not prev or (candidate.get("annualized_rate") or 0.0) > (prev.get("annualized_rate") or 0.0):
-                        candidate_map[candidate["key"]] = candidate
+                        batch_candidates[candidate["key"]] = candidate
 
-        logger.info(f"🔎 找到 {len(candidate_map)} 个满足年化收益阈值的机会")
-        return list(candidate_map.values())
+            total_opportunities_found += len(batch_candidates)
+
+            # 立即处理本批次：撤销不再有效的订单
+            self._cancel_batch_obsolete_orders(batch_match_keys, set(batch_candidates.keys()))
+
+            # 立即处理本批次：按年化收益排序后下单
+            if batch_candidates:
+                sorted_candidates = sorted(
+                    batch_candidates.values(),
+                    key=lambda x: x.get("annualized_rate") or 0.0,
+                    reverse=True
+                )
+                for candidate in sorted_candidates:
+                    with self._liquidity_orders_lock:
+                        active_count = len(self.liquidity_orders)
+                    if active_count >= self.max_liquidity_orders:
+                        break
+                    if self._ensure_liquidity_order(candidate):
+                        active_keys_this_cycle.add(candidate["key"])
+
+        logger.info(f"🔎 本轮扫描共找到 {total_opportunities_found} 个满足年化收益阈值的机会")
+
+    def _cancel_batch_obsolete_orders(self, batch_keys: set, valid_keys: set) -> None:
+        """撤销本批次中不再有效的订单。
+
+        Args:
+            batch_keys: 本批次涉及的所有可能的订单 keys
+            valid_keys: 本批次中仍然有效的订单 keys
+        """
+        with self._liquidity_orders_lock:
+            items = [(key, state) for key, state in self.liquidity_orders.items() if key in batch_keys]
+
+        cancelled_count = 0
+        failed_count = 0
+
+        for key, state in items:
+            if key in valid_keys:
+                continue
+
+            success = self._cancel_liquidity_order(state, reason="opportunity gone")
+            if success:
+                cancelled_count += 1
+            else:
+                failed_count += 1
+
+        if cancelled_count > 0 or failed_count > 0:
+            logger.info(f"📊 批次订单取消结果: 成功={cancelled_count}, 失败={failed_count}")
 
     def _register_liquidity_order_state(self, state: LiquidityOrderState) -> None:
         with self._liquidity_orders_lock:
@@ -489,25 +549,6 @@ class ModularArbitrageMM(ModularArbitrage):
             traceback.print_exc()
             return False
 
-    def _cancel_obsolete_liquidity_orders(self, desired_keys: set) -> None:
-        with self._liquidity_orders_lock:
-            items = list(self.liquidity_orders.items())
-
-        cancelled_count = 0
-        failed_count = 0
-
-        for key, state in items:
-            if key in desired_keys:
-                continue
-
-            success = self._cancel_liquidity_order(state, reason="opportunity gone")
-            if success:
-                cancelled_count += 1
-            else:
-                failed_count += 1
-
-        if cancelled_count > 0 or failed_count > 0:
-            logger.info(f"📊 订单取消结果: 成功={cancelled_count}, 失败={failed_count}")
 
     def _ensure_liquidity_status_thread(self) -> None:
         if self._liquidity_status_thread and self._liquidity_status_thread.is_alive():
@@ -1055,21 +1096,9 @@ class ModularArbitrageMM(ModularArbitrage):
         return False
 
     def run_liquidity_provider_cycle(self) -> None:
-        candidates = self._scan_liquidity_opportunities()
-        if not candidates:
-            self._cancel_obsolete_liquidity_orders(set())
-            self._update_liquidity_order_statuses()
-            return
-
-        candidates.sort(key=lambda x: x.get("annualized_rate") or 0.0, reverse=True)
-        desired_keys: List[str] = []
-        for candidate in candidates:
-            if len(desired_keys) >= self.max_liquidity_orders:
-                break
-            if self._ensure_liquidity_order(candidate):
-                desired_keys.append(candidate["key"])
-
-        self._cancel_obsolete_liquidity_orders(set(desired_keys))
+        # 使用新的扫描和执行方法：每批次市场获取订单簿后立即处理下单/撤单
+        self._scan_and_execute_liquidity_opportunities()
+        # 更新订单状态
         self._update_liquidity_order_statuses()
 
     def run_liquidity_provider_loop(self, interval_seconds: Optional[float] = None) -> None:
