@@ -835,6 +835,27 @@ class ModularArbitrage:
                 print(f"  第一平台下单: {first_order_size:.2f} -> 预期实际: {first_effective_size:.2f}")
                 print(f"  第二平台下单: {second_order_size:.2f} -> 预期实际: {second_effective_size:.2f}")
 
+                # 检查平台下单金额是否满足最小限制 (1.3 USDT)
+                MIN_ORDER_AMOUNT = 1.3
+
+                # 检查第一个平台
+                first_order_amount = first_order_size * (first_price if first_price is not None else opp['first_price'])
+                if first_order_amount < MIN_ORDER_AMOUNT:
+                    platform_name = opp.get('first_platform', 'Unknown').capitalize()
+                    print(f"⚠️ 跳过套利: {platform_name} 首单金额 ${first_order_amount:.2f} 小于最小限制 ${MIN_ORDER_AMOUNT}")
+                    if session_id:
+                        self._timing_tracker.end_session(session_id, success=False)
+                    return
+
+                # 检查第二个平台
+                second_order_amount = second_order_size * (second_price if second_price is not None else opp['second_price'])
+                if second_order_amount < MIN_ORDER_AMOUNT:
+                    platform_name = opp.get('second_platform', 'Unknown').capitalize()
+                    print(f"⚠️ 跳过套利: {platform_name} 对冲单金额 ${second_order_amount:.2f} 小于最小限制 ${MIN_ORDER_AMOUNT}")
+                    if session_id:
+                        self._timing_tracker.end_session(session_id, success=False)
+                    return
+
                 # Place first order
                 if opp.get('first_platform') == 'opinion':
                     try:
