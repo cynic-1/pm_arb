@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
 删除JSON文件中question字段包含"FDV"的对象，并删除op_rules和poly_rules字段
+可选：按cutoff_at字段从小到大排序
 """
 import json
 import sys
 from pathlib import Path
 
 
-def remove_fdv_items(input_file, output_file=None, remove_rules=True):
+def remove_fdv_items(input_file, output_file=None, remove_rules=True, sort_by_cutoff=False):
     """
     从JSON文件中删除question包含"FDV"的对象，并删除op_rules和poly_rules字段
 
@@ -15,6 +16,7 @@ def remove_fdv_items(input_file, output_file=None, remove_rules=True):
         input_file: 输入的JSON文件路径
         output_file: 输出文件路径（可选，默认会覆盖原文件）
         remove_rules: 是否删除op_rules和poly_rules字段（默认True）
+        sort_by_cutoff: 是否按cutoff_at字段从小到大排序（默认False）
     """
     # 读取JSON文件
     print(f"正在读取文件: {input_file}")
@@ -50,6 +52,11 @@ def remove_fdv_items(input_file, output_file=None, remove_rules=True):
                 del item['poly_rules']
         print(f"从 {fields_removed_count} 个对象中删除了 op_rules 和 poly_rules 字段")
 
+    # 按cutoff_at排序
+    if sort_by_cutoff:
+        filtered_data.sort(key=lambda x: x.get('cutoff_at', float('inf')))
+        print("已按 cutoff_at 字段从小到大排序")
+
     # 确定输出文件
     if output_file is None:
         output_file = input_file
@@ -74,21 +81,25 @@ def remove_fdv_items(input_file, output_file=None, remove_rules=True):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("用法: python remove_fdv.py <input_file> [output_file] [--keep-rules]")
+        print("用法: python remove_fdv.py <input_file> [output_file] [--keep-rules] [--sort-by-cutoff]")
         print("示例: python remove_fdv.py 1228.json")
         print("示例: python remove_fdv.py 1228.json 1228_filtered.json")
         print("示例: python remove_fdv.py 1228.json --keep-rules  # 保留rules字段")
+        print("示例: python remove_fdv.py 1228.json --sort-by-cutoff  # 按cutoff_at排序")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = None
     remove_rules = True
+    sort_by_cutoff = True
 
     # 解析参数
     for i in range(2, len(sys.argv)):
         arg = sys.argv[i]
         if arg == '--keep-rules':
             remove_rules = False
+        elif arg == '--sort-by-cutoff':
+            sort_by_cutoff = True
         elif output_file is None and not arg.startswith('--'):
             output_file = arg
 
@@ -96,4 +107,4 @@ if __name__ == "__main__":
         print(f"错误: 文件不存在 - {input_file}")
         sys.exit(1)
 
-    remove_fdv_items(input_file, output_file, remove_rules)
+    remove_fdv_items(input_file, output_file, remove_rules, sort_by_cutoff)

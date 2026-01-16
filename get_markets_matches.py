@@ -536,12 +536,15 @@ class CrossPlatformArbitrage:
 
         for op_child in op_children:
             child_title = op_child["child_title"]
-            child_title_lower = child_title.lower().strip()
+            # 仅保留字母和数字，删除其余符号
+            child_title_lower = ''.join(c for c in child_title.lower() if c.isalnum()).strip()
 
             found_match = None
             for pm_child in unmatched_pm:
                 pm_question = pm_child["question"].lower().strip()
-                if child_title_lower in pm_question or pm_question in child_title_lower:
+                # 对 pm_question 也做同样的字母数字过滤，以便正确匹配数字（如 88000 vs 88,000）
+                pm_question_alnum = ''.join(c for c in pm_question if c.isalnum())
+                if child_title_lower in pm_question_alnum or pm_question_alnum in child_title_lower:
                     found_match = pm_child
                     break
 
