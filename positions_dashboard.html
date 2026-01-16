@@ -45,7 +45,7 @@
 
     .sections {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
       gap: 1.2rem;
     }
 
@@ -55,6 +55,13 @@
       border-radius: 14px;
       padding: 1.4rem;
       box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45);
+      overflow: hidden;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 0 -0.5rem;
+      padding: 0 0.5rem;
     }
 
     section header {
@@ -77,7 +84,26 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      table-layout: fixed;
+    }
+
+    table.trades-table {
+      table-layout: auto;
+      min-width: 100%;
+    }
+
+    table.trades-table td,
+    table.trades-table th {
+      white-space: nowrap;
+      padding: 0.4rem 0.5rem;
+    }
+
+    table.trades-table td:nth-child(2) {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     th,
@@ -143,6 +169,39 @@
       padding: 1rem 0;
       color: var(--muted);
     }
+
+    .more-btn {
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+
+    .more-btn:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--accent);
+    }
+
+    .trade-side-buy {
+      color: var(--gain);
+      font-weight: 500;
+    }
+
+    .trade-side-sell {
+      color: var(--loss);
+      font-weight: 500;
+    }
+
+    .trade-type {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(148, 163, 184, 0.15);
+    }
   </style>
 </head>
 <body>
@@ -157,6 +216,82 @@
     </div>
 
     <div class="sections">
+      <!-- Recent Trades Section -->
+      <section id="poly-trades-section">
+        <header>
+          <div>
+            <h2 style="margin: 0">Polymarket 最近交易</h2>
+            <p class="pill">最近成交记录</p>
+          </div>
+          <button class="more-btn" id="poly-trades-more-btn" onclick="togglePolyTrades()">展开更多</button>
+        </header>
+        <div class="table-wrapper">
+          <table id="poly-trades-table" class="trades-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>市场</th>
+                <th>方向</th>
+                <th>份额</th>
+                <th>价格</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="meta" id="poly-trades-empty" style="display: none; text-align: center;">暂无交易记录</p>
+      </section>
+
+      <section id="opinion-trades-section">
+        <header>
+          <div>
+            <h2 style="margin: 0">Opinion 最近交易</h2>
+            <p class="pill">最近成交记录</p>
+          </div>
+          <button class="more-btn" id="opinion-trades-more-btn" onclick="toggleOpinionTrades()">展开更多</button>
+        </header>
+        <div class="table-wrapper">
+          <table id="opinion-trades-table" class="trades-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>市场</th>
+                <th>方向</th>
+                <th>份额</th>
+                <th>价格</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="meta" id="opinion-trades-empty" style="display: none; text-align: center;">暂无交易记录</p>
+      </section>
+
+      <section id="matched-pairs-section" style="grid-column: 1 / -1;">
+        <header>
+          <div>
+            <h2 style="margin: 0">跨平台配对仓位</h2>
+            <p class="pill">完全匹配的对冲仓位</p>
+          </div>
+          <span class="tag">结算价值</span>
+        </header>
+        <div class="value-large" id="matched-total">$0.00</div>
+        <p class="meta" id="matched-error"></p>
+        <table id="matched-pairs-table">
+          <thead>
+            <tr>
+              <th>市场</th>
+              <th>类型</th>
+              <th>Poly份额</th>
+              <th>Opinion份额</th>
+              <th>匹配份额</th>
+              <th>结算价值</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
       <section id="polymarket-section">
         <header>
           <div>
@@ -211,16 +346,29 @@
 
   <script>
     const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+    const DEFAULT_TRADES_LIMIT = 10;
+    const EXPANDED_TRADES_LIMIT = 50;
     let nextRefresh = Date.now() + REFRESH_INTERVAL_MS;
     let countdownTimer;
+    let polyTradesExpanded = false;
+    let opinionTradesExpanded = false;
+    let allPolyTrades = [];
+    let allOpinionTrades = [];
+    let marketMatches = {}; // polymarket condition_id -> question mapping
+    let opinionMarketMatches = {}; // opinion market_id -> question mapping
 
     const polyTable = document.querySelector('#polymarket-table tbody');
     const opinionTable = document.querySelector('#opinion-table tbody');
+    const matchedTable = document.querySelector('#matched-pairs-table tbody');
+    const polyTradesTable = document.querySelector('#poly-trades-table tbody');
+    const opinionTradesTable = document.querySelector('#opinion-trades-table tbody');
     const polyTotal = document.getElementById('poly-total');
     const polyAddressLabel = document.getElementById('poly-address');
     const polyError = document.getElementById('poly-error');
     const opinionTotal = document.getElementById('opinion-total');
     const opinionError = document.getElementById('opinion-error');
+    const matchedTotal = document.getElementById('matched-total');
+    const matchedError = document.getElementById('matched-error');
     const lastUpdated = document.getElementById('last-updated');
     const countdown = document.getElementById('countdown');
     const opinionStatus = document.getElementById('opinion-status');
@@ -231,6 +379,10 @@
           throw new Error(`HTTP ${res.status}`);
         }
         const data = await res.json();
+        // Build market matches lookup from matched pairs data
+        if (data.matchedPairs && data.matchedPairs.pairs) {
+          // Also try to get from positions data for condition_id mapping
+        }
         renderTables(data);
         lastUpdated.textContent = new Date(data.lastUpdated).toLocaleString();
         nextRefresh = Date.now() + REFRESH_INTERVAL_MS;
@@ -240,9 +392,147 @@
       }
     }
 
+    async function fetchMarketMatches() {
+      try {
+        const res = await fetch('/api/market_matches', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          data.forEach(match => {
+            if (match.polymarket_condition_id) {
+              marketMatches[match.polymarket_condition_id] = match.question;
+            }
+            if (match.opinion_market_id) {
+              opinionMarketMatches[match.opinion_market_id] = match.question;
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch market matches:', err);
+      }
+    }
+
+    async function fetchTrades(limit = DEFAULT_TRADES_LIMIT) {
+      try {
+        const res = await fetch(`/api/trades?limit=${limit}`, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        allPolyTrades = data.polymarketTrades || [];
+        allOpinionTrades = data.opinionTrades || [];
+        renderPolyTrades();
+        renderOpinionTrades();
+      } catch (err) {
+        console.error('Failed to fetch trades:', err);
+      }
+    }
+
+    function togglePolyTrades() {
+      polyTradesExpanded = !polyTradesExpanded;
+      const btn = document.getElementById('poly-trades-more-btn');
+      if (polyTradesExpanded) {
+        btn.textContent = '收起';
+        fetchTrades(EXPANDED_TRADES_LIMIT);
+      } else {
+        btn.textContent = '展开更多';
+        fetchTrades(DEFAULT_TRADES_LIMIT);
+      }
+    }
+
+    function toggleOpinionTrades() {
+      opinionTradesExpanded = !opinionTradesExpanded;
+      const btn = document.getElementById('opinion-trades-more-btn');
+      if (opinionTradesExpanded) {
+        btn.textContent = '收起';
+        fetchTrades(EXPANDED_TRADES_LIMIT);
+      } else {
+        btn.textContent = '展开更多';
+        fetchTrades(DEFAULT_TRADES_LIMIT);
+      }
+    }
+
+    function formatUnixTimestamp(timestamp) {
+      if (!timestamp) return '--';
+      const ts = parseInt(timestamp, 10);
+      if (isNaN(ts)) return '--';
+      const date = new Date(ts * 1000);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function getMarketTitle(conditionId) {
+      return marketMatches[conditionId] || conditionId?.slice(0, 10) + '...' || '--';
+    }
+
+    function getOpinionMarketTitle(marketId) {
+      return opinionMarketMatches[marketId] || '--';
+    }
+
+    function renderPolyTrades() {
+      const trades = polyTradesExpanded ? allPolyTrades : allPolyTrades.slice(0, DEFAULT_TRADES_LIMIT);
+      const emptyEl = document.getElementById('poly-trades-empty');
+      if (!trades || trades.length === 0) {
+        polyTradesTable.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      polyTradesTable.innerHTML = '';
+      trades.forEach(trade => {
+        const tr = document.createElement('tr');
+        const matchTime = formatUnixTimestamp(trade.match_time);
+        const sideClass = trade.side === 'BUY' ? 'trade-side-buy' : 'trade-side-sell';
+        const marketTitle = getMarketTitle(trade.market);
+        const outcomeDisplay = trade.outcome || '';
+        const sideDisplay = `${trade.side || '--'}${outcomeDisplay ? ' ' + outcomeDisplay : ''}`;
+        tr.innerHTML = `
+          <td>${matchTime}</td>
+          <td title="${escapeHtml(marketTitle)}">${escapeHtml(marketTitle)}</td>
+          <td class="${sideClass}">${sideDisplay}</td>
+          <td>${formatNumber(trade.size)}</td>
+          <td>${formatUSD(trade.price)}</td>
+        `;
+        polyTradesTable.appendChild(tr);
+      });
+    }
+
+    function renderOpinionTrades() {
+      const trades = opinionTradesExpanded ? allOpinionTrades : allOpinionTrades.slice(0, DEFAULT_TRADES_LIMIT);
+      const emptyEl = document.getElementById('opinion-trades-empty');
+      if (!trades || trades.length === 0) {
+        opinionTradesTable.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      opinionTradesTable.innerHTML = '';
+      trades.forEach(trade => {
+        const tr = document.createElement('tr');
+        const createdAt = formatUnixTimestamp(trade.createdAt);
+        const sideClass = trade.side === 'BUY' ? 'trade-side-buy' : 'trade-side-sell';
+        const marketTitle = getOpinionMarketTitle(trade.marketId) || trade.marketTitle || '--';
+        const sideDisplay = `${trade.side || '--'}${trade.outcomeSide ? ' ' + trade.outcomeSide : ''}`;
+        tr.innerHTML = `
+          <td>${createdAt}</td>
+          <td title="${escapeHtml(marketTitle)}">${escapeHtml(marketTitle)}</td>
+          <td class="${sideClass}">${sideDisplay}</td>
+          <td>${formatNumber(trade.shares)}</td>
+          <td>${formatUSD(trade.price)}</td>
+        `;
+        opinionTradesTable.appendChild(tr);
+      });
+    }
+
     function renderTables(data) {
       renderPolymarket(data.polymarket);
       renderOpinion(data.opinion);
+      renderMatchedPairs(data.matchedPairs);
     }
 
     function renderPolymarket(poly) {
@@ -257,6 +547,67 @@
       opinionTotal.textContent = formatUSD(opinion.totalValue);
       opinionError.textContent = opinion.error ? `⚠️ ${opinion.error}` : '';
       renderRows(opinionTable, opinion.positions, ['marketTitle', 'side', 'shares', 'avgPrice', 'currentValue', 'unrealizedPnl'], opinionFormatter);
+    }
+
+    function renderMatchedPairs(matched) {
+      matchedTotal.textContent = formatUSD(matched.totalMatchedValue || 0);
+      matchedError.textContent = matched.error ? `⚠️ ${matched.error}` : '';
+      renderMatchedRows(matchedTable, matched.pairs || []);
+    }
+
+    function renderMatchedRows(tbody, pairs) {
+      tbody.innerHTML = '';
+      if (!pairs || pairs.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.className = 'empty';
+        td.textContent = '暂无跨平台配对仓位';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      pairs.forEach((pair) => {
+        const tr = document.createElement('tr');
+
+        // Market question
+        const tdQuestion = document.createElement('td');
+        tdQuestion.textContent = pair.question || '--';
+        tdQuestion.style.maxWidth = '300px';
+        tdQuestion.style.overflow = 'hidden';
+        tdQuestion.style.textOverflow = 'ellipsis';
+        tdQuestion.style.whiteSpace = 'nowrap';
+        tdQuestion.title = pair.question;
+        tr.appendChild(tdQuestion);
+
+        // Pair type
+        const tdType = document.createElement('td');
+        const typeColor = pair.pairType.startsWith('Cross') ? 'var(--accent)' : 'var(--text)';
+        tdType.innerHTML = `<span style="color: ${typeColor}">${pair.pairType}</span>`;
+        tr.appendChild(tdType);
+
+        // Poly shares
+        const tdPolyShares = document.createElement('td');
+        tdPolyShares.textContent = formatNumber(pair.polymarketPosition.size);
+        tr.appendChild(tdPolyShares);
+
+        // Opinion shares
+        const tdOpinionShares = document.createElement('td');
+        tdOpinionShares.textContent = formatNumber(pair.opinionPosition.size);
+        tr.appendChild(tdOpinionShares);
+
+        // Matched shares
+        const tdMatched = document.createElement('td');
+        tdMatched.innerHTML = `<strong>${formatNumber(pair.matchedShares)}</strong>`;
+        tr.appendChild(tdMatched);
+
+        // Settlement value
+        const tdValue = document.createElement('td');
+        tdValue.innerHTML = `<strong style="color: var(--gain)">${formatUSD(pair.matchedValue)}</strong>`;
+        tr.appendChild(tdValue);
+
+        tbody.appendChild(tr);
+      });
     }
 
     function renderRows(tbody, rows, columns, formatter) {
@@ -347,8 +698,15 @@
       tickCountdown();
     }, 1000);
 
-    fetchData();
+    // Initialize: fetch market matches first, then data and trades
+    async function init() {
+      await fetchMarketMatches();
+      fetchData();
+      fetchTrades();
+    }
+    init();
     setInterval(fetchData, REFRESH_INTERVAL_MS);
+    setInterval(() => fetchTrades(polyTradesExpanded || opinionTradesExpanded ? EXPANDED_TRADES_LIMIT : DEFAULT_TRADES_LIMIT), REFRESH_INTERVAL_MS);
   </script>
 </body>
 </html>

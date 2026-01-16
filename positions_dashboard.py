@@ -12,25 +12,31 @@ from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
 from opinion_clob_sdk import Client as OpinionClient
+from py_clob_client.client import ClobClient
+from py_clob_client.clob_types import TradeParams
 
 load_dotenv()
 
 POLYMARKET_ADDRESS = os.getenv(
-    "POLYMARKET_ADDRESS",
+    "PM_FUNDER",
     "0xbd6c2a16c00ab38338b241783d454981a750a568",
 )
+POLYMARKET_HOST = os.getenv("POLYMARKET_HOST", "https://clob.polymarket.com")
 POLYMARKET_POSITIONS_URL = "https://data-api.polymarket.com/positions"
 POLYMARKET_VALUE_URL = "https://data-api.polymarket.com/value"
+OPINION_OPENAPI_URL = "https://openapi.opinion.trade/openapi"
+OPINION_WALLET_ADDRESS = os.getenv("OP_WALLET_ADDRESS", "")
 VALUE_THRESHOLD = float(os.getenv("POSITION_VALUE_THRESHOLD", "1"))
 CACHE_SECONDS = int(os.getenv("DASHBOARD_CACHE_SECONDS", "600"))
 DEFAULT_PORT = int(os.getenv("DASHBOARD_PORT", "8080"))
 HTML_BASENAME = "positions_dashboard.html"
+MARKET_MATCHES_FILE = Path(__file__).parent / "market_matches.json"
 
 
 @dataclass
@@ -39,6 +45,16 @@ class FetchResult:
 
     polymarket: Dict[str, Any]
     opinion: Dict[str, Any]
+    matched_pairs: Dict[str, Any]
+    last_updated: str
+
+
+@dataclass
+class TradesResult:
+    """Trades data for both platforms."""
+
+    polymarket_trades: List[Dict[str, Any]]
+    opinion_trades: List[Dict[str, Any]]
     last_updated: str
 
 
@@ -51,6 +67,8 @@ class PortfolioFetcher:
         self._cache: Optional[FetchResult] = None
         self._cache_ts = 0.0
         self._opinion_client = self._init_opinion_client()
+        self._polymarket_client = self._init_polymarket_client()
+        self._market_matches = self._load_market_matches()
         self._stop_event = threading.Event()
         self._refresh_thread = threading.Thread(target=self._refresh_loop, daemon=True)
         try:
@@ -75,14 +93,50 @@ class PortfolioFetcher:
             print(f"[warn] Failed to init Opinion client: {exc}")
             return None
 
+    def _init_polymarket_client(self) -> Optional[ClobClient]:
+        """Initialize Polymarket CLOB client if credentials are present."""
+        try:
+            private_key = os.getenv("PM_KEY")
+            if not private_key:
+                print("[warn] PM_KEY not set, Polymarket trades will not be available")
+                return None
+            chain_id = int(os.getenv("CHAIN_ID", "137"))
+            signature_type = int(os.getenv("SIGNATURE_TYPE", "1"))
+            client = ClobClient(
+                POLYMARKET_HOST,
+                key=private_key,
+                chain_id=chain_id,
+                signature_type=signature_type,
+                funder=POLYMARKET_ADDRESS,
+            )
+            client.set_api_creds(client.create_or_derive_api_creds())
+            return client
+        except Exception as exc:
+            print(f"[warn] Failed to init Polymarket CLOB client: {exc}")
+            return None
+
+    def _load_market_matches(self) -> List[Dict[str, Any]]:
+        """Load market matches from JSON file."""
+        try:
+            if MARKET_MATCHES_FILE.exists():
+                with open(MARKET_MATCHES_FILE, 'r') as f:
+                    return json.load(f)
+            print(f"[warn] Market matches file not found: {MARKET_MATCHES_FILE}")
+            return []
+        except Exception as exc:
+            print(f"[warn] Failed to load market matches: {exc}")
+            return []
+
     def refresh_now(self) -> None:
         """Force an immediate refresh from upstream APIs."""
 
         poly = self._fetch_polymarket()
         op = self._fetch_opinion()
+        matched = self._calculate_matched_pairs(poly, op)
         snapshot = FetchResult(
             polymarket=poly,
             opinion=op,
+            matched_pairs=matched,
             last_updated=datetime.now(timezone.utc).isoformat(),
         )
         with self._lock:
@@ -97,6 +151,91 @@ class PortfolioFetcher:
                 return self._cache
 
         return self._empty_snapshot()
+
+    def get_market_matches(self) -> List[Dict[str, Any]]:
+        """Return loaded market matches."""
+        return self._market_matches
+
+    def get_trades(self, limit: int = 10) -> TradesResult:
+        """Fetch recent trades from both platforms."""
+        poly_trades = self._fetch_polymarket_trades(limit)
+        opinion_trades = self._fetch_opinion_trades(limit)
+        return TradesResult(
+            polymarket_trades=poly_trades,
+            opinion_trades=opinion_trades,
+            last_updated=datetime.now(timezone.utc).isoformat(),
+        )
+
+    def _fetch_polymarket_trades(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Fetch recent trades from Polymarket."""
+        if not self._polymarket_client:
+            return []
+        try:
+            params = TradeParams(maker_address=POLYMARKET_ADDRESS)
+            resp = self._polymarket_client.get_trades(params)
+            trades = []
+            raw_trades = resp if isinstance(resp, list) else resp.get("data", [])
+            for trade in raw_trades[:limit]:
+                trades.append({
+                    "id": trade.get("id"),
+                    "market": trade.get("market"),
+                    "asset_id": trade.get("asset_id"),
+                    "side": trade.get("side"),
+                    "size": trade.get("size"),
+                    "price": trade.get("price"),
+                    "outcome": trade.get("outcome"),
+                    "status": trade.get("status"),
+                    "match_time": trade.get("match_time"),
+                    "type": trade.get("type"),
+                    "fee_rate_bps": trade.get("fee_rate_bps"),
+                    "transaction_hash": trade.get("transaction_hash"),
+                })
+            return trades
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Polymarket trades: {exc}")
+            return []
+
+    def _fetch_opinion_trades(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Fetch recent trades from Opinion via OpenAPI."""
+        api_key = os.getenv("OP_API_KEY")
+        wallet_address = OPINION_WALLET_ADDRESS or os.getenv("OP_WALLET_ADDRESS", "")
+        if not api_key or not wallet_address:
+            return []
+        try:
+            url = f"{OPINION_OPENAPI_URL}/trade/user/{wallet_address}"
+            resp = self._session.get(
+                url,
+                params={"page": 1, "limit": limit},
+                headers={"apikey": api_key},
+                timeout=20,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("errno") != 0:
+                print(f"[warn] Opinion trades API error: {data.get('msg')}")
+                return []
+            trades = []
+            for trade in data.get("result", {}).get("list", []):
+                trades.append({
+                    "txHash": trade.get("txHash"),
+                    "marketId": trade.get("marketId"),
+                    "marketTitle": trade.get("marketTitle") or trade.get("rootMarketTitle"),
+                    "side": trade.get("side"),
+                    "outcome": trade.get("outcome"),
+                    "outcomeSide": trade.get("outcomeSideEnum"),
+                    "price": trade.get("price"),
+                    "shares": trade.get("shares"),
+                    "amount": trade.get("amount"),
+                    "usdAmount": trade.get("usdAmount"),
+                    "fee": trade.get("fee"),
+                    "status": trade.get("statusEnum"),
+                    "chainId": trade.get("chainId"),
+                    "createdAt": trade.get("createdAt"),
+                })
+            return trades
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Opinion trades: {exc}")
+            return []
 
     def _refresh_loop(self) -> None:
         """Background thread keeping the cache warm."""
@@ -118,6 +257,7 @@ class PortfolioFetcher:
         return FetchResult(
             polymarket={"address": POLYMARKET_ADDRESS, **placeholder},
             opinion=dict(placeholder),
+            matched_pairs={"pairs": [], "totalMatchedValue": 0.0, "error": None},
             last_updated="pending",
         )
 
@@ -166,9 +306,11 @@ class PortfolioFetcher:
                         "percentPnl": float(pos.get("percentPnl", 0) or 0),
                         "slug": pos.get("slug"),
                         "icon": pos.get("icon"),
+                        "asset": pos.get("asset"),
+                        "conditionId": pos.get("conditionId"),
                     }
                 )
-            
+
             filtered_positions.sort(key=lambda x: x["size"], reverse=True)
 
             payload["positions"] = filtered_positions
@@ -225,13 +367,17 @@ class PortfolioFetcher:
                 market_title = _safe_get(pos, "market_title")
                 full_title = f"{parent_title} - {market_title}" if parent_title else market_title
 
+                # Get token ID based on side
+                side = _safe_get(pos, "outcome_side_enum", "")
+                token_id = _safe_get(pos, "token_id")
+
                 filtered_positions.append(
                     {
                         "marketId": _safe_get(pos, "market_id"),
                         "marketTitle": full_title,
                         "parentTitle": parent_title,
                         "subtitle": market_title,
-                        "side": _safe_get(pos, "outcome_side_enum"),
+                        "side": side,
                         "shares": float(_safe_get(pos, "shares_owned", 0)),
                         "avgPrice": float(_safe_get(pos, "avg_entry_price", 0)),
                         "currentValue": current_value,
@@ -239,6 +385,7 @@ class PortfolioFetcher:
                         "unrealizedPnlPercent": float(
                             _safe_get(pos, "unrealized_pnl_percent", 0)
                         ),
+                        "tokenId": str(token_id) if token_id else None,
                     }
                 )
 
@@ -251,6 +398,118 @@ class PortfolioFetcher:
             payload["error"] = str(exc)
 
         return payload
+
+    def _calculate_matched_pairs(
+        self, polymarket_data: Dict[str, Any], opinion_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Calculate matched position pairs across platforms."""
+        result: Dict[str, Any] = {
+            "pairs": [],
+            "totalMatchedValue": 0.0,
+            "error": None,
+        }
+
+        try:
+            if not self._market_matches:
+                result["error"] = "No market matches loaded"
+                return result
+
+            poly_positions = polymarket_data.get("positions", [])
+            opinion_positions = opinion_data.get("positions", [])
+
+            # Build index of positions by token ID
+            poly_by_token: Dict[str, Dict[str, Any]] = {}
+            for pos in poly_positions:
+                asset = pos.get("asset")
+                if asset:
+                    poly_by_token[str(asset)] = pos
+
+            opinion_by_token: Dict[str, Dict[str, Any]] = {}
+            for pos in opinion_positions:
+                token_id = pos.get("tokenId")
+                if token_id:
+                    opinion_by_token[str(token_id)] = pos
+
+            # Match positions using market_matches.json
+            matched_pairs = []
+            for match in self._market_matches:
+                # Check for Polymarket YES + Opinion YES pair
+                poly_yes = poly_by_token.get(str(match.get("polymarket_yes_token")))
+                opinion_yes = opinion_by_token.get(str(match.get("opinion_yes_token")))
+                if poly_yes and opinion_yes:
+                    pair = self._create_pair(match, poly_yes, opinion_yes, "Yes")
+                    matched_pairs.append(pair)
+
+                # Check for Polymarket NO + Opinion NO pair
+                poly_no = poly_by_token.get(str(match.get("polymarket_no_token")))
+                opinion_no = opinion_by_token.get(str(match.get("opinion_no_token")))
+                if poly_no and opinion_no:
+                    pair = self._create_pair(match, poly_no, opinion_no, "No")
+                    matched_pairs.append(pair)
+
+                # Check for cross-platform hedges: Polymarket YES + Opinion NO
+                if poly_yes and opinion_no:
+                    pair = self._create_pair(match, poly_yes, opinion_no, "Cross-Yes/No")
+                    matched_pairs.append(pair)
+
+                # Check for cross-platform hedges: Polymarket NO + Opinion YES
+                if poly_no and opinion_yes:
+                    pair = self._create_pair(match, poly_no, opinion_yes, "Cross-No/Yes")
+                    matched_pairs.append(pair)
+
+            # Sort by matched value (descending)
+            matched_pairs.sort(key=lambda x: x["matchedValue"], reverse=True)
+
+            total_matched_value = sum(pair["matchedValue"] for pair in matched_pairs)
+
+            result["pairs"] = matched_pairs
+            result["totalMatchedValue"] = total_matched_value
+
+        except Exception as exc:
+            result["error"] = str(exc)
+            print(f"[warn] Failed to calculate matched pairs: {exc}")
+
+        return result
+
+    def _create_pair(
+        self,
+        match: Dict[str, Any],
+        poly_pos: Dict[str, Any],
+        opinion_pos: Dict[str, Any],
+        pair_type: str,
+    ) -> Dict[str, Any]:
+        """Create a matched pair from two positions."""
+        poly_size = poly_pos.get("size", 0)
+        opinion_size = opinion_pos.get("shares", 0)
+
+        # Matched shares is the minimum of the two positions
+        matched_shares = min(poly_size, opinion_size)
+
+        # Settlement value is $1 per matched share
+        settlement_value = matched_shares * 1.0
+
+        return {
+            "question": match.get("question"),
+            "pairType": pair_type,
+            "polymarketPosition": {
+                "market": poly_pos.get("market"),
+                "outcome": poly_pos.get("outcome"),
+                "size": poly_size,
+                "avgPrice": poly_pos.get("avgPrice", 0),
+                "currentValue": poly_pos.get("currentValue", 0),
+            },
+            "opinionPosition": {
+                "market": opinion_pos.get("marketTitle"),
+                "side": opinion_pos.get("side"),
+                "size": opinion_size,
+                "avgPrice": opinion_pos.get("avgPrice", 0),
+                "currentValue": opinion_pos.get("currentValue", 0),
+            },
+            "matchedShares": matched_shares,
+            "matchedValue": settlement_value,
+            "polymarketExcess": poly_size - matched_shares,
+            "opinionExcess": opinion_size - matched_shares,
+        }
 
 
 def _safe_get(obj: Any, attr: str, default: Any = None) -> Any:
@@ -273,6 +532,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/positions":
             self._serve_json()
+        elif parsed.path == "/api/trades":
+            self._serve_trades()
+        elif parsed.path == "/api/market_matches":
+            self._serve_market_matches()
         elif parsed.path in {"/", "", "/index.html", f"/{HTML_BASENAME}"}:
             self._serve_html()
         else:
@@ -283,9 +546,40 @@ class DashboardHandler(BaseHTTPRequestHandler):
         payload = {
             "polymarket": snapshot.polymarket,
             "opinion": snapshot.opinion,
+            "matchedPairs": snapshot.matched_pairs,
             "lastUpdated": snapshot.last_updated,
         }
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._set_security_headers()
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_trades(self) -> None:
+        from urllib.parse import parse_qs
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        limit = int(query.get("limit", ["10"])[0])
+        limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
+        trades = self.fetcher.get_trades(limit)
+        payload = {
+            "polymarketTrades": trades.polymarket_trades,
+            "opinionTrades": trades.opinion_trades,
+            "lastUpdated": trades.last_updated,
+        }
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._set_security_headers()
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_market_matches(self) -> None:
+        matches = self.fetcher.get_market_matches()
+        body = json.dumps(matches, ensure_ascii=False).encode("utf-8")
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self._set_security_headers()
