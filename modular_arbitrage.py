@@ -836,7 +836,7 @@ class ModularArbitrage:
                 print(f"  第二平台下单: {second_order_size:.2f} -> 预期实际: {second_effective_size:.2f}")
 
                 # 检查平台下单金额是否满足最小限制 (1.3 USDT)
-                MIN_ORDER_AMOUNT = 1.3
+                MIN_ORDER_AMOUNT = 1.2
 
                 # 检查第一个平台
                 first_order_amount = first_order_size * (first_price if first_price is not None else opp['first_price'])
@@ -857,6 +857,7 @@ class ModularArbitrage:
                     return
 
                 # Place first order
+                first_order_success = False
                 if opp.get('first_platform') == 'opinion':
                     try:
                         order1 = PlaceOrderDataInput(
@@ -874,17 +875,20 @@ class ModularArbitrage:
                         )
                         if success and res1:
                             print("✅ Opinion 订单提交成功 (即时执行)")
+                            first_order_success = True
                             # 结束时间测量会话
                             if session_id:
                                 self._timing_tracker.end_session(session_id, success=True)
                         else:
-                            print(f"❌ Opinion 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                            print(f"❌ Opinion 下单失败，跳过对冲单")
                             if session_id:
                                 self._timing_tracker.end_session(session_id, success=False)
+                            return  # Opinion 首单失败，直接返回，不执行对冲单
                     except Exception as e:
-                        print(f"❌ Opinion 下单异常: {e}")
+                        print(f"❌ Opinion 下单异常: {e}，跳过对冲单")
                         if session_id:
                             self._timing_tracker.end_session(session_id, success=False)
+                        return  # Opinion 首单异常，直接返回，不执行对冲单
                 else:
                     try:
                         # 创建 Polymarket 订单参数
@@ -909,12 +913,15 @@ class ModularArbitrage:
                         )
                         if success:
                             print(f"✅ Polymarket 订单提交成功 (即时执行): {res1}")
+                            first_order_success = True
                         else:
-                            print(f"❌ Polymarket 下单失败（已尝试 {self.config.order_max_retries} 次）")
+                            print(f"❌ Polymarket 下单失败（已尝试 {self.config.order_max_retries} 次），跳过对冲单")
+                            return  # Polymarket 首单失败，直接返回，不执行对冲单
                     except Exception as e:
-                        print(f"❌ Polymarket 下单异常: {e}")
+                        print(f"❌ Polymarket 下单异常: {e}，跳过对冲单")
+                        return  # Polymarket 首单异常，直接返回，不执行对冲单
 
-                # Place second order
+                # Place second order (only if first order succeeded)
                 if opp.get('second_platform') == 'opinion':
                     try:
                         order2 = PlaceOrderDataInput(
