@@ -814,8 +814,9 @@ class ModularArbitrage:
 
             # Immediate execution: place both orders
             if opp.get('type') == 'immediate':
-                first_price = self._round_price(opp.get('first_price'))
-                second_price = self._round_price(opp.get('second_price'))
+                # 提高限价单价格0.02以降低单边库存风险
+                first_price = self._round_price(opp.get('first_price') + 0.02)
+                second_price = self._round_price(opp.get('second_price') + 0.02)
 
                 # 计算第一个平台的下单数量(考虑手续费)
                 first_order_size, first_effective_size = self.get_order_size_for_platform(
