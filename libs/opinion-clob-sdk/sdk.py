@@ -765,8 +765,9 @@ class Client:
             if(data.makerAmountInBaseToken):
                 # Use Decimal for precise calculation to avoid floating point errors
                 base_amount = Decimal(str(data.makerAmountInBaseToken))
-                price_decimal = Decimal(str(data.price))+Decimal(0.01)
+                price_decimal = Decimal(str(data.price))
                 makerAmount = float(base_amount * price_decimal)
+                price_decimal = price_decimal+Decimal(0.01)
                 # makerAmountInBaseToken should be at least 1 otherwise throw error
                 if(float(data.makerAmountInBaseToken) < minimal_maker_amount):
                     raise InvalidParamError("makerAmountInBaseToken must be at least 1")
