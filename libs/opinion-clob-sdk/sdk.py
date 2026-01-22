@@ -767,7 +767,11 @@ class Client:
                 base_amount = Decimal(str(data.makerAmountInBaseToken))
                 price_decimal = Decimal(str(data.price))
                 makerAmount = float(base_amount * price_decimal)
-                data.price = str(price_decimal + Decimal("0.01"))
+                new_price = price_decimal + Decimal("0.01")
+                # Cap price at 0.995 since it cannot exceed 1
+                if new_price > Decimal("0.995"):
+                    new_price = Decimal("0.995")
+                data.price = str(new_price)
                 # makerAmountInBaseToken should be at least 1 otherwise throw error
                 if(float(data.makerAmountInBaseToken) < minimal_maker_amount):
                     raise InvalidParamError("makerAmountInBaseToken must be at least 1")
