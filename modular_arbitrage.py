@@ -742,8 +742,8 @@ class ModularArbitrage:
         with self._immediate_exec_lock:
             now = time.time()
             elapsed = now - self._last_immediate_exec_time
-            if elapsed < 1.0:
-                print(f"  ⏳ 距离上次立即套利下单仅 {elapsed:.2f}s，跳过本次执行 (需间隔 >= 1s)")
+            if elapsed < 2.0:
+                print(f"  ⏳ 距离上次立即套利下单仅 {elapsed:.2f}s，跳过本次执行 (需间隔 >= 2s)")
                 if session_id:
                     self._timing_tracker.end_session(session_id, success=False)
                 return
