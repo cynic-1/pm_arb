@@ -701,7 +701,8 @@ class Client:
         exchange_addr: str = '0x5f45344126d6488025b0b84a3a8189f2487a7246',
         quote_token_addr: str = '0x55d398326f99059fF775485246999027B3197955',
         quote_token_decimal: int = 18,
-        check_approval: bool = False
+        check_approval: bool = False,
+        enable_execution_protection: bool = False
     ):
         """Place an order with fixed parameters to avoid network requests (low latency version).
 
@@ -716,6 +717,7 @@ class Client:
             quote_token_addr: Quote token (e.g., USDT) contract address
             quote_token_decimal: Quote token decimals (default 18 for USDT)
             check_approval: Whether to check and enable trading approvals first (default False)
+            enable_execution_protection: Whether to enable execution protection by increasing buy price by 0.01 (default False)
 
         Returns:
             Order placement result from API
@@ -725,7 +727,8 @@ class Client:
             exchange_addr=exchange_addr,
             quote_token_addr=quote_token_addr,
             quote_token_decimal=quote_token_decimal,
-            check_approval=check_approval
+            check_approval=check_approval,
+            enable_execution_protection=enable_execution_protection
         )
 
     def _place_order_with_params(
@@ -734,9 +737,14 @@ class Client:
         exchange_addr: str,
         quote_token_addr: str,
         quote_token_decimal: int,
-        check_approval: bool = False
+        check_approval: bool = False,
+        enable_execution_protection: bool = False
     ):
-        """Internal method to place order with explicit parameters (no network requests)."""
+        """Internal method to place order with explicit parameters (no network requests).
+
+        Args:
+            enable_execution_protection: If True, increase buy price by 0.01 for better execution
+        """
         makerAmount = 0
         minimal_maker_amount = 1
 
@@ -767,11 +775,13 @@ class Client:
                 base_amount = Decimal(str(data.makerAmountInBaseToken))
                 price_decimal = Decimal(str(data.price))
                 makerAmount = float(base_amount * price_decimal)
-                new_price = price_decimal + Decimal("0.01")
-                # Cap price at 0.995 since it cannot exceed 1
-                if new_price > Decimal("0.995"):
-                    new_price = Decimal("0.995")
-                data.price = str(new_price)
+                # Apply execution protection if enabled
+                if enable_execution_protection:
+                    new_price = price_decimal + Decimal("0.01")
+                    # Cap price at 0.995 since it cannot exceed 1
+                    if new_price > Decimal("0.995"):
+                        new_price = Decimal("0.995")
+                    data.price = str(new_price)
                 # makerAmountInBaseToken should be at least 1 otherwise throw error
                 if(float(data.makerAmountInBaseToken) < minimal_maker_amount):
                     raise InvalidParamError("makerAmountInBaseToken must be at least 1")

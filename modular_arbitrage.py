@@ -499,7 +499,10 @@ class ModularArbitrage:
         # opinion下单不重试，因为重试耗时可能导致订单过期
         try:
             # t5和t6将在Opinion SDK内部测量（通过修改SDK）
-            result = self.clients.get_opinion_client().place_order_fast(order)
+            result = self.clients.get_opinion_client().place_order_fast(
+                order,
+                enable_execution_protection=True  # 启用执行保护以提高成交率
+            )
             last_result = result
 
             if getattr(result, "errno", 0) == 0:
