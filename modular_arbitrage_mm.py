@@ -1013,7 +1013,9 @@ class ModularArbitrageMM(ModularArbitrage):
             logger.error(f"⚠️ 构造 Opinion 流动性订单失败: {exc}")
             return None
 
-        success, result = self.place_opinion_order_with_retries(order, context="流动性挂单")
+        success, result = self.place_opinion_order_with_retries(
+            order, context="流动性挂单", enable_execution_protection=False
+        )
         if not success or not result:
             return None
 

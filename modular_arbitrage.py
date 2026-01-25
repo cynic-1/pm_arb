@@ -486,9 +486,16 @@ class ModularArbitrage:
     # ==================== 订单执行 ====================
 
     def place_opinion_order_with_retries(
-        self, order: Any, context: str = "", session_id: Optional[str] = None
+        self, order: Any, context: str = "", session_id: Optional[str] = None, enable_execution_protection: bool = True
     ) -> Tuple[bool, Optional[Any]]:
-        """Opinion 下单带重试"""
+        """Opinion 下单带重试
+
+        Args:
+            order: 订单对象
+            context: 上下文信息
+            session_id: 会话ID（用于时间追踪）
+            enable_execution_protection: 是否启用执行保护（默认True）
+        """
         prefix = f"[{context}] " if context else ""
         last_result = None
 
@@ -501,7 +508,7 @@ class ModularArbitrage:
             # t5和t6将在Opinion SDK内部测量（通过修改SDK）
             result = self.clients.get_opinion_client().place_order_fast(
                 order,
-                enable_execution_protection=True  # 启用执行保护以提高成交率
+                enable_execution_protection=enable_execution_protection
             )
             last_result = result
 
