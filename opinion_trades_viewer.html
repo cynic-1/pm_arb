@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opinion Trade History Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .content-section {
+            padding: 30px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .trades-table th {
+            background: #f8f9fa;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+        }
+
+        .trades-table td {
+            padding: 15px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .trades-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-buy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-sell {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-yes {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-no {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .market-title {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+        }
+
+        .tx-hash {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #667eea;
+            cursor: pointer;
+        }
+
+        .tx-hash:hover {
+            text-decoration: underline;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .profit-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .no-data svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Opinion Trade History Viewer</h1>
+            <p>查询并分析用户在Opinion预测市场的交易历史</p>
+        </div>
+
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="walletAddress">钱包地址 *</label>
+                    <input
+                        type="text"
+                        id="walletAddress"
+                        placeholder="0x..."
+                        required
+                    >
+                </div>
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="chainId">链 ID (可选)</label>
+                    <input
+                        type="text"
+                        id="chainId"
+                        placeholder="例如: 56"
+                    >
+                </div>
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="marketId">市场 ID (可选)</label>
+                    <input
+                        type="number"
+                        id="marketId"
+                        placeholder="市场ID"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary" id="searchBtn">
+                    🔍 查询交易
+                </button>
+            </form>
+        </div>
+
+        <div class="content-section">
+            <div id="statsSection" style="display: none;">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="label">总交易数</div>
+                        <div class="value" id="totalTrades">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">总交易额 (USD)</div>
+                        <div class="value" id="totalVolume">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">总盈亏 (USD)</div>
+                        <div class="value" id="totalProfit">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">当前页</div>
+                        <div class="value" id="currentPageStat">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loadingSection" style="display: none;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载交易数据...</p>
+                </div>
+            </div>
+
+            <div id="errorSection" style="display: none;">
+                <div class="error" id="errorMessage"></div>
+            </div>
+
+            <div id="tradesSection" style="display: none;">
+                <div style="overflow-x: auto;">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>市场</th>
+                                <th>方向</th>
+                                <th>结果</th>
+                                <th>价格</th>
+                                <th>数量</th>
+                                <th>金额 (USD)</th>
+                                <th>手续费</th>
+                                <th>盈亏</th>
+                                <th>交易哈希</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button id="prevBtn" disabled>← 上一页</button>
+                    <span class="page-info">
+                        第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">1</span> 页
+                    </span>
+                    <button id="nextBtn" disabled>下一页 →</button>
+                </div>
+            </div>
+
+            <div id="noDataSection" style="display: none;">
+                <div class="no-data">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <p>未找到交易记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'D1UUaLryaEAPTocixe2brawxeVBNOjmk';
+        const API_BASE_URL = 'https://openapi.opinion.trade/openapi';
+
+        let currentPage = 1;
+        let totalRecords = 0;
+        let currentWalletAddress = '';
+        let currentChainId = '';
+        let currentMarketId = '';
+
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const loadingSection = document.getElementById('loadingSection');
+        const errorSection = document.getElementById('errorSection');
+        const tradesSection = document.getElementById('tradesSection');
+        const noDataSection = document.getElementById('noDataSection');
+        const statsSection = document.getElementById('statsSection');
+        const tradesTableBody = document.getElementById('tradesTableBody');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            currentWalletAddress = document.getElementById('walletAddress').value.trim();
+            currentChainId = document.getElementById('chainId').value.trim();
+            currentMarketId = document.getElementById('marketId').value.trim();
+            currentPage = 1;
+            await fetchTrades();
+        });
+
+        prevBtn.addEventListener('click', async () => {
+            if (currentPage > 1) {
+                currentPage--;
+                await fetchTrades();
+            }
+        });
+
+        nextBtn.addEventListener('click', async () => {
+            const totalPages = Math.ceil(totalRecords / 20);
+            if (currentPage < totalPages) {
+                currentPage++;
+                await fetchTrades();
+            }
+        });
+
+        async function fetchTrades() {
+            // Hide all sections
+            hideAllSections();
+            loadingSection.style.display = 'block';
+            searchBtn.disabled = true;
+
+            try {
+                let url = `${API_BASE_URL}/trade/user/${currentWalletAddress}?page=${currentPage}&limit=20`;
+
+                if (currentChainId) {
+                    url += `&chainId=${currentChainId}`;
+                }
+                if (currentMarketId) {
+                    url += `&marketId=${currentMarketId}`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.code !== 0) {
+                    throw new Error(data.msg || '请求失败');
+                }
+
+                totalRecords = data.result.total;
+                const trades = data.result.list;
+
+                if (trades.length === 0) {
+                    hideAllSections();
+                    noDataSection.style.display = 'block';
+                } else {
+                    displayTrades(trades);
+                    updateStats(trades);
+                    updatePagination();
+                }
+
+            } catch (error) {
+                hideAllSections();
+                errorSection.style.display = 'block';
+                document.getElementById('errorMessage').textContent = `错误: ${error.message}`;
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        function hideAllSections() {
+            loadingSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            tradesSection.style.display = 'none';
+            noDataSection.style.display = 'none';
+            statsSection.style.display = 'none';
+        }
+
+        function displayTrades(trades) {
+            tradesTableBody.innerHTML = '';
+
+            trades.forEach(trade => {
+                const row = document.createElement('tr');
+
+                const date = new Date(trade.createdAt * 1000).toLocaleString('zh-CN');
+                const sideBadge = trade.side === 'BUY' ? 'badge-buy' : 'badge-sell';
+                const outcomeBadge = trade.outcomeSideEnum === 'Yes' ? 'badge-yes' : 'badge-no';
+
+                const profit = parseFloat(trade.profit || 0);
+                const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+                const profitDisplay = profit >= 0 ? `+$${Math.abs(profit).toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`;
+
+                const txHashShort = trade.txHash ? `${trade.txHash.slice(0, 6)}...${trade.txHash.slice(-4)}` : '-';
+
+                row.innerHTML = `
+                    <td>${date}</td>
+                    <td><div class="market-title" title="${trade.marketTitle || trade.rootMarketTitle || '-'}">${trade.marketTitle || trade.rootMarketTitle || '-'}</div></td>
+                    <td><span class="badge ${sideBadge}">${trade.side}</span></td>
+                    <td><span class="badge ${outcomeBadge}">${trade.outcomeSideEnum}</span></td>
+                    <td>$${parseFloat(trade.price).toFixed(4)}</td>
+                    <td>${parseFloat(trade.shares).toFixed(2)}</td>
+                    <td>$${parseFloat(trade.usdAmount || 0).toFixed(2)}</td>
+                    <td>$${parseFloat(trade.fee || 0).toFixed(4)}</td>
+                    <td class="${profitClass}">${profitDisplay}</td>
+                    <td><span class="tx-hash" onclick="openTx('${trade.txHash}', '${trade.chainId}')" title="${trade.txHash}">${txHashShort}</span></td>
+                `;
+
+                tradesTableBody.appendChild(row);
+            });
+
+            tradesSection.style.display = 'block';
+        }
+
+        function updateStats(trades) {
+            const totalVolume = trades.reduce((sum, trade) => sum + parseFloat(trade.usdAmount || 0), 0);
+            const totalProfit = trades.reduce((sum, trade) => sum + parseFloat(trade.profit || 0), 0);
+
+            document.getElementById('totalTrades').textContent = totalRecords;
+            document.getElementById('totalVolume').textContent = `$${totalVolume.toFixed(2)}`;
+            document.getElementById('totalProfit').textContent = totalProfit >= 0 ? `+$${totalProfit.toFixed(2)}` : `-$${Math.abs(totalProfit).toFixed(2)}`;
+            document.getElementById('totalProfit').className = totalProfit >= 0 ? 'value profit-positive' : 'value profit-negative';
+            document.getElementById('currentPageStat').textContent = currentPage;
+
+            statsSection.style.display = 'block';
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(totalRecords / 20);
+
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        function openTx(txHash, chainId) {
+            if (!txHash) return;
+
+            const explorers = {
+                '1': 'https://etherscan.io',
+                '56': 'https://bscscan.com',
+                '137': 'https://polygonscan.com'
+            };
+
+            const explorerUrl = explorers[chainId] || 'https://etherscan.io';
+            window.open(`${explorerUrl}/tx/${txHash}`, '_blank');
+        }
+    </script>
+</body>
+</html>

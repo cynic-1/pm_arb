@@ -17,9 +17,16 @@ from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
-from opinion_clob_sdk import Client as OpinionClient
+try:
+    from opinion_clob_sdk import Client as OpinionClient
+    OPINION_SDK_AVAILABLE = True
+except ImportError:
+    OpinionClient = None
+    OPINION_SDK_AVAILABLE = False
+    print("[warn] opinion_clob_sdk not available, Opinion balance via SDK will be disabled")
 from py_clob_client.client import ClobClient
-from py_clob_client.clob_types import TradeParams
+from py_clob_client.clob_types import TradeParams, BalanceAllowanceParams, AssetType
+from decimal import Decimal
 
 load_dotenv()
 
@@ -29,13 +36,15 @@ POLYMARKET_ADDRESS = os.getenv(
 )
 POLYMARKET_HOST = os.getenv("POLYMARKET_HOST", "https://clob.polymarket.com")
 POLYMARKET_POSITIONS_URL = "https://data-api.polymarket.com/positions"
+POLYMARKET_CLOSED_POSITIONS_URL = "https://data-api.polymarket.com/closed-positions"
+POLYMARKET_TRADES_URL = "https://data-api.polymarket.com/trades"
 POLYMARKET_VALUE_URL = "https://data-api.polymarket.com/value"
 OPINION_OPENAPI_URL = "https://openapi.opinion.trade/openapi"
-OPINION_WALLET_ADDRESS = os.getenv("OP_WALLET_ADDRESS", "")
+OPINION_WALLET_ADDRESS = os.getenv("OP_WALLET_ADDRESS", "") or os.getenv("PM_FUNDER", "")
 VALUE_THRESHOLD = float(os.getenv("POSITION_VALUE_THRESHOLD", "1"))
 CACHE_SECONDS = int(os.getenv("DASHBOARD_CACHE_SECONDS", "600"))
 DEFAULT_PORT = int(os.getenv("DASHBOARD_PORT", "8080"))
-HTML_BASENAME = "positions_dashboard.html"
+INVESTOR_HTML_BASENAME = "investor_dashboard.html"
 MARKET_MATCHES_FILE = Path(__file__).parent / "market_matches.json"
 
 
@@ -58,6 +67,15 @@ class TradesResult:
     last_updated: str
 
 
+@dataclass
+class ClosedPositionsResult:
+    """Closed positions data for realized PnL tracking."""
+
+    polymarket: List[Dict[str, Any]]
+    opinion: List[Dict[str, Any]]
+    last_updated: str
+
+
 class PortfolioFetcher:
     """Fetches and caches portfolio info for Polymarket & Opinion."""
 
@@ -77,8 +95,11 @@ class PortfolioFetcher:
             print(f"[warn] Initial refresh failed: {exc}")
         self._refresh_thread.start()
 
-    def _init_opinion_client(self) -> Optional[OpinionClient]:
+    def _init_opinion_client(self):
         """Initialize Opinion client if credentials are present."""
+        if not OPINION_SDK_AVAILABLE:
+            print("[info] Opinion SDK not available, skipping client init")
+            return None
 
         try:
             return OpinionClient(
@@ -101,18 +122,24 @@ class PortfolioFetcher:
                 print("[warn] PM_KEY not set, Polymarket trades will not be available")
                 return None
             chain_id = int(os.getenv("CHAIN_ID", "137"))
-            signature_type = int(os.getenv("SIGNATURE_TYPE", "1"))
+            signature_type = int(os.getenv("SIGNATURE_TYPE", "2"))  # 2=Safe/Proxy by default
+            funder = POLYMARKET_ADDRESS
+            print(f"[debug] Polymarket init: chain_id={chain_id}, signature_type={signature_type}, funder={funder}")
             client = ClobClient(
                 POLYMARKET_HOST,
                 key=private_key,
                 chain_id=chain_id,
                 signature_type=signature_type,
-                funder=POLYMARKET_ADDRESS,
+                funder=funder,
             )
-            client.set_api_creds(client.create_or_derive_api_creds())
+            api_creds = client.create_or_derive_api_creds()
+            print(f"[debug] Polymarket API creds derived successfully")
+            client.set_api_creds(api_creds)
             return client
         except Exception as exc:
             print(f"[warn] Failed to init Polymarket CLOB client: {exc}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _load_market_matches(self) -> List[Dict[str, Any]]:
@@ -166,29 +193,282 @@ class PortfolioFetcher:
             last_updated=datetime.now(timezone.utc).isoformat(),
         )
 
-    def _fetch_polymarket_trades(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """Fetch recent trades from Polymarket."""
+    def get_balances(self) -> Dict[str, Any]:
+        """Fetch cash balances from both platforms."""
+        poly_balance = self._fetch_polymarket_balance()
+        opinion_balance = self._fetch_opinion_balance()
+        return {
+            "polymarket": poly_balance,
+            "opinion": opinion_balance,
+            "total": poly_balance + opinion_balance,
+            "lastUpdated": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def _fetch_polymarket_balance(self) -> float:
+        """Fetch USDC balance from Polymarket."""
         if not self._polymarket_client:
+            print("[debug] Polymarket client not initialized")
+            return 0.0
+        try:
+            resp = self._polymarket_client.get_balance_allowance(
+                BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)
+            )
+            print(f"[debug] Polymarket balance response: {resp}")
+            # Balance is in 1e6 (USDC decimals)
+            balance = Decimal(resp.get("balance", "0")) / Decimal(10**6)
+            print(f"[debug] Polymarket balance: {balance}")
+            return float(balance)
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Polymarket balance: {exc}")
+            return 0.0
+
+    def _fetch_opinion_balance(self) -> float:
+        """Fetch USDT balance from Opinion via SDK."""
+        if not self._opinion_client:
+            print("[debug] Opinion client not initialized")
+            return 0.0
+        try:
+            resp = self._opinion_client.get_my_balances()
+            print(f"[debug] Opinion balance response: {resp}")
+
+            # Parse balance items - the SDK returns pydantic models
+            # resp.result is OpenapiBalanceRespOpenAPI with .balances list
+            items = []
+            if hasattr(resp, "result"):
+                result = resp.result
+                if hasattr(result, "balances"):
+                    items = result.balances
+                elif hasattr(result, "list"):
+                    items = result.list
+                elif hasattr(result, "data"):
+                    items = result.data
+
+            total = Decimal(0)
+            for b in items:
+                print(f"[debug] Opinion balance item: {b}")
+                # OpenapiQuoteTokenBalance has: available_balance, total_balance, token_decimals, quote_token
+                amount_str = "0"
+                decimals = 18
+                if hasattr(b, "available_balance"):
+                    amount_str = str(b.available_balance or "0")
+                if hasattr(b, "token_decimals"):
+                    decimals = int(b.token_decimals or 18)
+                # Note: available_balance is already in human-readable format (not wei)
+                # Check if it's a large number (wei) or small number (already converted)
+                amount = Decimal(amount_str)
+                if amount > 1e10:  # Likely in wei
+                    amount = amount / (Decimal(10) ** decimals)
+                total += amount
+                print(f"[debug] Amount: {amount_str}, Decimals: {decimals}, Parsed: {amount}")
+
+            print(f"[debug] Opinion total balance: {total}")
+            return float(total)
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Opinion balance: {exc}")
+            import traceback
+            traceback.print_exc()
+            return 0.0
+
+    def get_closed_positions(self, limit: int = 50) -> ClosedPositionsResult:
+        """Fetch closed positions for realized PnL tracking.
+
+        Only includes:
+        - Merged positions (YES+NO combined to $1)
+        - Resolved/settled positions (market ended, claimed)
+
+        Does NOT include regular buy/sell trades.
+        """
+        poly_closed = self._fetch_polymarket_closed_positions(limit)
+        # Only fetch claimed/resolved positions, not regular trades
+        opinion_closed = self._fetch_opinion_claimed_positions()
+        return ClosedPositionsResult(
+            polymarket=poly_closed,
+            opinion=opinion_closed,
+            last_updated=datetime.now(timezone.utc).isoformat(),
+        )
+
+    def _fetch_polymarket_closed_positions(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Fetch closed positions from Polymarket API."""
+        try:
+            resp = self._session.get(
+                POLYMARKET_CLOSED_POSITIONS_URL,
+                params={
+                    "user": POLYMARKET_ADDRESS,
+                    "limit": min(limit, 50),
+                    "sortBy": "REALIZEDPNL",
+                    "sortDirection": "DESC",
+                },
+                timeout=20,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            positions = data if isinstance(data, list) else data.get("data", [])
+            result = []
+            for pos in positions:
+                result.append({
+                    "title": pos.get("title"),
+                    "outcome": pos.get("outcome"),
+                    "avgPrice": float(pos.get("avgPrice", 0) or 0),
+                    "totalBought": float(pos.get("totalBought", 0) or 0),
+                    "realizedPnl": float(pos.get("realizedPnl", 0) or 0),
+                    "curPrice": float(pos.get("curPrice", 0) or 0),
+                    "timestamp": pos.get("timestamp"),
+                    "slug": pos.get("slug"),
+                    "conditionId": pos.get("conditionId"),
+                })
+            return result
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Polymarket closed positions: {exc}")
+            return []
+
+    def _fetch_opinion_trades_with_profit(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Fetch Opinion SELL trades for realized PnL calculation."""
+        api_key = os.getenv("OP_API_KEY")
+        wallet_address = OPINION_WALLET_ADDRESS or os.getenv("OP_WALLET_ADDRESS", "")
+        if not api_key or not wallet_address:
             return []
         try:
-            params = TradeParams(maker_address=POLYMARKET_ADDRESS)
-            resp = self._polymarket_client.get_trades(params)
+            # Fetch multiple pages to get more complete trade history
+            all_trades = []
+            pages_to_fetch = (limit + 19) // 20  # ceil division
+            for page in range(1, min(pages_to_fetch + 1, 6)):  # max 5 pages
+                url = f"{OPINION_OPENAPI_URL}/trade/user/{wallet_address}"
+                resp = self._session.get(
+                    url,
+                    params={"page": page, "limit": 20},
+                    headers={"apikey": api_key},
+                    timeout=20,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("code") != 0 and data.get("errno") != 0:
+                    print(f"[warn] Opinion trades API error: {data.get('msg')}")
+                    break
+                batch = data.get("result", {}).get("list", [])
+                if not batch:
+                    break
+                all_trades.extend(batch)
+                if len(batch) < 20:
+                    break
+
             trades = []
-            raw_trades = resp if isinstance(resp, list) else resp.get("data", [])
+            for trade in all_trades:
+                # Include SELL trades (realized gains/losses from selling)
+                # profit field can be positive (gain) or negative (loss)
+                profit = trade.get("profit")
+                side = trade.get("side", "").upper()
+                if side == "SELL" or profit is not None:
+                    # For SELL trades, calculate profit if not provided
+                    if profit is None and side == "SELL":
+                        # Approximate: we don't have avg entry price here
+                        # but the trade amount represents the sale proceeds
+                        profit = 0  # Will be calculated from positions
+                    trades.append({
+                        "marketTitle": trade.get("marketTitle") or trade.get("rootMarketTitle"),
+                        "outcomeSideEnum": trade.get("outcomeSideEnum"),
+                        "side": side,
+                        "price": float(trade.get("price", 0) or 0),
+                        "shares": float(trade.get("shares", 0) or 0),
+                        "profit": float(profit) if profit else 0,
+                        "createdAt": trade.get("createdAt"),
+                    })
+            return trades[:limit]
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Opinion trades with profit: {exc}")
+            return []
+
+    def _fetch_opinion_claimed_positions(self) -> List[Dict[str, Any]]:
+        """Fetch Opinion positions that have been claimed/resolved via OpenAPI.
+
+        Only includes positions from resolved markets (merge or final settlement).
+        """
+        api_key = os.getenv("OP_API_KEY")
+        wallet_address = OPINION_WALLET_ADDRESS
+        if not api_key or not wallet_address:
+            return []
+        try:
+            all_positions: List[Dict[str, Any]] = []
+            page = 1
+            while page <= 10:  # Safety limit
+                url = f"{OPINION_OPENAPI_URL}/positions/user/{wallet_address}"
+                resp = self._session.get(
+                    url,
+                    params={"page": page, "limit": 20},
+                    headers={"apikey": api_key},
+                    timeout=20,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("code", -1) != 0:
+                    print(f"[warn] Opinion positions API error: {data.get('msg')}")
+                    break
+                batch = data.get("result", {}).get("list", [])
+                if not batch:
+                    break
+                all_positions.extend(batch)
+                if len(batch) < 20:
+                    break
+                page += 1
+
+            claimed = []
+            for pos in all_positions:
+                claim_status = pos.get("claimStatusEnum", "")
+                market_status = pos.get("marketStatusEnum", "")
+                # Only include claimed positions and resolved markets
+                # This covers: merge (redeemed) and final settlement (resolved + claimed)
+                if claim_status == "Claimed" or market_status == "Resolved":
+                    shares = float(pos.get("sharesOwned", 0) or 0)
+                    avg_price = float(pos.get("avgEntryPrice", 0) or 0)
+                    # unrealizedPnl at resolution = realized PnL
+                    # Positive = won (resolved in your favor)
+                    # Negative = lost (resolved against you, shares worth $0)
+                    unrealized_pnl = float(pos.get("unrealizedPnl", 0) or 0)
+
+                    claimed.append({
+                        "marketTitle": pos.get("marketTitle") or pos.get("rootMarketTitle"),
+                        "outcomeSideEnum": pos.get("outcomeSideEnum"),
+                        "shares": shares,
+                        "avgPrice": avg_price,
+                        "profit": unrealized_pnl,
+                        "claimStatus": claim_status,
+                        "marketStatus": market_status,
+                    })
+            return claimed
+        except Exception as exc:
+            print(f"[warn] Failed to fetch Opinion claimed positions: {exc}")
+            return []
+
+    def _fetch_polymarket_trades(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Fetch recent trades from Polymarket data API."""
+        try:
+            resp = self._session.get(
+                POLYMARKET_TRADES_URL,
+                params={
+                    "user": POLYMARKET_ADDRESS,
+                    "limit": min(limit, 100),
+                },
+                timeout=20,
+            )
+            resp.raise_for_status()
+            raw_trades = resp.json()
+            if isinstance(raw_trades, dict):
+                raw_trades = raw_trades.get("data", [])
+            trades = []
             for trade in raw_trades[:limit]:
                 trades.append({
                     "id": trade.get("id"),
-                    "market": trade.get("market"),
-                    "asset_id": trade.get("asset_id"),
+                    "market": trade.get("conditionId"),
+                    "title": trade.get("title"),
+                    "asset_id": trade.get("asset"),
                     "side": trade.get("side"),
-                    "size": trade.get("size"),
-                    "price": trade.get("price"),
+                    "size": float(trade.get("size", 0) or 0),
+                    "price": float(trade.get("price", 0) or 0),
                     "outcome": trade.get("outcome"),
                     "status": trade.get("status"),
-                    "match_time": trade.get("match_time"),
+                    "match_time": trade.get("timestamp"),
                     "type": trade.get("type"),
                     "fee_rate_bps": trade.get("fee_rate_bps"),
-                    "transaction_hash": trade.get("transaction_hash"),
+                    "transaction_hash": trade.get("transactionHash"),
                 })
             return trades
         except Exception as exc:
@@ -526,7 +806,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
     """Serves the HTML dashboard and JSON API."""
 
     fetcher: PortfolioFetcher = PortfolioFetcher()
-    html_path = Path(__file__).with_name(HTML_BASENAME)
+    investor_html_path = Path(__file__).with_name(INVESTOR_HTML_BASENAME)
 
     def do_GET(self) -> None:  # noqa: N802 - required name
         parsed = urlparse(self.path)
@@ -534,10 +814,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._serve_json()
         elif parsed.path == "/api/trades":
             self._serve_trades()
+        elif parsed.path == "/api/balances":
+            self._serve_balances()
         elif parsed.path == "/api/market_matches":
             self._serve_market_matches()
-        elif parsed.path in {"/", "", "/index.html", f"/{HTML_BASENAME}"}:
-            self._serve_html()
+        elif parsed.path in {"/", "", "/index.html", "/investor", "/investor.html", f"/{INVESTOR_HTML_BASENAME}"}:
+            self._serve_investor_html()
         else:
             self._respond_not_found()
 
@@ -587,12 +869,42 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _serve_html(self) -> None:
-        if not self.html_path.exists():
+    def _serve_balances(self) -> None:
+        balances = self.fetcher.get_balances()
+        body = json.dumps(balances, ensure_ascii=False).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._set_security_headers()
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_closed_positions(self) -> None:
+        from urllib.parse import parse_qs
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        limit = int(query.get("limit", ["50"])[0])
+        limit = min(max(limit, 1), 100)
+        closed = self.fetcher.get_closed_positions(limit)
+        payload = {
+            "polymarket": closed.polymarket,
+            "opinion": closed.opinion,
+            "lastUpdated": closed.last_updated,
+        }
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._set_security_headers()
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _serve_investor_html(self) -> None:
+        if not self.investor_html_path.exists():
             self._respond_not_found()
             return
 
-        body = self.html_path.read_bytes()
+        body = self.investor_html_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self._set_security_headers()

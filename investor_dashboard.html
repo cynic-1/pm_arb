@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>跨平台套利策略 - 投资人看板</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: #0a0e17;
+      --card: #141b2d;
+      --card-hover: #1a2438;
+      --text: #e2e8f0;
+      --muted: #8b95a5;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --border: #1e293b;
+      --loss: #ef4444;
+      --gain: #22c55e;
+      --warning: #f59e0b;
+      --gradient-start: #3b82f6;
+      --gradient-end: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding: 1.5rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--gain);
+    }
+
+    .status-badge.loading {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .summary-card.highlight {
+      background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+      border: 1px solid #4299e1;
+    }
+
+    .summary-card.highlight .summary-value {
+      color: #63b3ed;
+      font-size: 1.8rem;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    }
+
+    .summary-card.profit::before {
+      background: var(--gain);
+    }
+
+    .summary-card.loss::before {
+      background: var(--loss);
+    }
+
+    .summary-label {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .summary-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .summary-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.875rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .summary-change.positive {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--gain);
+    }
+
+    .summary-change.negative {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--loss);
+    }
+
+    /* Sections */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .section-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+    }
+
+    .section-body {
+      padding: 0;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.02);
+      white-space: nowrap;
+    }
+
+    tbody tr:hover {
+      background: var(--card-hover);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-gain {
+      color: var(--gain);
+    }
+
+    .text-loss {
+      color: var(--loss);
+    }
+
+    .text-muted {
+      color: var(--muted);
+    }
+
+    .font-mono {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-buy {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--gain);
+    }
+
+    .badge-sell {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--loss);
+    }
+
+    .badge-poly {
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+    }
+
+    .badge-opinion {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-light);
+    }
+
+    .market-title {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+    }
+
+    /* Grid layout for positions */
+    .positions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.75rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Profit Chart placeholder */
+    .profit-chart {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      margin: 1rem;
+      color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .positions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .summary-card.highlight .summary-value {
+        font-size: 1.5rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* Trade history chart bars */
+    .profit-bar {
+      display: inline-block;
+      height: 16px;
+      border-radius: 2px;
+      min-width: 2px;
+    }
+
+    .profit-bar.positive {
+      background: var(--gain);
+    }
+
+    .profit-bar.negative {
+      background: var(--loss);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Polymarket x Opinion 跨平台套利策略</h1>
+      <div class="header-info">
+        <span id="last-updated">--</span>
+        <span class="status-badge loading" id="status-badge">
+          <span id="status-text">加载中</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Summary Cards - Row 1 -->
+    <div class="summary-grid">
+      <div class="summary-card highlight" id="grand-total-card">
+        <div class="summary-label">总资产 (Total Assets)</div>
+        <div class="summary-value" id="grand-total">$0.00</div>
+        <div class="summary-sub" id="grand-total-detail">现金 + 持仓价值</div>
+      </div>
+
+      <div class="summary-card" id="initial-assets-card">
+        <div class="summary-label">期初资产 (Initial)</div>
+        <div class="summary-value" id="initial-assets">$100,000.00</div>
+        <div class="summary-sub">策略启动资金</div>
+      </div>
+
+      <div class="summary-card" id="cash-balance-card">
+        <div class="summary-label">现金余额 (Cash)</div>
+        <div class="summary-value" id="cash-balance">$0.00</div>
+        <div class="summary-sub">
+          <span id="poly-cash">Poly: $0</span> |
+          <span id="opinion-cash">Opinion: $0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Cards - Row 2 -->
+    <div class="summary-grid">
+      <div class="summary-card" id="position-value-card">
+        <div class="summary-label">持仓价值 (Positions)</div>
+        <div class="summary-value" id="position-value">$0.00</div>
+        <div class="summary-sub">
+          <span id="poly-value">Polymarket: $0</span> |
+          <span id="opinion-value">Opinion: $0</span>
+        </div>
+      </div>
+
+      <div class="summary-card" id="unrealized-pnl-card">
+        <div class="summary-label">未实现收益 (Unrealized PnL)</div>
+        <div class="summary-value" id="unrealized-pnl">$0.00</div>
+        <div class="summary-sub" id="unrealized-pnl-detail">当前持仓浮动盈亏</div>
+      </div>
+
+      <div class="summary-card" id="matched-value-card">
+        <div class="summary-label">配对仓位结算价值</div>
+        <div class="summary-value" id="matched-value">$0.00</div>
+        <div class="summary-sub" id="matched-count">跨平台对冲仓位</div>
+      </div>
+    </div>
+
+    <!-- Trade History Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">交易历史</h2>
+        <span class="section-badge" id="trade-count">0 笔交易</span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="all" onclick="switchTradeTab('all')">全部</button>
+        <button class="tab" data-tab="polymarket" onclick="switchTradeTab('polymarket')">Polymarket</button>
+        <button class="tab" data-tab="opinion" onclick="switchTradeTab('opinion')">Opinion</button>
+      </div>
+      <div class="section-body">
+        <div class="table-wrapper">
+          <table id="trades-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>平台</th>
+                <th>市场</th>
+                <th>方向</th>
+                <th class="text-right">数量</th>
+                <th class="text-right">价格</th>
+                <th class="text-right">金额</th>
+                <th class="text-right">收益</th>
+              </tr>
+            </thead>
+            <tbody id="trades-tbody">
+              <tr>
+                <td colspan="8" class="empty-state">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Current Positions -->
+    <div class="positions-grid">
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Polymarket 持仓</h2>
+          <span class="section-badge badge-poly" id="poly-count">0 个仓位</span>
+        </div>
+        <div class="section-body">
+          <div class="table-wrapper">
+            <table id="poly-positions-table">
+              <thead>
+                <tr>
+                  <th>市场</th>
+                  <th>结果</th>
+                  <th class="text-right">数量</th>
+                  <th class="text-right">均价</th>
+                  <th class="text-right">市值</th>
+                  <th class="text-right">PnL</th>
+                </tr>
+              </thead>
+              <tbody id="poly-positions-tbody">
+                <tr>
+                  <td colspan="6" class="empty-state">加载中...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Opinion 持仓</h2>
+          <span class="section-badge badge-opinion" id="opinion-count">0 个仓位</span>
+        </div>
+        <div class="section-body">
+          <div class="table-wrapper">
+            <table id="opinion-positions-table">
+              <thead>
+                <tr>
+                  <th>市场</th>
+                  <th>方向</th>
+                  <th class="text-right">数量</th>
+                  <th class="text-right">均价</th>
+                  <th class="text-right">市值</th>
+                  <th class="text-right">PnL</th>
+                </tr>
+              </thead>
+              <tbody id="opinion-positions-tbody">
+                <tr>
+                  <td colspan="6" class="empty-state">加载中...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matched Pairs -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">跨平台配对仓位</h2>
+        <span class="section-badge" id="pairs-count">0 对</span>
+      </div>
+      <div class="section-body">
+        <div class="table-wrapper">
+          <table id="pairs-table">
+            <thead>
+              <tr>
+                <th>市场</th>
+                <th>配对类型</th>
+                <th class="text-right">Poly 份额</th>
+                <th class="text-right">Opinion 份额</th>
+                <th class="text-right">匹配份额</th>
+                <th class="text-right">结算价值</th>
+                <th class="text-right">套利成本</th>
+                <th class="text-right">预期收益率</th>
+              </tr>
+            </thead>
+            <tbody id="pairs-tbody">
+              <tr>
+                <td colspan="8" class="empty-state">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const CONFIG = {
+      REFRESH_INTERVAL: 60 * 1000, // 1 minute
+      TRADES_LIMIT: 100,
+      API_BASE: ''
+    };
+
+    // State
+    let currentTradeTab = 'all';
+    let allTrades = [];
+    let polyTrades = [];
+    let opinionTrades = [];
+
+    // DOM Elements
+    const elements = {
+      grandTotal: document.getElementById('grand-total'),
+      grandTotalDetail: document.getElementById('grand-total-detail'),
+      initialAssets: document.getElementById('initial-assets'),
+      cashBalance: document.getElementById('cash-balance'),
+      polyCash: document.getElementById('poly-cash'),
+      opinionCash: document.getElementById('opinion-cash'),
+      positionValue: document.getElementById('position-value'),
+      polyValue: document.getElementById('poly-value'),
+      opinionValue: document.getElementById('opinion-value'),
+      unrealizedPnl: document.getElementById('unrealized-pnl'),
+      unrealizedPnlDetail: document.getElementById('unrealized-pnl-detail'),
+      matchedValue: document.getElementById('matched-value'),
+      matchedCount: document.getElementById('matched-count'),
+      lastUpdated: document.getElementById('last-updated'),
+      statusBadge: document.getElementById('status-badge'),
+      statusText: document.getElementById('status-text'),
+      tradeCount: document.getElementById('trade-count'),
+      polyCount: document.getElementById('poly-count'),
+      opinionCount: document.getElementById('opinion-count'),
+      pairsCount: document.getElementById('pairs-count'),
+      tradesTbody: document.getElementById('trades-tbody'),
+      polyPositionsTbody: document.getElementById('poly-positions-tbody'),
+      opinionPositionsTbody: document.getElementById('opinion-positions-tbody'),
+      pairsTbody: document.getElementById('pairs-tbody')
+    };
+
+    // Constants
+    const INITIAL_ASSETS = 100000;
+
+    // Utility functions
+    function formatUSD(value) {
+      const num = Number(value) || 0;
+      return '$' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatNumber(value, decimals = 2) {
+      const num = Number(value) || 0;
+      return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function formatPercent(value) {
+      const num = Number(value) || 0;
+      return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
+    }
+
+    function formatTimestamp(ts) {
+      if (!ts) return '--';
+      const date = new Date(typeof ts === 'number' ? (ts < 1e12 ? ts * 1000 : ts) : ts);
+      if (isNaN(date.getTime())) return '--';
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getPnlClass(value) {
+      const num = Number(value) || 0;
+      if (num > 0) return 'text-gain';
+      if (num < 0) return 'text-loss';
+      return 'text-muted';
+    }
+
+    function updateCardClass(cardId, value) {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      card.classList.remove('profit', 'loss');
+      const num = Number(value) || 0;
+      if (num > 0) card.classList.add('profit');
+      else if (num < 0) card.classList.add('loss');
+    }
+
+    // API calls
+    async function fetchPositions() {
+      const res = await fetch(CONFIG.API_BASE + '/api/positions');
+      if (!res.ok) throw new Error('Failed to fetch positions');
+      return res.json();
+    }
+
+    async function fetchTrades(limit = CONFIG.TRADES_LIMIT) {
+      const res = await fetch(CONFIG.API_BASE + '/api/trades?limit=' + limit);
+      if (!res.ok) throw new Error('Failed to fetch trades');
+      return res.json();
+    }
+
+    async function fetchBalances() {
+      const res = await fetch(CONFIG.API_BASE + '/api/balances');
+      if (!res.ok) throw new Error('Failed to fetch balances');
+      return res.json();
+    }
+
+    // State for calculating grand total
+    let currentCashBalance = 0;
+    let currentPositionValue = 0;
+
+    // Render functions
+    function renderBalances(balances) {
+      const polyCash = balances?.polymarket || 0;
+      const opinionCash = balances?.opinion || 0;
+      const totalCash = polyCash + opinionCash;
+
+      currentCashBalance = totalCash;
+      elements.cashBalance.textContent = formatUSD(totalCash);
+      elements.polyCash.textContent = 'Poly: ' + formatUSD(polyCash);
+      elements.opinionCash.textContent = 'Opinion: ' + formatUSD(opinionCash);
+
+      // Update grand total
+      updateGrandTotal();
+    }
+
+    function renderSummary(positions) {
+      const polyTotal = positions.polymarket?.totalValue || 0;
+      const opinionTotal = positions.opinion?.totalValue || 0;
+      const positionValue = polyTotal + opinionTotal;
+
+      currentPositionValue = positionValue;
+      elements.positionValue.textContent = formatUSD(positionValue);
+      elements.polyValue.textContent = 'Polymarket: ' + formatUSD(polyTotal);
+      elements.opinionValue.textContent = 'Opinion: ' + formatUSD(opinionTotal);
+
+      // Update grand total
+      updateGrandTotal();
+
+      // Calculate unrealized PnL from current positions
+      let polyUnrealized = 0;
+      let opinionUnrealized = 0;
+      if (positions.polymarket?.positions) {
+        polyUnrealized = positions.polymarket.positions.reduce((sum, p) => sum + (Number(p.cashPnl) || 0), 0);
+      }
+      if (positions.opinion?.positions) {
+        opinionUnrealized = positions.opinion.positions.reduce((sum, p) => sum + (Number(p.unrealizedPnl) || 0), 0);
+      }
+      const unrealizedPnl = polyUnrealized + opinionUnrealized;
+      elements.unrealizedPnl.textContent = formatUSD(unrealizedPnl);
+      elements.unrealizedPnl.className = 'summary-value ' + getPnlClass(unrealizedPnl);
+      elements.unrealizedPnlDetail.textContent = `Poly: ${formatUSD(polyUnrealized)} | Opinion: ${formatUSD(opinionUnrealized)}`;
+      updateCardClass('unrealized-pnl-card', unrealizedPnl);
+
+      // Matched pairs value
+      const matchedValue = positions.matchedPairs?.totalMatchedValue || 0;
+      const pairsLen = positions.matchedPairs?.pairs?.length || 0;
+      elements.matchedValue.textContent = formatUSD(matchedValue);
+      elements.matchedCount.textContent = pairsLen + ' 对跨平台对冲仓位';
+    }
+
+    function updateGrandTotal() {
+      const grandTotal = currentCashBalance + currentPositionValue;
+      elements.grandTotal.textContent = formatUSD(grandTotal);
+
+      // Show return vs initial
+      const returnPct = ((grandTotal - INITIAL_ASSETS) / INITIAL_ASSETS * 100).toFixed(2);
+      const returnSign = returnPct >= 0 ? '+' : '';
+      elements.grandTotalDetail.textContent = `vs 期初: ${returnSign}${returnPct}%`;
+    }
+
+    function renderTrades(data) {
+      polyTrades = (data.polymarketTrades || []).map(t => ({
+        ...t,
+        platform: 'polymarket',
+        time: t.match_time,
+        market: t.title || t.market,
+        side: t.side,
+        size: t.size,
+        price: t.price,
+        amount: (Number(t.size) || 0) * (Number(t.price) || 0),
+        profit: null
+      }));
+
+      opinionTrades = (data.opinionTrades || []).map(t => ({
+        ...t,
+        platform: 'opinion',
+        time: t.createdAt,
+        market: t.marketTitle,
+        side: t.side,
+        size: t.shares,
+        price: t.price,
+        amount: Number(t.amount) || Number(t.usdAmount) || (Number(t.shares) * Number(t.price)),
+        profit: Number(t.profit) || null
+      }));
+
+      // Merge and sort
+      allTrades = [...polyTrades, ...opinionTrades].sort((a, b) => {
+        const ta = Number(a.time) || 0;
+        const tb = Number(b.time) || 0;
+        return tb - ta;
+      });
+
+      elements.tradeCount.textContent = allTrades.length + ' 笔交易';
+      renderTradesTable();
+    }
+
+    function renderTradesTable() {
+      let trades = allTrades;
+      if (currentTradeTab === 'polymarket') {
+        trades = polyTrades;
+      } else if (currentTradeTab === 'opinion') {
+        trades = opinionTrades;
+      }
+
+      if (trades.length === 0) {
+        elements.tradesTbody.innerHTML = '<tr><td colspan="8" class="empty-state">暂无交易记录</td></tr>';
+        return;
+      }
+
+      elements.tradesTbody.innerHTML = trades.slice(0, 50).map(t => `
+        <tr>
+          <td class="font-mono">${formatTimestamp(t.time)}</td>
+          <td><span class="badge ${t.platform === 'polymarket' ? 'badge-poly' : 'badge-opinion'}">${t.platform === 'polymarket' ? 'Poly' : 'Opinion'}</span></td>
+          <td class="market-title" title="${escapeHtml(t.market)}">${escapeHtml(t.market || '--')}</td>
+          <td><span class="badge ${t.side === 'BUY' ? 'badge-buy' : 'badge-sell'}">${t.side || '--'}</span></td>
+          <td class="text-right font-mono">${formatNumber(t.size)}</td>
+          <td class="text-right font-mono">${formatUSD(t.price)}</td>
+          <td class="text-right font-mono">${formatUSD(t.amount)}</td>
+          <td class="text-right font-mono ${getPnlClass(t.profit)}">${t.profit != null ? formatUSD(t.profit) : '--'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function switchTradeTab(tab) {
+      currentTradeTab = tab;
+      document.querySelectorAll('.tabs .tab').forEach(el => {
+        el.classList.toggle('active', el.dataset.tab === tab);
+      });
+      renderTradesTable();
+    }
+
+    function renderPositions(data) {
+      // Polymarket positions
+      const polyPositions = data.polymarket?.positions || [];
+      elements.polyCount.textContent = polyPositions.length + ' 个仓位';
+
+      if (polyPositions.length === 0) {
+        elements.polyPositionsTbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无持仓</td></tr>';
+      } else {
+        elements.polyPositionsTbody.innerHTML = polyPositions.map(p => `
+          <tr>
+            <td class="market-title" title="${escapeHtml(p.market)}">${escapeHtml(p.market || '--')}</td>
+            <td>${escapeHtml(p.outcome || '--')}</td>
+            <td class="text-right font-mono">${formatNumber(p.size)}</td>
+            <td class="text-right font-mono">${formatUSD(p.avgPrice)}</td>
+            <td class="text-right font-mono">${formatUSD(p.currentValue)}</td>
+            <td class="text-right font-mono ${getPnlClass(p.cashPnl)}">${formatUSD(p.cashPnl)} (${formatPercent(p.percentPnl)})</td>
+          </tr>
+        `).join('');
+      }
+
+      // Opinion positions
+      const opinionPositions = data.opinion?.positions || [];
+      elements.opinionCount.textContent = opinionPositions.length + ' 个仓位';
+
+      if (opinionPositions.length === 0) {
+        elements.opinionPositionsTbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无持仓</td></tr>';
+      } else {
+        elements.opinionPositionsTbody.innerHTML = opinionPositions.map(p => `
+          <tr>
+            <td class="market-title" title="${escapeHtml(p.marketTitle)}">${escapeHtml(p.marketTitle || '--')}</td>
+            <td>${escapeHtml(p.side || '--')}</td>
+            <td class="text-right font-mono">${formatNumber(p.shares)}</td>
+            <td class="text-right font-mono">${formatUSD(p.avgPrice)}</td>
+            <td class="text-right font-mono">${formatUSD(p.currentValue)}</td>
+            <td class="text-right font-mono ${getPnlClass(p.unrealizedPnl)}">${formatUSD(p.unrealizedPnl)} (${formatPercent(p.unrealizedPnlPercent)})</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderMatchedPairs(data) {
+      const pairs = data.matchedPairs?.pairs || [];
+      elements.pairsCount.textContent = pairs.length + ' 对';
+
+      if (pairs.length === 0) {
+        elements.pairsTbody.innerHTML = '<tr><td colspan="8" class="empty-state">暂无配对仓位</td></tr>';
+        return;
+      }
+
+      elements.pairsTbody.innerHTML = pairs.map(p => {
+        // Calculate arbitrage cost and expected profit
+        const polyAvg = p.polymarketPosition?.avgPrice || 0;
+        const opinionAvg = p.opinionPosition?.avgPrice || 0;
+        const totalCost = (polyAvg + opinionAvg) * p.matchedShares;
+        const expectedProfit = p.matchedValue - totalCost;
+        const profitRate = totalCost > 0 ? (expectedProfit / totalCost * 100) : 0;
+
+        return `
+          <tr>
+            <td class="market-title" title="${escapeHtml(p.question)}">${escapeHtml(p.question || '--')}</td>
+            <td>${escapeHtml(p.pairType || '--')}</td>
+            <td class="text-right font-mono">${formatNumber(p.polymarketPosition?.size)}</td>
+            <td class="text-right font-mono">${formatNumber(p.opinionPosition?.size)}</td>
+            <td class="text-right font-mono"><strong>${formatNumber(p.matchedShares)}</strong></td>
+            <td class="text-right font-mono text-gain"><strong>${formatUSD(p.matchedValue)}</strong></td>
+            <td class="text-right font-mono">${formatUSD(totalCost)}</td>
+            <td class="text-right font-mono ${getPnlClass(expectedProfit)}">${formatPercent(profitRate)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Main update function
+    async function updateDashboard() {
+      elements.statusBadge.classList.add('loading');
+      elements.statusText.textContent = '更新中';
+
+      try {
+        const [positions, trades, balances] = await Promise.all([
+          fetchPositions(),
+          fetchTrades(),
+          fetchBalances().catch(() => ({ polymarket: 0, opinion: 0, total: 0 }))
+        ]);
+
+        renderBalances(balances);
+        renderSummary(positions);
+        renderTrades(trades);
+        renderPositions(positions);
+        renderMatchedPairs(positions);
+
+        elements.lastUpdated.textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN');
+        elements.statusBadge.classList.remove('loading');
+        elements.statusText.textContent = '运行中';
+      } catch (err) {
+        console.error('Dashboard update failed:', err);
+        elements.statusText.textContent = '更新失败';
+      }
+    }
+
+    // Initialize
+    updateDashboard();
+    setInterval(updateDashboard, CONFIG.REFRESH_INTERVAL);
+  </script>
+</body>
+</html>
