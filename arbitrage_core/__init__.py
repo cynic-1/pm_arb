@@ -23,6 +23,7 @@ from .websocket_manager import (
     OpinionWebSocket,
     OrderBookUpdate,
 )
+from .liquidity_scorer import LiquidityScorer, LiquidityScore
 
 # 待实现的模块（已注释）：
 # from .orderbook import OrderBookManager
@@ -45,6 +46,9 @@ __all__ = [
     "PolymarketWebSocket",
     "OpinionWebSocket",
     "OrderBookUpdate",
+    # 流动性评分
+    "LiquidityScorer",
+    "LiquidityScore",
     # 待实现模块（已注释）：
     # "OrderBookManager",
     # "OrderExecutor",

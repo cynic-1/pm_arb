@@ -76,6 +76,12 @@ class ArbitrageConfig:
     liquidity_trade_limit: int = field(default_factory=lambda: max(10, int(os.getenv("LIQUIDITY_TRADE_LIMIT", "40"))))
     liquidity_debug: bool = field(default_factory=lambda: os.getenv("LIQUIDITY_DEBUG", "1") not in {"0", "false", "False"})
 
+    # 流动性筛选配置
+    liquidity_top_n: int = field(default_factory=lambda: max(0, int(os.getenv("LIQUIDITY_TOP_N", "10"))))  # 流动性最好的前N个市场
+    liquidity_bottom_n: int = field(default_factory=lambda: max(0, int(os.getenv("LIQUIDITY_BOTTOM_N", "5"))))  # 流动性最差的前N个市场
+    liquidity_rescore_cycles: int = field(default_factory=lambda: max(0, int(os.getenv("LIQUIDITY_RESCORE_CYCLES", "1000"))))  # 每N个循环重新评分
+    liquidity_cancel_all_on_rescore: bool = field(default_factory=lambda: os.getenv("LIQUIDITY_CANCEL_ALL_ON_RESCORE", "1") not in {"0", "false", "False"})  # 重新评分时取消所有订单
+
     # ==================== 监控配置 ====================
     account_monitor_interval: float = field(default_factory=lambda: float(os.getenv("ACCOUNT_MONITOR_INTERVAL", "3.0")))
     order_status_fallback_after: Optional[float] = None
