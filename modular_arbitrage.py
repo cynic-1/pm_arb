@@ -709,6 +709,12 @@ class ModularArbitrage:
         if not self.config.immediate_exec_enabled:
             return
 
+        # 检查单笔收益率，如果大于3%则跳过
+        profit_rate = opportunity.get('profit_rate', 0)
+        if profit_rate > 3.0:
+            print(f"  ⏭️  单笔收益率 {profit_rate:.2f}% > 3%，跳过该套利机会")
+            return
+
         # 使用年化收益率作为判断标准
         annualized_rate = opportunity.get('annualized_rate')
         if annualized_rate is None:
