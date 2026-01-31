@@ -1,67 +1,15 @@
 [
   {
-    "question": "TrumpRX launched by January 31, 2026?",
-    "opinion_market_id": 4145,
-    "opinion_yes_token": "2522334896818502974614233595146462374389983548783460196466706732885668769446",
-    "opinion_no_token": "27281121138108851570900424177010987883172314734917097371321669037054285726259",
-    "polymarket_condition_id": "0xc1739b130759c6e45642f0469f86566371082e23a0f56bdb05d4cb7e35711f25",
-    "polymarket_yes_token": "90679591974671519344477806559662079889523055441293714172602907255521988057511",
-    "polymarket_no_token": "75549097491291121846905310297570680680684721023000264655101865089702218051689",
-    "polymarket_slug": "trumprx-launched-by-january-31-2026",
+    "question": "Bitcoin Up or Down on January 31?",
+    "opinion_market_id": 5067,
+    "opinion_yes_token": "79289347711859346880243016948454422688510132174213659287804871743448102864663",
+    "opinion_no_token": "46426890580528612141115509777019078723653943783180732125347978155670236722630",
+    "polymarket_condition_id": "0x3e3e404870d97456dba2808de2dd6e9a6165168794bf90e0cdb6048d93e7ab7a",
+    "polymarket_yes_token": "104654371106328340370851190866138578890372380489856819236186101949732258611553",
+    "polymarket_no_token": "106427873235215000863138013046412629162553337634131931763773799867931616707210",
+    "polymarket_slug": "bitcoin-up-or-down-on-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will USD reach 1.5M Iranian rials by January 31?",
-    "opinion_market_id": 4144,
-    "opinion_yes_token": "21625009848752086748703139869163081657815083032108670965949674289969692911055",
-    "opinion_no_token": "30144146435518146006122550572299293455265944550867519146368219726267915467020",
-    "polymarket_condition_id": "0xd5defa7fa82e9f99ee9f2d107eecf51423d586ab31794b0ee49995501237e8d5",
-    "polymarket_yes_token": "50262231745386542022481845493500730008172302434912396005248225228083851535588",
-    "polymarket_no_token": "30477966547893322981394976117406124473643918180240619989158491946247812788073",
-    "polymarket_slug": "will-usd-reach-1pt5m-iranian-rials-by-january-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Will the Iranian regime fall by January 31?",
-    "opinion_market_id": 4003,
-    "opinion_yes_token": "70670213192149390369499622476706779459215900361537273189303408416987706890911",
-    "opinion_no_token": "89565699628597009255313165690401049699703494749118537821129100655143429900116",
-    "polymarket_condition_id": "0x77b9b065f487d1e18d005465d221ec6c84ed3babfaf6ecf62f20baeaa9fc3038",
-    "polymarket_yes_token": "7658808656738124231655982304932115710649774031219112698093176227109214699054",
-    "polymarket_no_token": "75325926334064369719522833702687350588543226350264281045007110029547967164523",
-    "polymarket_slug": "will-the-iranian-regime-fall-by-january-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "U.S. recognizes Machado as leader of Venezuela by January 31?",
-    "opinion_market_id": 3975,
-    "opinion_yes_token": "17143316589219485416060615905577902577738838280910030458410091811973978359070",
-    "opinion_no_token": "11295755245172817128772667768404404530531453088799840586854338687366757872917",
-    "polymarket_condition_id": "0xfda7c9a4106beba4799d4e38ce4e8df14ea2651bec78cdd12b7295aa3cc42268",
-    "polymarket_yes_token": "19496567323687088411779225138011498180373915763326106874269310145324552013118",
-    "polymarket_no_token": "62509694473831567981196349828478691476439532369072290506726774370207398310914",
-    "polymarket_slug": "us-recognizes-machado-as-leader-of-venezuela-by-january-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Israel strikes Iran by January 31, 2026?",
-    "opinion_market_id": 3861,
-    "opinion_yes_token": "99904537451919756465656938138414080393645016131525956911984437296468042828030",
-    "opinion_no_token": "97311288919559802465522549861894063891343590762862212608595970389487227268737",
-    "polymarket_condition_id": "0x23fd2b26c4e095465ba0d2ebce8d5eda57009ddc59aad8b68ab19ca968b41eed",
-    "polymarket_yes_token": "15091760884604171309203489618212539770109612407760305338364320626709285790409",
-    "polymarket_no_token": "34465433013244737261777301958314575283534514587255327061285941306189159190135",
-    "polymarket_slug": "israel-strikes-iran-by-january-31-2026-894-994-453",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -74,7 +22,7 @@
     "polymarket_no_token": "39253622070199270385909006606006878895431836518766490608307293361215037004641",
     "polymarket_slug": "bitcoin-above-80k-on-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -87,7 +35,7 @@
     "polymarket_no_token": "94131290361086408364737992916715418644867739548456870901074867276984528984776",
     "polymarket_slug": "bitcoin-above-82k-on-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -100,7 +48,7 @@
     "polymarket_no_token": "80692827164436510184711098845151259062785506528932400081392400126158608218888",
     "polymarket_slug": "bitcoin-above-84k-on-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -113,33 +61,7 @@
     "polymarket_no_token": "83071390335981386340836584046968274849548512292325577732577286825918528408105",
     "polymarket_slug": "bitcoin-above-86k-on-january-31",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "US strike on Mexico by ...? - January 31",
-    "opinion_market_id": 3997,
-    "opinion_yes_token": "66689491714226842723379031539853263738597872030029496578004341946516733175044",
-    "opinion_no_token": "100663177674441407268582542961983477659089796854217164860123667803244003408888",
-    "polymarket_condition_id": "0x386c1da56d757c6920fc73535aba510300e9cd666c0312d11b4cc03f097fb487",
-    "polymarket_yes_token": "63261459433323020856575387789253256070173594617236763006477922210149664988186",
-    "polymarket_no_token": "91704962006845431511273988613996521492030307444776446954708148967530919259358",
-    "polymarket_slug": "us-strike-on-mexico-by-january-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "US/Israel strikes Iran by...? - January 31, 2026",
-    "opinion_market_id": 3973,
-    "opinion_yes_token": "64860667649698796189061251862119526181879081544545756246443340551303673762851",
-    "opinion_no_token": "41657951328430187563322782710045542364186926293942673090365988032631355706926",
-    "polymarket_condition_id": "0x391e2cca67a2d49030baf239fdebb1d428b732a00d0af46a0c98866a0a8eee8a",
-    "polymarket_yes_token": "86582863442764039699735977419741265869635735642166631514435274464883317069448",
-    "polymarket_no_token": "27071666078102857046487824727499027509877910834815426286412785710673240730862",
-    "polymarket_slug": "will-us-or-israel-strike-iran-by-january-31-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
@@ -152,7 +74,7 @@
     "polymarket_no_token": "111140858756679672855496335009166515388069256844669514478723925327224070650753",
     "polymarket_slug": "will-us-or-israel-strike-iran-by-february-28-2026-766",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1772323200,
     "polymarket_neg_risk": false
   },
   {
@@ -165,7 +87,7 @@
     "polymarket_no_token": "16685638071290527000266951263027941144457271794881126911455805709168603026779",
     "polymarket_slug": "will-us-or-israel-strike-iran-by-march-31-2026-233",
     "similarity_score": 1.0,
-    "cutoff_at": 1769817600,
+    "cutoff_at": 1775001600,
     "polymarket_neg_risk": false
   },
   {
@@ -556,19 +478,6 @@
     "polymarket_slug": "will-bitcoin-dip-to-70k-in-january-2026",
     "similarity_score": 1.0,
     "cutoff_at": 1769817600,
-    "polymarket_neg_risk": false
-  },
-  {
-    "question": "Bitcoin Up or Down on January 31?",
-    "opinion_market_id": 5067,
-    "opinion_yes_token": "79289347711859346880243016948454422688510132174213659287804871743448102864663",
-    "opinion_no_token": "46426890580528612141115509777019078723653943783180732125347978155670236722630",
-    "polymarket_condition_id": "0x3e3e404870d97456dba2808de2dd6e9a6165168794bf90e0cdb6048d93e7ab7a",
-    "polymarket_yes_token": "104654371106328340370851190866138578890372380489856819236186101949732258611553",
-    "polymarket_no_token": "106427873235215000863138013046412629162553337634131931763773799867931616707210",
-    "polymarket_slug": "bitcoin-up-or-down-on-january-31",
-    "similarity_score": 1.0,
-    "cutoff_at": 1769904000,
     "polymarket_neg_risk": false
   },
   {
