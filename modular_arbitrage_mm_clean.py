@@ -720,7 +720,7 @@ class ModularArbitrageMM(ModularArbitrage):
 
     def _update_liquidity_order_statuses(self, tracked_states: Optional[List[Tuple[str, LiquidityOrderState]]] = None) -> None:
         # 清理超时的已标记移除订单（保留监控 5 分钟后强制清理）
-        MARKED_REMOVAL_TIMEOUT = 12*60*60.0  # 5 分钟
+        MARKED_REMOVAL_TIMEOUT = 2*60.0  # 5 分钟
 
         if tracked_states is None:
             with self._liquidity_orders_lock:
