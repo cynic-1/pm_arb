@@ -313,16 +313,24 @@ class ModularArbitrageMM(ModularArbitrage):
             "cost": metrics.get("cost"),
         }
 
+    def _has_arbitrage_opportunity(self, match: MarketMatch, opinion_yes_book: Any, poly_yes_book: Any) -> bool:
+        """检查市场是否存在符合年化收益阈值的套利机会"""
+        candidates = self._collect_liquidity_candidates(match, opinion_yes_book, poly_yes_book)
+        return len(candidates) > 0
+
     def _score_all_markets(self) -> List[LiquidityScore]:
-        """对所有配对市场进行流动性评分"""
+        """对所有配对市场进行流动性评分（仅评分存在套利机会的市场）"""
         if not self.market_matches:
             logger.error("⚠️ 未加载市场匹配，无法评分")
             return []
 
         logger.info(f"📊 开始对 {len(self.market_matches)} 个市场进行流动性评分...")
+        logger.info(f"   (仅评分存在套利机会的市场，年化阈值 ≥ {self.liquidity_min_annualized:.2f}%)")
 
         batch_size = self.config.orderbook_batch_size
         all_scores: List[LiquidityScore] = []
+        markets_with_opportunity = 0
+        markets_without_opportunity = 0
 
         for batch_start in range(0, len(self.market_matches), batch_size):
             batch_matches = self.market_matches[batch_start : batch_start + batch_size]
@@ -349,6 +357,13 @@ class ModularArbitrageMM(ModularArbitrage):
                 if not opinion_yes_book or not poly_yes_book:
                     continue
 
+                # 【新增】先检查是否存在符合阈值的套利机会
+                if not self._has_arbitrage_opportunity(match, opinion_yes_book, poly_yes_book):
+                    markets_without_opportunity += 1
+                    continue
+
+                markets_with_opportunity += 1
+
                 market_key = self._make_liquidity_key(match, match.opinion_yes_token, "market")
                 score = self.liquidity_scorer.score_market_pair(
                     market_key=market_key,
@@ -359,7 +374,8 @@ class ModularArbitrageMM(ModularArbitrage):
                 if score:
                     all_scores.append(score)
 
-        logger.info(f"✅ 完成评分，共 {len(all_scores)} 个市场有效")
+        logger.info(f"✅ 完成评分: 有套利机会 {markets_with_opportunity} 个, 无套利机会 {markets_without_opportunity} 个")
+        logger.info(f"   有效评分: {len(all_scores)} 个市场")
         return all_scores
 
     def _select_working_markets(self, scores: List[LiquidityScore]) -> List[MarketMatch]:
