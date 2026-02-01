@@ -84,14 +84,14 @@ class ModularArbitrageMM(ModularArbitrage):
         self._hedge_failures = 0
         self._stats_start_time = time.time()
 
-        # 流动性评分器
+        # 流动性评分器（改进版：使用金额深度和极端价格惩罚）
         self.liquidity_scorer = LiquidityScorer(
             depth_weight=0.5,
             price_weight=0.3,
             spread_weight=0.2,
-            min_depth_threshold=self.liquidity_min_size,
-            max_depth_for_score=1000.0,
-            max_spread_for_score=0.1,
+            min_value_threshold=50.0,        # 最小金额阈值：50 USDC
+            max_value_for_score=5000.0,      # 金额评分上限：5000 USDC
+            max_relative_spread=0.2,         # 最大相对价差：20%
         )
 
         # 流动性筛选配置

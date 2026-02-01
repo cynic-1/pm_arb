@@ -61,16 +61,16 @@ class LiquidityScorer:
         depth_weight: float = 0.5,  # 深度权重
         price_weight: float = 0.3,  # 价格权重
         spread_weight: float = 0.2,  # 价差权重
-        min_depth_threshold: float = 10.0,  # 最小深度阈值
-        max_depth_for_score: float = 1000.0,  # 深度评分上限
-        max_spread_for_score: float = 0.1,  # 价差评分上限
+        min_value_threshold: float = 50.0,  # 最小金额阈值（USDC）
+        max_value_for_score: float = 5000.0,  # 金额评分上限（USDC）
+        max_relative_spread: float = 0.2,  # 最大相对价差（20%）
     ):
         self.depth_weight = depth_weight
         self.price_weight = price_weight
         self.spread_weight = spread_weight
-        self.min_depth_threshold = min_depth_threshold
-        self.max_depth_for_score = max_depth_for_score
-        self.max_spread_for_score = max_spread_for_score
+        self.min_value_threshold = min_value_threshold
+        self.max_value_for_score = max_value_for_score
+        self.max_relative_spread = max_relative_spread
 
         # 验证权重和为1
         total_weight = depth_weight + price_weight + spread_weight
@@ -105,31 +105,49 @@ class LiquidityScorer:
         bid_size = best_bid.size or 0.0
         ask_size = best_ask.size or 0.0
 
-        # 1. 深度得分：对数缩放，避免极端值主导
-        total_depth = bid_size + ask_size
-        if total_depth < self.min_depth_threshold:
+        # 【改进1】计算金额深度（USDC价值）而非股份深度
+        bid_value = bid_size * bid_price
+        ask_value = ask_size * ask_price
+        total_value = bid_value + ask_value
+
+        # 深度得分：基于金额深度
+        if total_value < self.min_value_threshold:
             depth_score = 0.0
         else:
-            # 使用对数缩放，将 [min_threshold, max_depth] 映射到 [0, 100]
             import math
-            normalized = min(total_depth / self.max_depth_for_score, 1.0)
-            depth_score = 100.0 * math.sqrt(normalized)  # 平方根缩放，更平滑
+            normalized = min(total_value / self.max_value_for_score, 1.0)
+            depth_score = 100.0 * math.sqrt(normalized)
 
-        # 2. 价格得分：价格越接近0.5，得分越高
+        # 【改进2】二次函数价格评分，极端价格衰减更快
         mid_price = (bid_price + ask_price) / 2.0
-        # 距离0.5的偏离度，范围[0, 0.5]
         price_deviation = abs(mid_price - 0.5)
-        # 转换为得分：偏离度0时100分，偏离度0.5时0分
-        price_score = 100.0 * (1.0 - 2.0 * price_deviation)
+        # 使用二次函数：偏离度越大，惩罚越重
+        price_score = 100.0 * (1.0 - (2.0 * price_deviation) ** 2)
         price_score = max(0.0, price_score)
 
-        # 3. 价差得分：价差越小，得分越高
+        # 【改进3】极端价格额外惩罚
+        if mid_price < 0.1 or mid_price > 0.9:
+            extreme_penalty = 0.2  # 仅保留20%
+        elif mid_price < 0.2 or mid_price > 0.8:
+            extreme_penalty = 0.5  # 保留50%
+        else:
+            extreme_penalty = 1.0  # 无惩罚
+
+        price_score *= extreme_penalty
+
+        # 【改进4】相对价差评分
         spread = ask_price - bid_price
         if spread < 0:
             spread_score = 0.0
         else:
-            # 价差从0到max_spread映射到100到0
-            spread_ratio = min(spread / self.max_spread_for_score, 1.0)
+            # 计算相对价差
+            if mid_price > 0.01:
+                relative_spread = spread / mid_price
+            else:
+                relative_spread = spread
+
+            # 相对价差从0到max_relative_spread映射到100到0
+            spread_ratio = min(relative_spread / self.max_relative_spread, 1.0)
             spread_score = 100.0 * (1.0 - spread_ratio)
 
         metrics = {
@@ -137,9 +155,13 @@ class LiquidityScorer:
             "ask_price": ask_price,
             "bid_size": bid_size,
             "ask_size": ask_size,
+            "bid_value": bid_value,
+            "ask_value": ask_value,
+            "total_value": total_value,
             "mid_price": mid_price,
             "spread": spread,
-            "total_depth": total_depth,
+            "relative_spread": relative_spread if spread >= 0 else None,
+            "extreme_penalty": extreme_penalty,
         }
 
         return depth_score, price_score, spread_score, metrics
@@ -185,6 +207,16 @@ class LiquidityScorer:
             self.price_weight * poly_price +
             self.spread_weight * poly_spread
         )
+
+        # 【改进】提取极端价格惩罚因子，应用到总分
+        opinion_penalty = opinion_metrics.get("extreme_penalty", 1.0)
+        poly_penalty = poly_metrics.get("extreme_penalty", 1.0)
+        # 取两个平台中更严格的惩罚（较小的值）
+        extreme_penalty = min(opinion_penalty, poly_penalty)
+
+        # 应用极端价格惩罚到总分
+        opinion_total *= extreme_penalty
+        poly_total *= extreme_penalty
 
         # 跨平台均衡度：两个平台得分越接近，均衡度越高
         if opinion_total + poly_total > 0:
@@ -259,9 +291,25 @@ class LiquidityScorer:
         logger.info("=" * 80)
         logger.info(f"市场: {score.market_key[:60]}")
         logger.info(f"综合得分: {score.total_score:.2f}/100")
+
+        # 计算Opinion金额深度
+        opinion_value = 0.0
+        if score.opinion_best_bid and score.opinion_bid_size:
+            opinion_value += score.opinion_best_bid * score.opinion_bid_size
+        if score.opinion_best_ask and score.opinion_ask_size:
+            opinion_value += score.opinion_best_ask * score.opinion_ask_size
+
         logger.info(f"  Opinion - 深度:{score.opinion_depth_score:.1f} 价格:{score.opinion_price_score:.1f} 价差:{score.opinion_spread_score:.1f}")
-        logger.info(f"           买:{score.opinion_best_bid:.4f}({score.opinion_bid_size:.0f}) 卖:{score.opinion_best_ask:.4f}({score.opinion_ask_size:.0f})")
+        logger.info(f"           买:{score.opinion_best_bid:.4f}×{score.opinion_bid_size:.0f} 卖:{score.opinion_best_ask:.4f}×{score.opinion_ask_size:.0f} [金额:{opinion_value:.0f}U]")
+
+        # 计算Polymarket金额深度
+        poly_value = 0.0
+        if score.poly_best_bid and score.poly_bid_size:
+            poly_value += score.poly_best_bid * score.poly_bid_size
+        if score.poly_best_ask and score.poly_ask_size:
+            poly_value += score.poly_best_ask * score.poly_ask_size
+
         logger.info(f"  Poly    - 深度:{score.poly_depth_score:.1f} 价格:{score.poly_price_score:.1f} 价差:{score.poly_spread_score:.1f}")
-        logger.info(f"           买:{score.poly_best_bid:.4f}({score.poly_bid_size:.0f}) 卖:{score.poly_best_ask:.4f}({score.poly_ask_size:.0f})")
+        logger.info(f"           买:{score.poly_best_bid:.4f}×{score.poly_bid_size:.0f} 卖:{score.poly_best_ask:.4f}×{score.poly_ask_size:.0f} [金额:{poly_value:.0f}U]")
         logger.info(f"  跨平台均衡度: {score.cross_platform_balance:.2f}")
         logger.info("=" * 80)
