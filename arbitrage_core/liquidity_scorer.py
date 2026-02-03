@@ -1,10 +1,10 @@
 """
 流动性评分器 - 评估配对市场的流动性质量
 
-评分标准：
-1. 订单簿深度（深度越大，分数越高）
-2. 价格接近度（价格越接近0.5，分数越高，表示市场更均衡）
-3. 买卖价差（价差越小，流动性越好）
+评分标准（确定性、可解释）：
+1. 订单簿深度（在中间价附近带宽内的可成交深度）
+2. 订单簿均衡度（买卖盘深度越均衡，分数越高）
+3. 相对价差（价差越小，流动性越好）
 """
 
 from __future__ import annotations
@@ -59,11 +59,14 @@ class LiquidityScorer:
     def __init__(
         self,
         depth_weight: float = 0.5,  # 深度权重
-        price_weight: float = 0.3,  # 价格权重
+        price_weight: float = 0.3,  # 均衡度权重（沿用字段名）
         spread_weight: float = 0.2,  # 价差权重
-        min_value_threshold: float = 50.0,  # 最小金额阈值（USDC）
-        max_value_for_score: float = 5000.0,  # 金额评分上限（USDC）
+        min_value_threshold: float = 50.0,  # 最小深度阈值（单位：份额）
+        max_value_for_score: float = 5000.0,  # 深度评分上限（单位：份额）
         max_relative_spread: float = 0.2,  # 最大相对价差（20%）
+        depth_band: float = 0.02,  # 深度带宽（相对中间价）
+        min_price_band: float = 0.01,  # 最小绝对带宽，防止过小
+        depth_levels: int = 20,  # 计算深度时最多使用的档位数
     ):
         self.depth_weight = depth_weight
         self.price_weight = price_weight
@@ -71,6 +74,9 @@ class LiquidityScorer:
         self.min_value_threshold = min_value_threshold
         self.max_value_for_score = max_value_for_score
         self.max_relative_spread = max_relative_spread
+        self.depth_band = depth_band
+        self.min_price_band = min_price_band
+        self.depth_levels = depth_levels
 
         # 验证权重和为1
         total_weight = depth_weight + price_weight + spread_weight
@@ -105,37 +111,53 @@ class LiquidityScorer:
         bid_size = best_bid.size or 0.0
         ask_size = best_ask.size or 0.0
 
-        # 【改进1】计算金额深度（USDC价值）而非股份深度
-        bid_value = bid_size * bid_price
-        ask_value = ask_size * ask_price
-        total_value = bid_value + ask_value
+        # 无效订单簿过滤
+        if bid_price <= 0 or ask_price <= 0 or bid_price >= ask_price:
+            return 0.0, 0.0, 0.0, {}
 
-        # 深度得分：基于金额深度
-        if total_value < self.min_value_threshold:
+        # 中间价
+        mid_price = (bid_price + ask_price) / 2.0
+
+        # 订单簿带宽内深度（份额）
+        band = max(mid_price * self.depth_band, self.min_price_band)
+        bids = getattr(orderbook, "bids", []) or []
+        asks = getattr(orderbook, "asks", []) or []
+
+        def _depth_within(levels: List[Any], is_bid: bool) -> float:
+            depth = 0.0
+            for level in levels[: self.depth_levels]:
+                price = getattr(level, "price", None)
+                size = getattr(level, "size", None)
+                if price is None or size is None:
+                    continue
+                if is_bid:
+                    if price >= mid_price - band:
+                        depth += size
+                else:
+                    if price <= mid_price + band:
+                        depth += size
+            return depth
+
+        bid_depth = _depth_within(bids, True)
+        ask_depth = _depth_within(asks, False)
+        effective_depth = (bid_depth * ask_depth) ** 0.5 if bid_depth > 0 and ask_depth > 0 else 0.0
+
+        # 深度得分：基于带宽深度（份额）
+        if effective_depth < self.min_value_threshold:
             depth_score = 0.0
         else:
             import math
-            normalized = min(total_value / self.max_value_for_score, 1.0)
+            normalized = min(effective_depth / self.max_value_for_score, 1.0)
             depth_score = 100.0 * math.sqrt(normalized)
 
-        # 【改进2】二次函数价格评分，极端价格衰减更快
-        mid_price = (bid_price + ask_price) / 2.0
-        price_deviation = abs(mid_price - 0.5)
-        # 使用二次函数：偏离度越大，惩罚越重
-        price_score = 100.0 * (1.0 - (2.0 * price_deviation) ** 2)
-        price_score = max(0.0, price_score)
-
-        # 【改进3】极端价格额外惩罚
-        if mid_price < 0.1 or mid_price > 0.9:
-            extreme_penalty = 0.2  # 仅保留20%
-        elif mid_price < 0.2 or mid_price > 0.8:
-            extreme_penalty = 0.5  # 保留50%
+        # 订单簿均衡度评分（替代原价格接近度，避免高价档位偏置）
+        if bid_depth + ask_depth > 0:
+            imbalance = abs(bid_depth - ask_depth) / (bid_depth + ask_depth)
+            price_score = 100.0 * (1.0 - imbalance)
         else:
-            extreme_penalty = 1.0  # 无惩罚
+            price_score = 0.0
 
-        price_score *= extreme_penalty
-
-        # 【改进4】相对价差评分
+        # 相对价差评分
         spread = ask_price - bid_price
         if spread < 0:
             spread_score = 0.0
@@ -155,13 +177,13 @@ class LiquidityScorer:
             "ask_price": ask_price,
             "bid_size": bid_size,
             "ask_size": ask_size,
-            "bid_value": bid_value,
-            "ask_value": ask_value,
-            "total_value": total_value,
             "mid_price": mid_price,
             "spread": spread,
             "relative_spread": relative_spread if spread >= 0 else None,
-            "extreme_penalty": extreme_penalty,
+            "band": band,
+            "bid_depth": bid_depth,
+            "ask_depth": ask_depth,
+            "effective_depth": effective_depth,
         }
 
         return depth_score, price_score, spread_score, metrics
@@ -207,16 +229,6 @@ class LiquidityScorer:
             self.price_weight * poly_price +
             self.spread_weight * poly_spread
         )
-
-        # 【改进】提取极端价格惩罚因子，应用到总分
-        opinion_penalty = opinion_metrics.get("extreme_penalty", 1.0)
-        poly_penalty = poly_metrics.get("extreme_penalty", 1.0)
-        # 取两个平台中更严格的惩罚（较小的值）
-        extreme_penalty = min(opinion_penalty, poly_penalty)
-
-        # 应用极端价格惩罚到总分
-        opinion_total *= extreme_penalty
-        poly_total *= extreme_penalty
 
         # 跨平台均衡度：两个平台得分越接近，均衡度越高
         if opinion_total + poly_total > 0:
