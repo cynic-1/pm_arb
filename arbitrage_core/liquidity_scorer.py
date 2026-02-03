@@ -300,7 +300,10 @@ class LiquidityScorer:
             opinion_value += score.opinion_best_ask * score.opinion_ask_size
 
         logger.info(f"  Opinion - 深度:{score.opinion_depth_score:.1f} 价格:{score.opinion_price_score:.1f} 价差:{score.opinion_spread_score:.1f}")
-        logger.info(f"           买:{score.opinion_best_bid:.4f}×{score.opinion_bid_size:.0f} 卖:{score.opinion_best_ask:.4f}×{score.opinion_ask_size:.0f} [金额:{opinion_value:.0f}U]")
+        if score.opinion_best_bid and score.opinion_best_ask:
+            logger.info(f"           买:{score.opinion_best_bid:.4f}×{score.opinion_bid_size:.0f} 卖:{score.opinion_best_ask:.4f}×{score.opinion_ask_size:.0f} [金额:{opinion_value:.0f}U]")
+        else:
+            logger.info(f"           无订单簿数据")
 
         # 计算Polymarket金额深度
         poly_value = 0.0
@@ -310,6 +313,9 @@ class LiquidityScorer:
             poly_value += score.poly_best_ask * score.poly_ask_size
 
         logger.info(f"  Poly    - 深度:{score.poly_depth_score:.1f} 价格:{score.poly_price_score:.1f} 价差:{score.poly_spread_score:.1f}")
-        logger.info(f"           买:{score.poly_best_bid:.4f}×{score.poly_bid_size:.0f} 卖:{score.poly_best_ask:.4f}×{score.poly_ask_size:.0f} [金额:{poly_value:.0f}U]")
+        if score.poly_best_bid and score.poly_best_ask:
+            logger.info(f"           买:{score.poly_best_bid:.4f}×{score.poly_bid_size:.0f} 卖:{score.poly_best_ask:.4f}×{score.poly_ask_size:.0f} [金额:{poly_value:.0f}U]")
+        else:
+            logger.info(f"           无订单簿数据")
         logger.info(f"  跨平台均衡度: {score.cross_platform_balance:.2f}")
         logger.info("=" * 80)
