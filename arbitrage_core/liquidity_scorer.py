@@ -61,11 +61,11 @@ class LiquidityScorer:
         depth_weight: float = 0.5,  # 深度权重
         price_weight: float = 0.3,  # 均衡度权重（沿用字段名）
         spread_weight: float = 0.2,  # 价差权重
-        min_value_threshold: float = 50.0,  # 最小深度阈值（单位：份额）
+        min_value_threshold: float = 10.0,  # 最小深度阈值（单位：份额）
         max_value_for_score: float = 5000.0,  # 深度评分上限（单位：份额）
-        max_relative_spread: float = 0.2,  # 最大相对价差（20%）
-        depth_band: float = 0.02,  # 深度带宽（相对中间价）
-        min_price_band: float = 0.01,  # 最小绝对带宽，防止过小
+        max_relative_spread: float = 0.35,  # 最大相对价差（35%）
+        depth_band: float = 0.05,  # 深度带宽（相对中间价）
+        min_price_band: float = 0.02,  # 最小绝对带宽，防止过小
         depth_levels: int = 20,  # 计算深度时最多使用的档位数
     ):
         self.depth_weight = depth_weight
@@ -172,6 +172,18 @@ class LiquidityScorer:
             spread_ratio = min(relative_spread / self.max_relative_spread, 1.0)
             spread_score = 100.0 * (1.0 - spread_ratio)
 
+        # 价格区间与价差惩罚：超出合理区间或价差过大降为惩罚性低分
+        penalty_factor = 1.0
+        if bid_price < 0.05 or bid_price > 0.95 or ask_price < 0.05 or ask_price > 0.95:
+            penalty_factor = min(penalty_factor, 0.1)
+        if spread > 0.02:
+            penalty_factor = min(penalty_factor, 0.3)
+
+        if penalty_factor < 1.0:
+            depth_score *= penalty_factor
+            price_score *= penalty_factor
+            spread_score *= penalty_factor
+
         metrics = {
             "bid_price": bid_price,
             "ask_price": ask_price,
@@ -213,8 +225,8 @@ class LiquidityScorer:
         poly_depth, poly_price, poly_spread, poly_metrics = \
             self.score_orderbook(poly_book, "polymarket")
 
-        # 如果两个平台都没有流动性，返回None
-        if opinion_depth == 0 and poly_depth == 0:
+        # 如果两个平台都没有有效订单簿，返回None
+        if not opinion_metrics and not poly_metrics:
             return None
 
         # 计算各平台的综合得分
