@@ -403,19 +403,6 @@
     "polymarket_neg_risk": false
   },
   {
-    "question": "What price will Bitcoin hit in February? - ↓ 50,000",
-    "opinion_market_id": 5851,
-    "opinion_yes_token": "109504749975989425998020282187054300698768137554952469230148827806496849558159",
-    "opinion_no_token": "113610695184769434355540131843061467868207461248221063442193677997962912713925",
-    "polymarket_condition_id": "0x5e5c9dfaf695371a0cc321b47b35f66a6dbd1482f0503526603d2bd2a91bfdc7",
-    "polymarket_yes_token": "37297213992198847758335843642137412014662841314020423585709724457305615671955",
-    "polymarket_no_token": "85285091029101061598102453878417748165438482105623263900746828987387745601127",
-    "polymarket_slug": "will-bitcoin-reach-150k-in-february-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1772236800,
-    "polymarket_neg_risk": false
-  },
-  {
     "question": "What price will Bitcoin hit in February? - ↓ 45,000",
     "opinion_market_id": 5852,
     "opinion_yes_token": "50167003305318656305524777097566490400803245466121731674915121844002983347267",
