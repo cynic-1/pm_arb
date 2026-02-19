@@ -275,7 +275,7 @@ class CrossPlatformArbitrage:
         try:
             response = requests.get(
                 f"{self.gamma_api}/public-search",
-                params={"q": query},
+                params={"q": query, "events_status": "active"},
                 timeout=10,
             )
             response.raise_for_status()
