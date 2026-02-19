@@ -7,6 +7,7 @@ import json
 import time
 import threading
 import logging
+import requests
 from typing import Dict, List, Callable, Optional, Set
 from dataclasses import dataclass
 from websocket import WebSocketApp
@@ -341,6 +342,11 @@ class OpinionWebSocket:
         self._rest_poll_thread = None
         self._rest_poll_stop = threading.Event()
         self._last_rest_fetch: Dict[str, float] = {}  # token_id -> timestamp
+        self._http_fallback_warned = False
+        self.depth_update_count = 0
+        self.stable_notice_count = 0
+        self.unknown_message_count = 0
+        self._unknown_samples_logged = 0
 
         # Auto-reconnection settings
         self.auto_reconnect = True
@@ -365,34 +371,90 @@ class OpinionWebSocket:
             parse_time = (time.time() - parse_start) * 1000
             logger.debug(f"[Opinion WS] JSON解析耗时: {parse_time:.2f}ms")
 
-            msg_type = data.get("msgType")
-            logger.debug(f"[Opinion WS] 消息类型: {msg_type}")
+            payloads: List[dict] = []
+            if isinstance(data, list):
+                payloads = [item for item in data if isinstance(item, dict)]
+            elif isinstance(data, dict):
+                payloads = [data]
 
-            if msg_type == "market.depth.diff":
-                self._process_book_update(data, recv_time)
-            elif data.get("code") == 200:
-                # Subscription confirmation
-                logger.debug(f"Opinion: {data.get('message')}")
+            for payload in payloads:
+                # 某些网关会把业务消息包在 data 字段里
+                inner = payload.get("data")
+                candidate = inner if isinstance(inner, dict) else payload
+
+                msg_type = (
+                    candidate.get("msgType")
+                    or candidate.get("msg_type")
+                    or candidate.get("channel")
+                    or candidate.get("event")
+                )
+                logger.debug(f"[Opinion WS] 消息类型: {msg_type}")
+
+                if msg_type in {"market.depth.diff", "market.depth", "depth.diff"} or (
+                    (candidate.get("side") or candidate.get("bookSide"))
+                    and (candidate.get("price") is not None)
+                    and (
+                        candidate.get("tokenId")
+                        or candidate.get("token_id")
+                        or candidate.get("token")
+                    )
+                ):
+                    if self._process_book_update(candidate, recv_time):
+                        self.depth_update_count += 1
+                    continue
+
+                if candidate.get("code") == 200:
+                    msg = str(candidate.get("message", ""))
+                    if "stable" in msg.lower():
+                        self.stable_notice_count += 1
+                    logger.debug(f"Opinion ack: {msg}")
+                    continue
+
+                self.unknown_message_count += 1
+                if self._unknown_samples_logged < 3:
+                    logger.warning(f"⚠️ Opinion WS 未识别消息样例: {candidate}")
+                    self._unknown_samples_logged += 1
 
         except json.JSONDecodeError:
             logger.debug(f"Non-JSON message: {message[:100]}")
         except Exception as e:
             logger.error(f"Error processing Opinion message: {e}")
 
-    def _process_book_update(self, data: dict, recv_time: float):
+    def _process_book_update(self, data: dict, recv_time: float) -> bool:
         """处理订单簿更新"""
         process_start = time.time()
 
-        market_id = data.get("marketId")
-        token_id = data.get("tokenId")
-        side = data.get("side")  # 'bids' or 'asks'
-        price = float(data.get("price", 0))
-        size = float(data.get("size", 0))
+        market_id = data.get("marketId") or data.get("market_id")
+        token_id = data.get("tokenId") or data.get("token_id") or data.get("token")
+        side_raw = data.get("side") or data.get("bookSide")
+        side = str(side_raw).lower() if side_raw is not None else ""
+        if side in {"buy", "bid"}:
+            side = "bids"
+        elif side in {"sell", "ask"}:
+            side = "asks"
 
-        logger.info(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_id[:20]}..., side={side}, price={price}, size={size}")
+        price_raw = data.get("price")
+        size_raw = data.get("size")
+        if size_raw is None:
+            size_raw = data.get("quantity")
+        if size_raw is None:
+            size_raw = data.get("shares")
 
-        if not (market_id and token_id and side and price > 0):
-            return
+        try:
+            price = float(price_raw)
+        except (TypeError, ValueError):
+            price = 0.0
+
+        try:
+            size = float(size_raw)
+        except (TypeError, ValueError):
+            size = 0.0
+
+        token_short = str(token_id)[:20] if token_id is not None else "None"
+        logger.info(f"[Opinion] 处理订单簿更新: market={market_id}, token={token_short}..., side={side}, price={price}, size={size}")
+
+        if not (market_id and token_id and side in {"bids", "asks"} and price > 0):
+            return False
 
         # Get or create orderbook snapshot
         with self.lock:
@@ -466,6 +528,7 @@ class OpinionWebSocket:
 
         total_time = (time.time() - process_start) * 1000
         logger.debug(f"[Opinion] 总处理耗时: {total_time:.2f}ms (从开始处理到完成)")
+        return True
 
     def on_error(self, ws, error):
         """处理错误"""
@@ -608,18 +671,26 @@ class OpinionWebSocket:
         # 使用 opinion_yes_token 进行轮询
         for token_id in list(self.market_to_yes_token.values()):
             try:
-                # 获取订单簿
-                response = self.opinion_client.get_orderbook(token_id)
+                rest_snapshot = None
 
-                if response.errno != 0:
-                    logger.debug(f"REST API error for token {token_id[:20]}...: {response.errmsg}")
-                    error_count += 1
-                    continue
+                # 优先使用 SDK 拉取
+                try:
+                    response = self.opinion_client.get_orderbook(token_id)
 
-                book = response.result
-                rest_snapshot = self._convert_rest_orderbook(book, token_id)
+                    if response.errno != 0:
+                        logger.debug(f"REST API error for token {token_id[:20]}...: {response.errmsg}")
+                    else:
+                        book = response.result
+                        rest_snapshot = self._convert_rest_orderbook(book, token_id)
+                except Exception as sdk_exc:
+                    logger.debug(f"SDK REST poll failed for token {token_id[:20]}...: {sdk_exc}")
+
+                # SDK 失败时，回退到官方直连 HTTP 端点
+                if not rest_snapshot:
+                    rest_snapshot = self._fetch_orderbook_via_http_fallback(token_id)
 
                 if not rest_snapshot:
+                    error_count += 1
                     continue
 
                 # 验证WebSocket缓存的订单簿
@@ -660,6 +731,47 @@ class OpinionWebSocket:
                 f"📊 REST API poll: {polled_count} tokens, {validated_count} validated, "
                 f"{error_count} errors, {poll_time:.2f}s"
             )
+
+    def _fetch_orderbook_via_http_fallback(self, token_id: str) -> Optional[OrderBookSnapshot]:
+        """在 SDK 拉取失败时，使用官方直连 HTTP 接口回退获取订单簿"""
+        if not self.config.opinion_api_key:
+            return None
+
+        url = "https://api.opinion.trade/openapi/token/orderbook"
+        headers = {"apikey": self.config.opinion_api_key}
+        params = {"token_id": token_id}
+
+        try:
+            resp = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=self.config.opinion_rest_poll_timeout,
+            )
+            resp.raise_for_status()
+            payload = resp.json()
+
+            if payload.get("errno", 0) != 0:
+                return None
+
+            book = payload.get("result") or {}
+            bids = self._parse_rest_levels(book.get("bids", []), reverse=True)
+            asks = self._parse_rest_levels(book.get("asks", []), reverse=False)
+
+            if not self._http_fallback_warned:
+                logger.warning("⚠️ Opinion REST polling switched to direct API fallback (api.opinion.trade)")
+                self._http_fallback_warned = True
+
+            return OrderBookSnapshot(
+                bids=bids,
+                asks=asks,
+                source='opinion',
+                token_id=token_id,
+                timestamp=time.time(),
+            )
+        except Exception as exc:
+            logger.debug(f"Direct REST fallback failed for token {token_id[:20]}...: {exc}")
+            return None
 
     def _convert_rest_orderbook(
         self, rest_book, token_id: str
@@ -915,7 +1027,10 @@ class WebSocketManager:
             "opinion": {
                 "messages": self.opinion_ws.message_count,
                 "cached_books": len(self.opinion_ws.orderbook_cache),
-                "connected": self.opinion_ws.connected.is_set()
+                "connected": self.opinion_ws.connected.is_set(),
+                "depth_updates": self.opinion_ws.depth_update_count,
+                "stable_notices": self.opinion_ws.stable_notice_count,
+                "unknown_messages": self.opinion_ws.unknown_message_count,
             }
         }
 

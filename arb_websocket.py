@@ -17,6 +17,10 @@ WebSocket跨平台套利检测器 - Opinion vs Polymarket
 4) 启动（循环扫描）
     python arb_websocket.py --pro --loop-interval 2 --matches-file market_matches.json
 
+6) 可选开关
+    - --opinion-bootstrap-rest : 在 Opinion 纯WS无初始簿时，启用 REST bootstrap 补偿
+    - --ws-status-interval 10  : 每10秒输出一次两边 WebSocket 运行状态
+
 5) 快速自检
     - 启动后应看到 “WebSocket 连接与订阅完成”
     - 若未连接成功，优先检查 API Key、网络与订阅 market/token 是否有效
@@ -116,7 +120,12 @@ logger = logging.getLogger(__name__)
 class ModularArbitrage:
     """WebSocket 跨平台套利检测器"""
 
-    def __init__(self, config: Optional[ArbitrageConfig] = None):
+    def __init__(
+        self,
+        config: Optional[ArbitrageConfig] = None,
+        opinion_bootstrap_rest: Optional[bool] = None,
+        ws_status_interval: Optional[float] = None,
+    ):
         """
         初始化套利检测器
 
@@ -133,6 +142,21 @@ class ModularArbitrage:
         self.ws_manager = WebSocketManager(self.config, self.clients.get_opinion_client())
         self._ws_connected = False
         self._ws_lock = threading.Lock()
+        self._poly_no_to_yes: Dict[str, str] = {}
+        self._poly_yes_to_no: Dict[str, str] = {}
+        self._opinion_bootstrap_rest = (
+            opinion_bootstrap_rest
+            if opinion_bootstrap_rest is not None
+            else os.getenv("OPINION_BOOTSTRAP_REST", "0") in {"1", "true", "True"}
+        )
+        self._ws_status_interval = max(
+            1.0,
+            ws_status_interval
+            if ws_status_interval is not None
+            else float(os.getenv("WS_STATUS_INTERVAL", "10")),
+        )
+        self._ws_status_thread: Optional[threading.Thread] = None
+        self._ws_status_stop_event = threading.Event()
 
         # 市场匹配缓存
         self.market_matches: List[MarketMatch] = []
@@ -167,8 +191,6 @@ class ModularArbitrage:
         for match in self.market_matches:
             if match.polymarket_yes_token:
                 poly_assets.append(str(match.polymarket_yes_token))
-            if match.polymarket_no_token:
-                poly_assets.append(str(match.polymarket_no_token))
 
             if match.opinion_market_id is not None:
                 opinion_markets.append(int(match.opinion_market_id))
@@ -199,23 +221,110 @@ class ModularArbitrage:
                 logger.error("❌ 无法启动 WebSocket：订阅列表为空")
                 return False
 
-            # 纯 WebSocket 模式：禁用 Opinion REST 轮询补偿
-            self.config.opinion_rest_poll_enabled = False
+            # 纯 WebSocket 为默认；可通过开关启用 Opinion bootstrap 补偿
+            self.config.opinion_rest_poll_enabled = bool(self._opinion_bootstrap_rest)
+            if self.config.opinion_rest_poll_enabled:
+                logger.info("🩹 Opinion bootstrap fallback: 已启用 REST 轮询补偿")
+            else:
+                logger.info("🧪 Opinion 纯 WebSocket 模式: 已禁用 REST 轮询补偿")
 
-            print(f"📡 启动 WebSocket 订阅: Polymarket资产={len(poly_assets)}, Opinion市场={len(opinion_markets)}")
+            print(f"📡 启动 WebSocket 订阅: Polymarket(YES资产)={len(poly_assets)}, Opinion市场={len(opinion_markets)}")
             self._ws_connected = self.ws_manager.connect_all(
                 polymarket_assets=poly_assets,
                 opinion_markets=opinion_markets,
             )
             if self._ws_connected:
                 print("✅ WebSocket 连接与订阅完成")
+                stats = self.ws_manager.get_stats()
+                print(
+                    "📊 初始缓存状态: "
+                    f"Polymarket={stats['polymarket']['cached_books']}, "
+                    f"Opinion={stats['opinion']['cached_books']}"
+                )
+                self._start_ws_status_logger()
+                self._log_ws_runtime_status(force=True)
             else:
                 print("❌ WebSocket 连接失败")
 
         return self._ws_connected
 
+    def _wait_for_websocket_warmup(
+        self,
+        timeout_seconds: float = 20.0,
+        min_poly_books: int = 1,
+        min_opinion_books: int = 0,
+    ) -> bool:
+        """等待 WebSocket 订单簿缓存预热完成"""
+        deadline = time.time() + max(0.0, timeout_seconds)
+
+        while time.time() < deadline:
+            stats = self.ws_manager.get_stats()
+            poly_books = stats["polymarket"]["cached_books"]
+            opinion_books = stats["opinion"]["cached_books"]
+
+            if poly_books >= min_poly_books and opinion_books >= min_opinion_books:
+                logger.info(
+                    f"✅ 订单簿预热完成: Polymarket={poly_books}, Opinion={opinion_books}"
+                )
+                return True
+
+            time.sleep(0.5)
+
+        stats = self.ws_manager.get_stats()
+        logger.warning(
+            "⚠️ 订单簿预热超时: "
+            f"Polymarket={stats['polymarket']['cached_books']}, "
+            f"Opinion={stats['opinion']['cached_books']}"
+        )
+        return False
+
+    def _log_ws_runtime_status(self, force: bool = False) -> None:
+        """记录 WebSocket 运行状态"""
+        if not self._ws_connected and not force:
+            return
+
+        stats = self.ws_manager.get_stats()
+        poly = stats["polymarket"]
+        op = stats["opinion"]
+
+        logger.info(
+            "📡 WS状态 | "
+            f"Poly[connected={poly['connected']}, msgs={poly['messages']}, books={poly['cached_books']}] | "
+            f"Opinion[connected={op['connected']}, msgs={op['messages']}, books={op['cached_books']}, "
+            f"depth={op.get('depth_updates', 0)}, stable={op.get('stable_notices', 0)}, "
+            f"unknown={op.get('unknown_messages', 0)}]"
+        )
+
+        if op["connected"] and op["cached_books"] == 0:
+            logger.warning(
+                "⚠️ Opinion 订单簿仍为空（可能 market.depth.diff 暂无增量），"
+                "若持续为空可启用 --opinion-bootstrap-rest"
+            )
+
+    def _ws_status_loop(self) -> None:
+        """后台循环输出 WebSocket 状态"""
+        while not self._ws_status_stop_event.wait(self._ws_status_interval):
+            try:
+                self._log_ws_runtime_status()
+            except Exception as exc:
+                logger.debug(f"WS 状态日志线程异常: {exc}")
+
+    def _start_ws_status_logger(self) -> None:
+        """启动 WebSocket 状态日志线程"""
+        if self._ws_status_thread and self._ws_status_thread.is_alive():
+            return
+
+        self._ws_status_stop_event.clear()
+        self._ws_status_thread = threading.Thread(
+            target=self._ws_status_loop,
+            daemon=True,
+            name="ws-status-logger",
+        )
+        self._ws_status_thread.start()
+
     def close_websockets(self) -> None:
         """关闭所有 WebSocket 连接"""
+        self._ws_status_stop_event.set()
         with self._ws_lock:
             if self._ws_connected:
                 self.ws_manager.close_all()
@@ -266,6 +375,14 @@ class ModularArbitrage:
                 return None
 
             snapshot = self.ws_manager.get_orderbook(token_id, "polymarket")
+
+            # 仅订阅了 YES token：若请求的是 NO token，则由对应 YES 推导
+            if snapshot is None and token_id in self._poly_no_to_yes:
+                yes_token = self._poly_no_to_yes[token_id]
+                yes_snapshot = self.ws_manager.get_orderbook(yes_token, "polymarket")
+                if yes_snapshot:
+                    snapshot = self.derive_no_orderbook(yes_snapshot, token_id)
+
             if not snapshot:
                 return None
 
@@ -448,6 +565,16 @@ class ModularArbitrage:
 
         if combined:
             self.market_matches = combined
+
+            self._poly_no_to_yes.clear()
+            self._poly_yes_to_no.clear()
+            for match in self.market_matches:
+                if match.polymarket_yes_token and match.polymarket_no_token:
+                    yes_token = str(match.polymarket_yes_token)
+                    no_token = str(match.polymarket_no_token)
+                    self._poly_yes_to_no[yes_token] = no_token
+                    self._poly_no_to_yes[no_token] = yes_token
+
             print(f"✅ 共加载 {len(self.market_matches)} 个市场匹配\n")
             return True
 
@@ -1044,6 +1171,8 @@ class ModularArbitrage:
             logger.error("❌ WebSocket 未就绪，无法执行扫描")
             return
 
+        self._wait_for_websocket_warmup(timeout_seconds=20.0, min_poly_books=1, min_opinion_books=0)
+
         THRESHOLD_PRICE = 0.995
         THRESHOLD_SIZE = 200
 
@@ -1305,6 +1434,19 @@ def main():
         "--loop-interval", type=float, default=None, help="循环间隔时间（秒）"
     )
 
+    parser.add_argument(
+        "--opinion-bootstrap-rest",
+        action="store_true",
+        help="启用 Opinion REST bootstrap 补偿（默认纯WebSocket）",
+    )
+
+    parser.add_argument(
+        "--ws-status-interval",
+        type=float,
+        default=10.0,
+        help="WebSocket 运行状态日志输出间隔（秒）",
+    )
+
     args = parser.parse_args()
 
     arbitrage: Optional[ModularArbitrage] = None
@@ -1317,7 +1459,11 @@ def main():
         config.display_summary()
 
         # 创建套利检测器
-        arbitrage = ModularArbitrage(config)
+        arbitrage = ModularArbitrage(
+            config,
+            opinion_bootstrap_rest=args.opinion_bootstrap_rest,
+            ws_status_interval=args.ws_status_interval,
+        )
 
         # 加载市场匹配
         if not arbitrage.load_market_matches(args.matches_file):
