@@ -55,6 +55,8 @@ class ArbitrageConfig:
     roi_reference_size: float = field(default_factory=lambda: max(1.0, float(os.getenv("ROI_BASE_SIZE", "200"))))
     seconds_per_year: float = field(default_factory=lambda: float(os.getenv("SECONDS_PER_YEAR", str(365 * 24 * 60 * 60))))
     min_annualized_percent: float = field(default_factory=lambda: float(os.getenv("MIN_ANNUALIZED_PERCENT", "18.0")))
+    threshold_price: float = field(default_factory=lambda: min(1.0, max(0.0, float(os.getenv("THRESHOLD_PRICE", "0.995")))))
+    threshold_size: float = field(default_factory=lambda: max(0.0, float(os.getenv("THRESHOLD_SIZE", "200"))))
 
     # ==================== 即时执行配置 ====================
     immediate_exec_enabled: bool = field(default_factory=lambda: os.getenv("IMMEDIATE_EXEC_ENABLED", "1") not in {"0", "false", "False"})

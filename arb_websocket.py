@@ -1173,8 +1173,8 @@ class ModularArbitrage:
 
         self._wait_for_websocket_warmup(timeout_seconds=20.0, min_poly_books=1, min_opinion_books=0)
 
-        THRESHOLD_PRICE = 0.995
-        THRESHOLD_SIZE = 200
+        threshold_price = self.config.threshold_price
+        threshold_size = self.config.threshold_size
 
         logger.info(f"\n{'='*100}")
 
@@ -1212,8 +1212,8 @@ class ModularArbitrage:
                     opinion_no_book,
                     poly_yes_book,
                     poly_no_book,
-                    THRESHOLD_PRICE,
-                    THRESHOLD_SIZE,
+                    threshold_price,
+                    threshold_size,
                 )
 
                 if opportunities:

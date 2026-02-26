@@ -1003,8 +1003,8 @@ class ModularArbitrage:
             logger.error("❌ 没有可用的市场匹配")
             return
 
-        THRESHOLD_PRICE = 0.995
-        THRESHOLD_SIZE = 200
+        threshold_price = self.config.threshold_price
+        threshold_size = self.config.threshold_size
 
         logger.info(f"\n{'='*100}")
 
@@ -1060,8 +1060,8 @@ class ModularArbitrage:
                     opinion_no_book,
                     poly_yes_book,
                     poly_no_book,
-                    THRESHOLD_PRICE,
-                    THRESHOLD_SIZE,
+                    threshold_price,
+                    threshold_size,
                 )
 
                 if opportunities:
