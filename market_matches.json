@@ -2691,19 +2691,6 @@
     "polymarket_neg_risk": true
   },
   {
-    "question": "What will Silver settle at in June? - >$115",
-    "opinion_market_id": 5754,
-    "opinion_yes_token": "113509054134702067879632356087972602359087709195643693959826018243332199612945",
-    "opinion_no_token": "41173828121849662808878452110236536344341869930852324742313534245898873903855",
-    "polymarket_condition_id": "0xdf88e78e59e5d854aeb115c92516972420d25815540d8b1418f03db92f0b3a5b",
-    "polymarket_yes_token": "79874717115167927782900365559583870716582553045618441173775590911882436531258",
-    "polymarket_no_token": "94558665561721318376736792472030560691861536877999508010733586627863088661256",
-    "polymarket_slug": "si-settle-100-115-jun-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1782777600,
-    "polymarket_neg_risk": true
-  },
-  {
     "question": "What will Silver settle at in June? - $90-$100",
     "opinion_market_id": 5756,
     "opinion_yes_token": "105307982229033199712225342555025696001568480534258268402141379117331735970828",
@@ -2910,19 +2897,6 @@
     "similarity_score": 1.0,
     "cutoff_at": 1782777600,
     "polymarket_neg_risk": false
-  },
-  {
-    "question": "What will Gold settle at in June? - >$6,200",
-    "opinion_market_id": 5736,
-    "opinion_yes_token": "107083187893144829170270819658449090062633785245820164577156012149978354960752",
-    "opinion_no_token": "113667520495518807469144304803109539693967996331339126767235544664049696178810",
-    "polymarket_condition_id": "0x7130b2c99bee81af658adafb4a6235f21575f568e3ae2a850af742afa50c2d85",
-    "polymarket_yes_token": "79480641743596328156888881841837787012633513624072222555595000167813156519758",
-    "polymarket_no_token": "17878506599231681723092997062254912120536148530389060800857875232098186845304",
-    "polymarket_slug": "gc-settle-5800-6200-jun-2026",
-    "similarity_score": 1.0,
-    "cutoff_at": 1782777600,
-    "polymarket_neg_risk": true
   },
   {
     "question": "What will Gold settle at in June? - $5,400-$5,800",
